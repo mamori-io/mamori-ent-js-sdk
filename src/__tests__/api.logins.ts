@@ -4,7 +4,7 @@ import * as https from 'https';
 
 const host = process.env.MAMORI_SERVER || '127.0.0.1';
 const username = process.env.MAMORI_USERNAME || 'root';
-const password = process.env.MAMORI_USERNAME || 'test';
+const password = process.env.MAMORI_PASSWORD || 'test';
 
 const INSECURE = new https.Agent({rejectUnauthorized: false});
 
