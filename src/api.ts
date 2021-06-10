@@ -1847,7 +1847,7 @@ export class DMService {
     }
 
     public cancel_query(task_id: string) {
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             let q = this._queries[task_id];
             if (q) {
                 this.new_query_job().then((channel: Channel) => {

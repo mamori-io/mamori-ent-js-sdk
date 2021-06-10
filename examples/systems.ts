@@ -1,19 +1,23 @@
 import { DMService } from '../src/api';
 import * as https from 'https';
 
+let argv = require('minimist')(process.argv.slice(2)) ;
+argv.url = argv.url || 'localhost:443';
+console.log(argv);
+
 const INSECURE = new https.Agent({rejectUnauthorized: false});
-let dm = new DMService("https://localhost/", INSECURE);
+let dm = new DMService("https://" + argv.url + "/", INSECURE);
 
 async function display_systems() {
-  console.info("server status:", await dm.service_status());
+  console.info("Server status: ", await dm.service_status());
 
   console.info("Connecting...");
-  let login = await dm.login("root", "test");
-  console.info("login successful:", login);
+  let login = await dm.login(argv._[0], argv._[1]);
+  console.info("Login successful:", login);
 
   console.info("Fetching user systems...");
   let systems = await dm.user_systems();
-  console.info("user systems:", systems);
+  console.info("Systems: ", systems);
 }
 
-display_systems().catch(e => console.error("ERROR:", e)).finally(() => process.exit(0));
+display_systems().catch(e => console.error("ERROR: ", e)).finally(() => process.exit(0));

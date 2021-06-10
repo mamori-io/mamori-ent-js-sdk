@@ -4,13 +4,17 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 import { DMService } from '../src/api';
 
-let dm = new DMService("https://localhost/");
+let argv = require('minimist')(process.argv.slice(2)) ;
+argv.url = argv.url || 'localhost:443';
+console.log(argv);
+
+let dm = new DMService("https://" + argv.url + "/");
 
 async function test() {
     console.info("server status:", await dm.service_status());
 
     console.info("Connecting...");
-    let login = await dm.login("root", "test");
+    let login = await dm.login(argv._[0], argv._[1]);
     console.info("login successful:", login);
     console.info("ping", await dm.ping());
 
@@ -31,4 +35,4 @@ async function test() {
 }
 
 
-test().finally(() => process.exit(0));
+test().catch(e => console.error("ERROR:", e)).finally(() => process.exit(0));
