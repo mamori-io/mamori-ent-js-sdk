@@ -1,9 +1,9 @@
 {
     "private": false,
     "version": "1.0.0",
-    "name": "mamori-io-v1-api",
-    "displayName": "MAMORI.IO V1 API bindings",
-    "description": "API Bindings for a v1 mamori server",
+    "name": "mamori-ent-js-sdk",
+    "displayName": "mamori.io SDK",
+    "description": "API Bindings for a mamori server",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -27,18 +27,17 @@
     "dependencies": {
         "axios": "^0.21.1",
         "moment-timezone": "0.5.13",
+        "typedoc": "^0.20.36",
         "websocket": "^1.0.34"
     },
     "jest": {
         "transform": {
             ".(ts|tsx)": "ts-jest"
         },
-
         "modulePathIgnorePatterns": [
             "dist",
             "examples"
         ],
-
         "moduleFileExtensions": [
             "ts",
             "tsx",

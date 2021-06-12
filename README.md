@@ -1,42 +1,56 @@
-MAMORI.IO V1 API BINDINGS
-==================================
+# SDK for Mamori enterprise server and proxies 
 
-INSTALLATION
+## Installation
 ```sh
 yarn add mamori-io-v1-api
 yarn add ts-node
 yarn add typescript
+yarn add typedoc
 yarn add @types/node
 ```
 
-TO RUN A SCRIPT
+## Usage
+To run a script:
 ```sh
 yarn ts-node <your script>
 ```
 
-
-EXAMPLE - Login and list available datasources
+Example script: login and list available datasources
 ```js
-// allow for self signed certs
+// allow for self-signed certificates
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 import { DMService } from '../src/api';
 
-let dm = new DMService("https://localhost/");
+let mamoriUrl  = "https://localhost/" ;
+let mamoriUser = "alice" ;
+let mamoriPwd  = "mirror" ;
+
+let dm = new DMService(mamoriUrl);
 
 async function display_systems() {
-  console.info("server status:", await dm.service_status());
-
   console.info("Connecting...");
-  let login = await dm.login("root", "test");
-  console.info("login successful:", login);
+  let login = await dm.login(mamoriUser, mamoriPwd);
+  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
 
   console.info("Fetching user systems...");
   let systems = await dm.user_systems();
-  console.info("user systems:", systems);
+  console.info("User systems: ", systems);
 }
 
-
-display_systems().finally(() => process.exit(0));
-
+display_systems().catch(e => console.error("ERROR: ", e)).finally(() => process.exit(0));
 ```
+
+For more examples, see `./examples/`.
+
+## Documentation
+To generate:
+```sh
+yarn typedoc src/api.ts
+```
+and open `./docs/index.html` to view.
+
+See [mamori.io](https://mamori.io/resources.html) for further documentation.
+
+----
+Copyright (c) 2021 mamori.io
