@@ -10,8 +10,16 @@ let dm = new DMService("https://" + argv.url + "/", INSECURE);
 
 async function create_datasource() {
   console.info("Connecting...");
-  await dm.login(argv._[0], argv._[1]);
-  console.info("Login successful.");
+  let login = await dm.login(argv._[0], argv._[1]);
+  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
+
+  try {
+    let dsystem = await dm.delete_system("test_system") ;
+    console.info("Delete system: ", dsystem);
+  }
+  catch (e) {
+    console.info("Delete system: ", (e as Error).message);
+  }
 
   await dm.create_system_for_rec("N",
     { name: "test_system", type: "POSTGRESQL", host: "10.0.2.2" },

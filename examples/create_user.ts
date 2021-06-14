@@ -11,7 +11,7 @@ let dm = new DMService("https://" + argv.url + "/", INSECURE);
 async function create_user() {
   console.info("Connecting...");
   let login = await dm.login(argv._[0], argv._[1]);
-  console.info("Login successful.");
+  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
 
   try {
     let duser = await dm.delete_user("test_user");
@@ -37,6 +37,8 @@ async function create_user() {
 
   let grant = await dm.grant_role_to_grantee("secure_connect", "test_user");
   console.info("Grant: ", grant);
+
+  await dm.logout() ;
 }
 
 create_user().catch(e => console.error("ERROR: ", e)).finally(() => process.exit(0));

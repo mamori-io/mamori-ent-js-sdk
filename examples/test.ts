@@ -15,7 +15,7 @@ async function test() {
 
     console.info("Connecting...");
     let login = await dm.login(argv._[0], argv._[1]);
-    console.info("login successful:", login);
+    console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
     console.info("ping", await dm.ping());
 
 

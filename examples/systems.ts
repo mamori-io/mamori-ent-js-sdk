@@ -13,7 +13,7 @@ async function display_systems() {
 
   console.info("Connecting...");
   let login = await dm.login(argv._[0], argv._[1]);
-  console.info("Login successful:", login);
+  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
 
   console.info("Fetching user systems...");
   let systems = await dm.user_systems();
