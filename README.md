@@ -1,4 +1,4 @@
-# SDK for Mamori enterprise server and proxies 
+# SDK for Mamori enterprise server and proxies
 
 ## Installation
 ```sh
@@ -20,7 +20,7 @@ Example script: login and list available datasources
 // allow for self-signed certificates
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import { DMService } from '../src/api';
+import { DMService } from 'mamori-io-v1-api';
 
 let mamoriUrl  = "https://localhost/" ;
 let mamoriUser = "alice" ;

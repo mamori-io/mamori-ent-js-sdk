@@ -1,4 +1,4 @@
-import { DMService } from '../src/api';
+import { DMService } from '../dist/api';
 import * as https from 'https';
 
 let argv = require('minimist')(process.argv.slice(2)) ;

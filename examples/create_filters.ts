@@ -1,4 +1,4 @@
-import { DMService } from '../src/api';
+import { DMService } from '../dist/api';
 import * as https from 'https';
 
 let argv = require('minimist')(process.argv.slice(2));
@@ -73,7 +73,7 @@ async function create_filter() {
     transformations: '[{"name": "default","priority": 1,"elementSpec": "$..sugars","function": "MASK FULL"}]'
   });
   console.info("openfoodfacts Filter: ", offFilter);
-  
+
   var offResult = await dm.get_http_apifilters({ filter: ["name", "=", "openfoodfacts"] });
   if (offResult.data) {
     for(var i in offResult.data) {

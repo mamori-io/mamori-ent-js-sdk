@@ -5,16 +5,15 @@
     "displayName": "mamori.io SDK",
     "description": "API Bindings for a mamori server",
     "license": "Apache-2.0",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "author": "Omar Masri <omasri@mamori.io>",
+    "main": "dist/api.js",
+    "types": "dist/api.d.ts",
+    "authors": ["Daniel Parnell <dparnell@mamori.io>", "Omar Masri <omasri@mamori.io>"],
+
     "scripts": {
         "build": "tsc",
-        "test": "jest"
+        "test": "jest",
+        "prepare": "tsc"
     },
-    "files": [
-        "dist"
-    ],
     "devDependencies": {
         "@types/jest": "^26.0.20",
         "@types/node": "^10.12.9",

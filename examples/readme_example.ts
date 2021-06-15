@@ -1,7 +1,7 @@
 // allow for self-signed certificates
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import { DMService } from '../src/api';
+import { DMService } from '../dist/api';
 
 let mamoriUrl  = "https://localhost:8443/" ;
 let mamoriUser = "alice" ;

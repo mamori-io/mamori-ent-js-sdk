@@ -1,4 +1,4 @@
-import { DMService } from '../src/api';
+import { DMService } from '../dist/api';
 import * as https from 'https';
 
 let argv = require('minimist')(process.argv.slice(2)) ;
@@ -24,7 +24,7 @@ async function create_role() {
       await dm.revoke_role_from_grantee(roleId, grantees.data[i].username) ;
       console.info("Revoked: ", roleId, " from: ", grantees.data[i].username);
     }
-    
+
     // Revoke from any roles
     await dm.revoke_role_from_grantee(roleId, "secure_connect") ;
     console.info("Revoked: ", roleId, " from: ", "secure_connect");
@@ -41,7 +41,7 @@ async function create_role() {
   await dm.create_role({roleid: roleId, externalname: "Test role"});
   await dm.grant_role_to_grantee(roleId, mamoriUser);
   await dm.grant_role_to_grantee(roleId, "secure_connect");
-  
+
   let grantedRoles = await dm.get_grantee_roles(roleId) ;
   console.info(roleId, " granted roles: ", grantedRoles);
 

@@ -102,6 +102,12 @@ export interface DriverRec {
     resource_files: any[]
 }
 
+export interface QueryOptions {
+    cxnname?: string;
+    delimiter?: string;
+    fetchsize?: number;
+}
+
 export type QueryRow = string[];
 
 export interface QueryResponse {
@@ -1822,14 +1828,15 @@ export class DMService {
         });
     }
 
-    public query(sql: string, options: any = {}) {
+    public query(sql: string, options: QueryOptions = {}) {
         this.ping(); // keep the session alive
 
         let deferred = new PromiseWithProgress((resolve, reject) => {
-            options.query = sql;
+            let msg = Object.assign({query: sql}, options);
+
             this.new_query_job()
                 .then((channel: Channel) => {
-                    channel.push("query", options)
+                    channel.push("query", msg)
                         .receive("ok", (resp) => {
                             this._queries[resp.id] = {resolve: resolve, reject: reject, notify: deferred._progress};
 
@@ -1923,11 +1930,11 @@ export class DMService {
         });
     }
 
-    public simple_query(sql: string): Promise<any[]> {
+    public simple_query(sql: string, options: QueryOptions = {}): Promise<any[]> {
         return new Promise<any[]>((resolve, reject) => {
             let acc: any[] = [];
 
-            this.query(sql).progress(chunk => {
+            this.query(sql, options).progress(chunk => {
                 if(chunk.rows) {
                     let cols = chunk.meta.map((c:any) => c.name);
 

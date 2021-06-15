@@ -2,7 +2,7 @@
 // allow for self signed certs
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import { DMService } from '../src/api';
+import { DMService } from '../dist/api';
 
 let argv = require('minimist')(process.argv.slice(2)) ;
 argv.url = argv.url || 'localhost:443';
@@ -14,7 +14,7 @@ async function test() {
     console.info("server status:", await dm.service_status());
 
     console.info("Connecting...");
-    let login = await dm.login(argv._[0], argv._[1]);
+    let login = await dm.login(argv._[0] || "root", argv._[1] || "test");
     console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
     console.info("ping", await dm.ping());
 
