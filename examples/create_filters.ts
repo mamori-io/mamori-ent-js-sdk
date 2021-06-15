@@ -50,7 +50,7 @@ async function create_filter() {
 
   //  https://world.openfoodfacts.org/
   //
-  var offResult = await dm.get_http_apifilters({ filter: ["name", "=", "openfoodfacts"] });
+  var offResult = await dm.get_http_apifilters([["name", "=", "openfoodfacts"]]);
   if (offResult.data) {
     for(var i in offResult.data) {
       if ("openfoodfacts" == offResult.data[i].name) {
@@ -70,7 +70,7 @@ async function create_filter() {
     headers: "",
     body: "",
     owner: mamoriUser,
-    transformations: '[{"name": "default","priority": 1,"elementSpec": "$..sugars","function": "MASK FULL"}]'
+    transformations: '[{"name": "default", "priority": 1, "elementSpec": "$..sugars", "function": "MASK FULL"}]'
   });
   console.info("openfoodfacts Filter: ", offFilter);
 
