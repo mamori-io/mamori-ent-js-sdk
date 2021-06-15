@@ -559,7 +559,6 @@ export class DMService {
         return this.callAPI("GET", "/v1/drivers");
     }
 
-
     public update_driver(drivername: string, options: any) {
         return this.callAPI("PUT", "/v1/drivers/" + drivername, options);
     }
@@ -666,9 +665,6 @@ export class DMService {
     }
 
     public delete_masking_procedure(rmsid: number, name: string) {
-        //
-        //%{"rmsid" => rmsid,"name" => name}
-        //
         return this.callAPI("DELETE", "/v1/maskingprocedures/1",{name:name, rmsid: rmsid});
     }
 
@@ -831,7 +827,6 @@ export class DMService {
         return this.callAPI("GET", '/v1/permissions', conditions);
     }
 
-
     public system() {
         return this.callAPI("GET", '/v1/permissions/dbtree');
     }
@@ -941,7 +936,6 @@ export class DMService {
         return this.callAPI("DELETE", "/v1/systemgroups/" + group + "/systems/" + system);
     }
 
-
     public system_group_add_credential(group: string, grantee: string, login: string, pw: string, options: any) {
         return this.callAPI("POST", "/v1/systemgroups/" + group + "/credentials", {
             grantee: grantee,
@@ -958,7 +952,6 @@ export class DMService {
     public system_group_credentials_search(group: string, options: any) {
         return this.callAPI("PUT", "/v1/systemgroups/" + group + "/credentials", options);
     }
-
 
     public databases() {
         return this.callAPI("GET", "/v1/objects/databases");
@@ -1350,122 +1343,6 @@ export class DMService {
         return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {db_credentials: credentials});
     }
 
-
-    // --- projects ---
-    public projects() {
-        return this.callAPI("GET", "/v1/datapuppy/projects");
-    }
-
-    public project_create(project: any) {
-        return this.callAPI("POST", "/v1/datapuppy/projects/", {project: project});
-    }
-
-    public project_drop(project_id: number) {
-        return this.callAPI("DELETE", "/v1/datapuppy/projects/" + project_id);
-    }
-
-    public project_get(project_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/projects/" + project_id);
-    }
-
-    public project_get_status(project_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/projectstatus/" + project_id);
-    }
-
-    public project_get_single(project_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/project/" + project_id);
-    }
-
-    public project_update(project_id: number, project: any) {
-        return this.callAPI("PUT", "/v1/datapuppy/projects/" + project_id, {project: project});
-    }
-
-    public project_duplicate(project_id: number, duplicateName: string) {
-        return this.callAPI("GET", "/v1/datapuppy/duplicate/" + project_id, {duplicate_name: duplicateName});
-    }
-
-    public project_set_script(project_id: number, script_type: string, script: string) {
-        return this.callAPI("POST", "/v1/datapuppy/scripts/" + project_id + "/set", {script_type: script_type, script: script});
-    }
-
-    public project_get_script(project_id: number, script_type: string, action?: string) {
-        return this.callAPI("GET", "/v1/datapuppy/scripts/" + project_id + "/get", {script_type: script_type, action: action ? action : 'get'});
-    }
-
-    public project_catalog(address: any) {
-        return this.callAPI("POST", "/v1/datapuppy/catalog", address);
-    }
-
-    public project_catalog_count(address: any) {
-        return this.callAPI("POST", "/v1/datapuppy/catalogcount", address);
-    }
-
-    public project_map_get(project_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/map/" + project_id + "/get");
-    }
-
-    public project_map_add(project_id: number, source: string, target?: string, includeexclude?: string, rule_order?: number) {
-        let command = (includeexclude) ? (target) ? "add_target_rule" : "add_rule" : "add";
-        return this.callAPI("GET", "/v1/datapuppy/map/" + project_id + "/" + command + "/" + encodeURIComponent(source) +
-            (target ? "/" + encodeURIComponent(target) : "") +
-            (includeexclude ? "/" + includeexclude : "") + (rule_order! >= 0 ? "/" + rule_order : ""));
-    }
-
-    public project_map_remove(project_id: number, source: string) {
-        return this.callAPI("GET", "/v1/datapuppy/map/" + project_id + "/remove/" + encodeURIComponent(source));
-    }
-
-    public project_map_map(project_id: number, source: string, target?: string, includeexclude?: string, rule_order?: number) {
-        let command = (includeexclude) ? (target) ? "map_target_rule" : "map_rule" : "map";
-        return this.callAPI("GET", "/v1/datapuppy/map/" + project_id + "/" + command +
-            "/" + encodeURIComponent(source) + (target ? "/" + encodeURIComponent(target) : "") +
-            (includeexclude ? "/" + includeexclude : "") + (rule_order! >= 0 ? "/" + rule_order : ""));
-    }
-
-    public project_map_unmap(project_id: number, source: string, target?: string) {
-
-
-        return this.callAPI("GET", "/v1/datapuppy/map/" + project_id + "/unmap/" + encodeURIComponent(source) + (target ? "/" + encodeURIComponent(target) : ""));
-    }
-
-    public project_execute(project_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/execute/" + project_id);
-    }
-
-    public project_cancel(project_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/cancel/" + project_id);
-    }
-
-    public project_runs(project_id?: number) {
-        return this.callAPI("GET", "/v1/datapuppy/runs" + (project_id ? "/" + project_id : ""));
-    }
-
-    public project_compare_log(compare_log: string, search_query: any) {
-        return this.callAPI("GET", "/v1/datapuppy/comparelog/" + encodeURIComponent(compare_log), search_query);
-    }
-
-    public project_full_compare_log(compare_log: string, target: string, select: string, join: string, orderBy: string, search_query: any) {
-        return this.callAPI("GET", "/v1/datapuppy/comparelogfull/" + encodeURIComponent(compare_log) + "/" +
-            encodeURIComponent(target) + "/" + select + "/" + join + "/" + orderBy, search_query);
-    }
-
-    public project_run(run_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/run/" + run_id);
-    }
-
-
-    public project_run_details(run_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/rundetails/" + run_id);
-    }
-
-    public run_details_search(run_id: number, search_query: any) {
-        return this.callAPI("PUT", "/v1/datapuppy/rundetails/" + run_id + "/search/", search_query);
-    }
-
-    public run_details_count(run_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/rundetails/count/" + run_id);
-    }
-
     public run_chart_duration(run_id: number) {
         return this.callAPI("GET", "/v1/datapuppy/runcharts/duration/" + run_id);
     }
@@ -1485,8 +1362,6 @@ export class DMService {
     public project_query_details(query_id: number) {
         return this.callAPI("GET", "/v1/datapuppy/querydetails/" + query_id);
     }
-
-    // --- /projects ---
 
     public cancel_session(ssid: string) {
         return this.callAPI("GET", "/v1/session/cancel/" + ssid);
