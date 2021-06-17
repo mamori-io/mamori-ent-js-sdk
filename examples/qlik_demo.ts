@@ -48,6 +48,8 @@ async function setup_qlik_demo() {
   else {
     endorseRole = await dm.create_role({ roleid: endorseRoleName });
     console.info("Created role: ", endorseRoleName);
+    let gp = await dm.grant_to(endorseRoleName, ['REQUEST'], "*", false) ;
+    console.info("Created role: ", gp);
   }
 
   //
