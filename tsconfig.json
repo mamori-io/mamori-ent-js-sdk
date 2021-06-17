@@ -14,6 +14,10 @@
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true
     },
+    "ts-node": {
+        "transpileOnly": true,
+        "transpiler": "ts-node/transpilers/swc-experimental"
+    },
     "files": [
         "./node_modules/@types/node/index.d.ts"
     ],
