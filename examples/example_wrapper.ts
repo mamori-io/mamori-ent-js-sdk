@@ -9,7 +9,7 @@
 // allow for self signed certs
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import { DMService } from '../src/api';
+import { DMService } from '../dist/api';
 import minimist = require('minimist');
 import { ParsedArgs } from 'minimist';
 
