@@ -7,10 +7,13 @@
     "license": "Apache-2.0",
     "main": "dist/api.js",
     "types": "dist/api.d.ts",
-    "authors": ["Daniel Parnell <dparnell@mamori.io>", "Omar Masri <omasri@mamori.io>"],
+    "authors": [
+        "Daniel Parnell <dparnell@mamori.io>",
+        "Omar Masri <omasri@mamori.io>"
+    ],
     "repository": {
-        "type" : "git",
-        "url" : "https://github.com/mamori-io/mamori-ent-js-sdk.git"
+        "type": "git",
+        "url": "https://github.com/mamori-io/mamori-ent-js-sdk.git"
     },
     "scripts": {
         "build": "tsc",
@@ -27,6 +30,7 @@
         "typescript": "^3.1.6"
     },
     "dependencies": {
+        "@types/minimist": "^1.2.1",
         "axios": "^0.21.1",
         "moment-timezone": "0.5.13",
         "typedoc": "^0.20.36",

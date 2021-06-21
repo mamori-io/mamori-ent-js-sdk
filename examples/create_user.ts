@@ -1,29 +1,30 @@
-import { DMService } from '../dist/api';
-import * as https from 'https';
+/*
+ * Copyright (c) 2021 mamori.io.  All Rights Reserved.
+ *
+ * This software contains the confidential and proprietary information of mamori.io.
+ * Parties accessing this software are required to maintain the confidentiality of all such information.
+ * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
+ * unless a separate, written license is agreed to and signed by mamori.io.
+ */
+import { ExampleWrapper } from './example_wrapper' ;
+import { DMService } from '../src/api';
+import { ParsedArgs } from 'minimist';
 
-let argv = require('minimist')(process.argv.slice(2)) ;
-argv.url = argv.url || 'localhost:443';
-console.log(argv);
+let testUser  = "test_user" ;
+let grantRole = "secure_connect" ;
 
-const INSECURE = new https.Agent({ rejectUnauthorized: false });
-let dm = new DMService("https://" + argv.url + "/", INSECURE);
-
-async function create_user() {
-  console.info("Connecting...");
-  let login = await dm.login(argv._[0], argv._[1]);
-  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
-
+let eg = async function (dm: DMService, args: ParsedArgs) {
   try {
-    let duser = await dm.delete_user("test_user");
-    console.info("Delete user: ", duser);
+    await dm.delete_user(testUser);
+    console.info("Delete user: ", testUser);
   }
   catch (e) {
     console.info("Delete user: ", (e as Error).message);
   }
 
   console.info("Creating test user...");
-  let cuser = await dm.create_user({
-    username: "test_user",
+  await dm.create_user({
+    username: testUser,
     password: "test",
     fullname: "Test User",
     identified_by: "password",
@@ -33,12 +34,13 @@ async function create_user() {
     valid_until: "2021-06-31 17:00:00",
     valid_timezone: "Australia/Melbourne"
   });
-  console.info("User: ", cuser);
+  console.info("User: ", testUser);
 
-  let grant = await dm.grant_role_to_grantee("secure_connect", "test_user");
-  console.info("Grant: ", grant);
-
-  await dm.logout() ;
+  await dm.grant_role_to_grantee(grantRole, testUser);
+  console.info("Grantwd: ", grantRole, " to: ", testUser);
 }
 
-create_user().catch(e => console.error("ERROR: ", e)).finally(() => process.exit(0));
+let rapt = new ExampleWrapper(eg, process.argv) ;
+rapt.execute()
+    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+    .finally(() => process.exit(0));

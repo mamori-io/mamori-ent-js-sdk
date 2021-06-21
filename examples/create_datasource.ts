@@ -1,18 +1,16 @@
-import { DMService } from '../dist/api';
-import * as https from 'https';
+/*
+ * Copyright (c) 2021 mamori.io.  All Rights Reserved.
+ *
+ * This software contains the confidential and proprietary information of mamori.io.
+ * Parties accessing this software are required to maintain the confidentiality of all such information.
+ * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
+ * unless a separate, written license is agreed to and signed by mamori.io.
+ */
+import { ExampleWrapper } from './example_wrapper' ;
+import { DMService } from '../src/api';
+import { ParsedArgs } from 'minimist';
 
-let argv = require('minimist')(process.argv.slice(2));
-argv.url = argv.url || 'localhost:443';
-console.log(argv);
-
-const INSECURE = new https.Agent({ rejectUnauthorized: false });
-let dm = new DMService("https://" + argv.url + "/", INSECURE);
-
-async function create_datasource() {
-  console.info("Connecting...");
-  let login = await dm.login(argv._[0], argv._[1]);
-  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
-
+let eg = async function (dm: DMService, args: ParsedArgs) {
   try {
     let dsystem = await dm.delete_system("test_system") ;
     console.info("Delete system: ", dsystem);
@@ -24,7 +22,7 @@ async function create_datasource() {
   await dm.create_system_for_rec("N",
     { name: "test_system", type: "POSTGRESQL", host: "10.0.2.2" },
     "PORT '5432', DRIVER 'postgres', USER 'postgres', PASSWORD 'postgres', DEFAULTDATABASE 'mamori', TEMPDATABASE 'mamori'",
-    { a: { system_name: "test_system", cirro_user: argv._[0], username: "postgres", password: "postgres" } }
+    { a: { system_name: "test_system", cirro_user: args._[0], username: "postgres", password: "postgres" } }
   );
 
   console.info("Fetching system...");
@@ -32,4 +30,7 @@ async function create_datasource() {
   console.info("System: ", system);
 }
 
-create_datasource().catch(e => console.error("ERROR: ", e)).finally(() => process.exit(0));
+let rapt = new ExampleWrapper(eg, process.argv) ;
+rapt.execute()
+    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+    .finally(() => process.exit(0));

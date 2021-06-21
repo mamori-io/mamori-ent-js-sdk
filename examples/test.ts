@@ -1,38 +1,33 @@
+/*
+ * Copyright (c) 2021 mamori.io.  All Rights Reserved.
+ *
+ * This software contains the confidential and proprietary information of mamori.io.
+ * Parties accessing this software are required to maintain the confidentiality of all such information.
+ * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
+ * unless a separate, written license is agreed to and signed by mamori.io.
+ */
+import { ExampleWrapper } from './example_wrapper' ;
+import { DMService } from '../src/api';
+import { ParsedArgs } from 'minimist';
 
-// allow for self signed certs
-process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-
-import { DMService } from '../dist/api';
-
-let argv = require('minimist')(process.argv.slice(2)) ;
-argv.url = argv.url || 'localhost:443';
-console.log(argv);
-
-let dm = new DMService("https://" + argv.url + "/");
-
-async function test() {
-    console.info("server status:", await dm.service_status());
-
-    console.info("Connecting...");
-    let login = await dm.login(argv._[0] || "root", argv._[1] || "test");
-    console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
+let eg = async function (dm: DMService, args: ParsedArgs) {
     console.info("ping", await dm.ping());
 
-
-    console.info("fetching connection totals for the last hour...");
+    console.info("\nFetching connection totals for the last hour...");
     let now = new Date();
     let then = new Date(now.getTime() - 1000 * 3600); // 1 hour ago
-
     let from_date = then.toISOString().replace("T", " ").replace(/\..*$/, "");
-    let to_date = now.toISOString().replace("T", " ").replace(/\..*$/, "");
-    console.info("totals:", await dm.call_operation("connection_totals", {from_date: from_date, to_date: to_date}));
+    let to_date   =  now.toISOString().replace("T", " ").replace(/\..*$/, "");
+    console.info("Totals: ", await dm.call_operation("connection_totals", {from_date: from_date, to_date: to_date}));
 
-    console.info("Fetching server version...");
-    console.info("Version:", await dm.simple_query("select * from  SYS.SYSVERSION"));
+    console.info("\nFetching server version...");
+    console.info("Version: ", await dm.server_version());
 
-    console.info("Fetching SSH logins...");
+    console.info("\nFetching SSH logins...");
     console.info("SSH logins:", await dm.ssh_logins());
 }
 
-
-test().catch(e => console.error("ERROR:", e)).finally(() => process.exit(0));
+let rapt = new ExampleWrapper(eg, process.argv) ;
+rapt.execute()
+    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+    .finally(() => process.exit(0));

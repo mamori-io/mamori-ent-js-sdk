@@ -1,4 +1,12 @@
-import { DMService } from '../dist/api';
+/*
+ * Copyright (c) 2021 mamori.io.  All Rights Reserved.
+ *
+ * This software contains the confidential and proprietary information of mamori.io.
+ * Parties accessing this software are required to maintain the confidentiality of all such information.
+ * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
+ * unless a separate, written license is agreed to and signed by mamori.io.
+ */
+import { DMService } from '../../dist/api';
 import * as https from 'https';
 
 let argv = require('minimist')(process.argv.slice(2));
