@@ -39,8 +39,8 @@ async function request_access() {
     pa.set(p.id,  {name: p.name, value: argv[p.name] || p.default_value}) ;
   }  
 
-  let requestMessage = argv._[3] || optionsMap["request_default_message "] || "" ;
-  let o = await dm.policies_request_execute(accessName, Object.fromEntries(pa), requestMessage);
+  let requestMessage = argv._[3] || optionsMap["request_default_message"] || "" ;
+  let o = await dm.policies_request_execute(accessName, pa.size == 0 ? null : Object.fromEntries(pa), requestMessage);
   console.info("Requested filter: ", accessName, " - ", o.request_key);
 
   await dm.logout();
