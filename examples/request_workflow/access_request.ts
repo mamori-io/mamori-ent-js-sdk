@@ -33,6 +33,9 @@ let eg = async function (dm: DMService, args: ParsedArgs) {
     optionsMap.set(p.name, p.value) ;
   } 
 
+  let requestMessage = args._[3] || optionsMap.get("request_default_message") || "" ;
+  console.info("Request for: ", optionsMap.get("description") || access_policy, " - ", requestMessage);
+
   // Request arguments
   //
   let pp = await dm.policies_get_procedure_parameters(access_policy) ;
@@ -41,12 +44,11 @@ let eg = async function (dm: DMService, args: ParsedArgs) {
     let p = pp[i] ;
     // Convert any numeric values to be strings.
     pa.set(p.id,  {name: p.name, value: "" + (args[p.name] || p.default_value)}) ;
+    console.info("Request parmeter: ", p.name, " = ", pa.get(p.id).value);
   }  
 
-  let requestMessage = args._[3] || optionsMap.get("request_default_message") || "" ;
-  console.info("Request for: ", optionsMap.get("description") || access_policy, " - ", requestMessage);
   let o = await dm.policies_request_execute(access_policy, pa.size == 0 ? null : Object.fromEntries(pa), requestMessage);
-  console.info("Request: ", access_policy, " key: ", o.request_key);
+  console.info("\nRequest key: ", o.request_key, "\n");
 }
 
 let rapt = new ExampleWrapper(eg, process.argv) ;

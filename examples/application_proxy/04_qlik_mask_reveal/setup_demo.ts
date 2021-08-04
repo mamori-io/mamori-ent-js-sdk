@@ -6,28 +6,34 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
+import { ExampleWrapper } from '../../example_wrapper' ;
 import { DMService } from '../../../dist/api';
-import * as https from 'https';
+import { ParsedArgs } from 'minimist';
+  
+let mgrRoleName: string = "qlik_manager";
+let userRoleName: string = "qlik_user";
+let endorseRoleName: string = "qlik_endorser";
+let filterName: string = "qlik_customers";
+let accessName: string = "qlik_access";
 
-let argv = require('minimist')(process.argv.slice(2));
-argv.url = argv.url || 'localhost:443';
-let mamoriUser = argv._[0];
-let mamoriPwd = argv._[1];
+let usage: string =       
+"Usage:\n" + 
+"   yarn ts-node --transpile-only examples/application_proxy/04_qlik_mask_reveal/setup_demo.ts [--help] [--url <url>] [<user> <password>]\n" + 
+"where:\n" + 
+"   user      mamori server user\n" +
+"   password\n" +
+"   url       Default: localhost:443\n" +
+"\n" +
+"After using this script to setup the qlik demonstration, a user with the qlik_user role can request access:\n\n" +
+"   yarn ts-node --transpile-only examples/request_workflow/access_request.ts [--help] [--url <url>] [<user> <password>] qlik_access [<message>] [--time=<N>]\n" + 
+"   \n" +
+"This will output a request key, e.g. 03048fd3-017b-0c52-399a-00001660cb1e.\n" +
+"The request can be endorsed or denied by a user with the qlik_endorser role, or cancelled by the requester using:\n\n" +
+"   yarn ts-node --transpile-only examples/request_workflow/access_action.ts [--help] --url <url> <user> <action> <requestKey> [<message>]\n" +
+"   \n" +
+"If endorsed, the requester will be granted the qlik_manager role temporarily, revealing the masked data for N seconds.\n" ;
 
-let mgrRoleName = "qlik_manager";
-let userRoleName = "qlik_user";
-let endorseRoleName = "qlik_endorser";
-let filterName = "qlik_customers";
-let accessName = "qlik_access";
-
-const INSECURE = new https.Agent({ rejectUnauthorized: false });
-let dm = new DMService("https://" + argv.url + "/", INSECURE);
-
-async function setup_qlik_demo() {
-  console.info("Connecting...");
-  let login = await dm.login(mamoriUser, mamoriPwd);
-  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
-
+let eg = async function (dm: DMService, args: ParsedArgs) {
   //
   // Qlik roles
   //
@@ -64,7 +70,6 @@ async function setup_qlik_demo() {
   //
 
   // Teardown existing
-  //
   var filterResult = await dm.get_http_apifilters([["name", "=", filterName]]);
   if (filterResult.data && filterResult.data.length > 0) {
     await dm.delete_http_apifilter(filterResult.data[0].id);
@@ -74,7 +79,6 @@ async function setup_qlik_demo() {
   console.info("Deleted procedure: ", accessName);
 
   // Setup anew
-  //
   await dm.add_http_apifilter({
     name: filterName,
     system: "qlik",
@@ -84,7 +88,7 @@ async function setup_qlik_demo() {
     queryparameters: "",
     headers: "",
     body: "",
-    owner: mamoriUser,
+    owner: args._[0],
     transformations: 
       '[{"name":"default","priority":1,"function":"MASK HASH","elementSpec":"Customer Name","functionArgs":"MD5"},' +
       '{"name":"default","priority":1,"function":"MASK FULL","elementSpec":"Customer Gender"},' +
@@ -113,10 +117,12 @@ async function setup_qlik_demo() {
   var filterResult = await dm.get_http_apifilters({ filter: ["name", "=", filterName] });
   if (filterResult) {
     await dm.activate_http_apifilter(filterResult.data[0].id);
-    console.info("Activeted filter: ", filterName);
+    console.info("Activated filter: ", filterName);
   }
-
-  await dm.logout();
 }
 
-setup_qlik_demo().catch(e => console.error("ERROR: ", e.response.data)).finally(() => process.exit(0));
+let rapt = new ExampleWrapper(eg, process.argv) ;
+rapt.usage = usage ;
+rapt.execute()
+    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+    .finally(() => process.exit(0));

@@ -7,3 +7,4 @@ node_modules
 *.pid
 .DS_Store
 */.DS_Store
+**/*.mp4

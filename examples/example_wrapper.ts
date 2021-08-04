@@ -53,7 +53,7 @@ export class ExampleWrapper {
 
     console.info("\nConnecting...");
     let login = await dm.login(this.args._[0] || "root", this.args._[1] || "test");
-    console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
+    console.info("Login successful for: ", login.fullname || login.name, ", session: ", login.session_id);
     console.info("");
 
     await this.eg(dm, this.args);

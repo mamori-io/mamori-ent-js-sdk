@@ -12,21 +12,21 @@ import { ParsedArgs } from 'minimist';
 
 let usage = 
 "Usage:\n" + 
-"   yarn ts-node examples/request_workflow/access_execute.ts [--help] --url <url> <user> <requestKey> [<message>]\n" + 
+"   yarn ts-node examples/request_workflow/access_action.ts [--help] --url <url> <user> <action> <requestKey> [<message>]\n" + 
 "where:\n" + 
 "   url         Default: localhost:443\n" +
 "   user        mamori user\n" +
 "   password\n" +
+"   action      CANCEL, DENY, ENDORSE or EXECUTE\n" +
 "   requestKey  Identifying request key, e.g. 4b9383f4-017a-e5f1-40b9-00001660cb1e, output by access_request.ts\n" +
 "   message     Execution message" ;
 
 let eg = async function (dm: DMService, args: ParsedArgs) {
-  let requestKey = args._[2] ;
-  let pp = await dm.policies_get_request_parameters(requestKey) ;
-  console.info("Request parameters: ", pp);
+  let action = args._[2].toLocaleUpperCase() ;
+  let requestKey = args._[3] ;
 
-  let ro = await dm.policies_request_action('ENDORSE', requestKey, args._[3] || "")
-  console.info("Endorsed request: ", requestKey, " - ", ro);
+  let ro = await dm.policies_request_action(action, requestKey, args._[4] || "")
+  console.info(action, " request: ", requestKey, " - ", ro);
 }
 
 let rapt = new ExampleWrapper(eg, process.argv) ;
