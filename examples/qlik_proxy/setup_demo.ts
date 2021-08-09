@@ -6,8 +6,8 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { ExampleWrapper } from '../../example_wrapper' ;
-import { DMService } from '../../../dist/api';
+import { ExampleWrapper } from '../example_wrapper' ;
+import { DMService } from '../../dist/api';
 import { ParsedArgs } from 'minimist';
   
 let mgrRoleName: string = "qlik_manager";
@@ -18,7 +18,7 @@ let accessName: string = "qlik_access";
 
 let usage: string =       
 "Usage:\n" + 
-"   yarn ts-node --transpile-only examples/application_proxy/04_qlik_mask_reveal/setup_demo.ts [--help] [--url <url>] [<user> <password>]\n" + 
+"   yarn ts-node --transpile-only examples/qlik_proxy/setup_demo.ts [--help] [--url <url>] [<user> <password>]\n" + 
 "where:\n" + 
 "   user      mamori server user\n" +
 "   password\n" +
