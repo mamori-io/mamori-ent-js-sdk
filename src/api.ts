@@ -812,6 +812,11 @@ export class DMService {
         return this.callAPI("GET", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/policies");
     }
 
+    public grant(grantee: string, grantable: string, object_name:string) {
+        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()),
+            {grantables: [grantable] ,object_name: object_name});
+    }
+
     public permissions(scopes?: string[]) {
         return this.callAPI("GET", '/v1/permissions', scopes ? {scope: scopes} : null);
     }
@@ -1165,6 +1170,11 @@ export class DMService {
 
     public create_encryption_key(options: any) {
         return this.callAPI("POST", "/v1/encryption_keys", options);
+    }
+
+
+    public create_rsa_pair(options: any) {
+        return this.callAPI("POST", "/v1/encryption_keys/create/rsapair", options);
     }
 
     public update_encryption_key(name: string, value: any) {
@@ -1601,6 +1611,33 @@ export class DMService {
             projection_expression: projection_expression ? projection_expression : "masked",
             policy_name: policy_name ? policy_name : "default",
             table_type: table_type ? table_type : "table",
+        });
+    }
+
+    // vpns
+
+    public get_vpns() {
+        return this.callAPI("GET", "/v1/vpns");
+    }
+
+    // providers
+    public  add_vpn(params: any){
+        return this.callAPI("POST", "/v1/vpns", params);
+    }
+
+    public enable_provider(name : string, type: string) {
+        return this.callAPI("PUT", "/v1/providers/" + name, {
+            name: name,
+            type: type,
+            enabled: "true"
+        });
+    }
+
+    public disable_provider(name : string, type: string) {
+        return this.callAPI("PUT", "/v1/providers/" + name, {
+            name: name,
+            type: type,
+            enabled: "false"
         });
     }
 
