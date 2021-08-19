@@ -6,30 +6,19 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { DMService } from '../../../dist/api';
-import * as https from 'https';
+import { ExampleWrapper } from '../example_wrapper' ;
+import { DMService } from '../../dist/api';
+import { ParsedArgs } from 'minimist';
 
-let argv = require('minimist')(process.argv.slice(2));
-argv.url = argv.url || 'localhost:443';
-let mamoriUser = argv._[0];
-let mamoriPwd = argv._[1];
+let mgrRoleName = "appp_manager";
+let userRoleName = "appp_user";
+let endorseRoleName = "appp_endorser";
+let filterName = "appp_customers";
+let accessName = "appp_access";
 
-let mgrRoleName = "qlik_manager";
-let userRoleName = "qlik_user";
-let endorseRoleName = "qlik_endorser";
-let filterName = "qlik_customers";
-let accessName = "qlik_access";
-
-const INSECURE = new https.Agent({ rejectUnauthorized: false });
-let dm = new DMService("https://" + argv.url + "/", INSECURE);
-
-async function setup_qlik_demo() {
-  console.info("Connecting...");
-  let login = await dm.login(mamoriUser, mamoriPwd);
-  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
-
+let eg = async function (dm: DMService, args: ParsedArgs) {
   //
-  // Qlik roles
+  // appp roles
   //
   var mgrRole = await dm.role(mgrRoleName);
   if (mgrRole) {
@@ -60,7 +49,7 @@ async function setup_qlik_demo() {
   }
 
   //
-  //  Qliksense filter
+  //  apppsense filter
   //
 
   // Teardown existing
@@ -77,27 +66,27 @@ async function setup_qlik_demo() {
   //
   await dm.add_http_apifilter({
     name: filterName,
-    system: "qlik",
-    type: "qlik",
+    system: "appp",
+    type: "appp",
     path: "Customer Detail",
     method: "",
     queryparameters: "",
     headers: "",
     body: "",
-    owner: mamoriUser,
+    owner: args._[0],
     transformations: 
       '[{"name":"default","priority":1,"function":"MASK HASH","elementSpec":"Customer Name","functionArgs":"MD5"},' +
       '{"name":"default","priority":1,"function":"MASK FULL","elementSpec":"Customer Gender"},' +
       '{"name":"default","priority":1,"function":"MASK FULL","elementSpec":"Sales Revenue (Current Year)","functionArgs":"9|$,"},' +
-      '{"name":"qlik_manager","priority":1,"function":"REVEAL","elementSpec":"*"}]',
+      '{"name":"appp_manager","priority":1,"function":"REVEAL","elementSpec":"*"}]',
   });
-  console.info("Created Qlik filter: ", filterName);
+  console.info("Created appp filter: ", filterName);
 
   await dm.policies_create_procedure(accessName,
     {a: {name: "time", description: "Duration of access", default_value: "30"}},
     endorseRoleName,
     "policy",
-    "Grant access to Qlik data",
+    "Grant access to appp data",
     userRoleName,
     "",
     "",
@@ -115,8 +104,9 @@ async function setup_qlik_demo() {
     await dm.activate_http_apifilter(filterResult.data[0].id);
     console.info("Activeted filter: ", filterName);
   }
-
-  await dm.logout();
 }
 
-setup_qlik_demo().catch(e => console.error("ERROR: ", e.response.data)).finally(() => process.exit(0));
+let rapt = new ExampleWrapper(eg, process.argv) ;
+rapt.execute()
+    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+    .finally(() => process.exit(0));

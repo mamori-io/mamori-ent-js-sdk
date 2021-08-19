@@ -31,13 +31,13 @@ let eg = async function (dm: DMService, args: ParsedArgs) {
     authenticated_by_primary: {provider: "totp"},
     email: "test@test.test",
     valid_from: "2021-06-10 09:00:00",
-    valid_until: "2021-06-31 17:00:00",
+    valid_until: "2022-06-31 17:00:00",
     valid_timezone: "Australia/Melbourne"
   });
   console.info("User: ", testUser);
 
   await dm.grant_role_to_grantee(grantRole, testUser);
-  console.info("Grantwd: ", grantRole, " to: ", testUser);
+  console.info("Granted: ", grantRole, " to: ", testUser);
 }
 
 let rapt = new ExampleWrapper(eg, process.argv) ;

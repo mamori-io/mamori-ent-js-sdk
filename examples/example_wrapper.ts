@@ -52,7 +52,7 @@ export class ExampleWrapper {
     let dm = new DMService("https://" + this.args.url + "/");
 
     console.info("\nConnecting...");
-    let login = await dm.login(this.args._[0] || "root", this.args._[1] || "test");
+    let login = await dm.login(this.args._[0] || "root", this.args._[1] || "test", "Example App");
     console.info("Login successful for: ", login.fullname || login.name, ", session: ", login.session_id);
     console.info("");
 
