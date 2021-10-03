@@ -12,8 +12,6 @@ import {DMService} from '../../dist/api';
 import {Runnable} from "../runnable";
 import {ParsedArgs} from "minimist";
 
-let grantRole = "mamori_admin";
-
 let usage: string =
     "Usage:\n" +
     "   yarn ts-node --transpile-only examples/configure/create_user.ts [--help] [--url <url>] <user> <password> <new user> <new password>\n" +
@@ -36,19 +34,15 @@ class CreateUser extends Runnable {
         let admin_password = args._[3];
 
         console.info(`Creating  user ${admin_user}...`);
-        await dm.create_user({
+        let user = JSON.stringify(await dm.create_user({
             username: admin_user,
             password: admin_password,
             fullname: "SDK User",
             identified_by: "password",
             email: `${admin_user}@mamori.io`
-        });
-        console.info(`Created user ${admin_user} granting privilege to work with policies`);
-        await dm.grant_to(admin_user, ['REQUEST'], "*", false) ;
-        let users = JSON.stringify(await dm.users());
-        console.info(`users ${users}`);
+        }));
 
-
+        console.info(`user ${user}`);
     }
 }
 new CreateUser().execute();

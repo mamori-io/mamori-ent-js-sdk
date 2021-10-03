@@ -21,6 +21,7 @@ let usage: string =
     "   url                 Default: localhost:443" +
     "   role                Role to grant\n" +
     "   grantee role        Role to grant to\n";
+// TODO Optional valid from/to
 
 class GrantRole extends Runnable {
 

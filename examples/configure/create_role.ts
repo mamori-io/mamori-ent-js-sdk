@@ -34,7 +34,7 @@ class CreateRole extends Runnable {
         console.log(`Creating ${rolename}...`);
         await dm.create_role({roleid: rolename, externalname: rolename});
         let roles = JSON.stringify(await dm.roles());
-        console.info(`roles ${roles}`);
+        console.info(`All roles ${roles}`);
     }
 }
 new CreateRole().execute();

@@ -22,6 +22,8 @@ let usage: string =
     "   user_or_role        Grantee\n" +
     "   grantable           Privilege\n" +
     "   object_name         On resource\n";
+// TODO Optional object_name
+// TODO Optional valid from/to
 
 class Grant extends Runnable {
 
