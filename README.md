@@ -2,7 +2,7 @@
 
 ## Installation
 ```sh
-yarn add mamori-io-v1-api
+yarn add mamori-ent-js-api
 yarn add ts-node
 yarn add typescript
 yarn add typedoc
@@ -21,7 +21,7 @@ Example script: login and list available datasources
 // allow for self-signed certificates
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import { DMService } from 'mamori-io-v1-api';
+import { DMService } from 'mamori-ent-js-api';
 
 let mamoriUrl  = "https://localhost/" ;
 let mamoriUser = "alice" ;
