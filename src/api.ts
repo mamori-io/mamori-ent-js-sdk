@@ -18,7 +18,6 @@ type ApiCallback = (result: any, resolve: PromiseCallback, reject: PromiseCallba
 type EventCallback = (data: any) => void;
 type EventCallbacks = EventCallback[];
 
-
 export type ProgressHandler = (value: any, cont: (flag: boolean) => void) => void;
 interface PromiseHolder {
     resolve: (result?: any) => void;
@@ -35,7 +34,6 @@ export class PromiseWithProgress<T> extends Promise<T> {
         return this;
     }
 }
-
 
 // based on the code from here: https://stackoverflow.com/a/52171480
 function cyrb53(str: string, seed: number = 0): string{
@@ -579,12 +577,12 @@ export class DMService {
         return this.callAPI("POST", "/v1/systems", {preview: preview, system: rec, options: options, authorizations: auths});
     }
 
-    public delete_system(database_system: string) {
-        return this.callAPI("DELETE", "/v1/systems/" + database_system);
+    public delete_system(system_name: string) {
+        return this.callAPI("DELETE", "/v1/systems/" + system_name);
     }
 
-    public get_system(database_system: string) {
-        return this.callAPI("GET", "/v1/systems/" + database_system);
+    public get_system(system_name: string) {
+        return this.callAPI("GET", "/v1/systems/" + system_name);
     }
 
     public get_system_advanced_options() {
@@ -1873,4 +1871,163 @@ export class DMService {
         return this.callAPI("GET", "/v1/ssh/matrix", params);
     }
 
+}
+
+    /**
+     * A system represents a target resource like a database or a machine.
+     * 
+     * Example use:
+     * ```javascript
+     * await  new System("test")
+     *     .ofType("POSTGRESQL", 'postgres')
+     *     .at("10.0.2.2", 5431)
+     *     .credentials('postgres', 'postgres')
+     *     .defaultDatabase('mamori')
+     *     .withOptions("CONNECTION_PROPERTIES 'asasda=2;fdgdfgfd=3'")
+     *     .create(api) ;
+     * ```
+     */
+     export class System {
+
+    name: string ;
+    type?: string ;
+    host?: string ;
+    port?: string ;
+    driver?: string ;
+    user?: string ;
+    password?: string ;
+    database?: string ;
+    options?: string ;
+
+    /**
+     * @param name  Unique system name
+     */
+    public constructor(name: string) {
+        this.name = name;
+    }
+
+    /**
+     * Create a new system with the current properties.
+     * @param api  A logged-in DMService instance
+     * @returns 
+     */
+    public async create(api: DMService) {
+        var cxnOptions =  
+            "DRIVER '" + this.driver + "', " + 
+            "USER '" + this.user + "', " + 
+            "PASSWORD '" + this.password + "'";
+        if (this.port) {
+            cxnOptions = cxnOptions + ", PORT '" + this.port + "'" ;
+        }
+        if (this.database) {
+            cxnOptions = cxnOptions + ", DEFAULTDATABASE '" + this.database + "', TEMPDATABASE '" + this.database + "'" ;
+        }
+        if (this.options) {
+            cxnOptions = cxnOptions + ", " + this.options ;
+        }
+        
+        let loggedInUser = (api.authorization as unknown as LoginResponse).username ;
+        let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password }};
+        
+        return api.create_system_for_rec("N", { name: this.name, type: this.type, host: this.host }, cxnOptions, auth);
+    }
+
+    /**
+     * Delete this system.
+     * @param api  A logged-in DMService instance
+     * @returns 
+     */
+     public async delete(api: DMService) {
+        return api.delete_system(this.name) ;
+    }
+
+    /**
+     * Update this system with the current properties.
+     * @param api  A logged-in DMService instance
+     * @returns 
+     */
+     public async update(api: DMService) {
+        var cxnOptions =  
+            "DRIVER '" + this.driver + "', " + 
+            "USER '" + this.user + "', " + 
+            "PASSWORD '" + this.password ;
+        if (this.port) {
+            cxnOptions = cxnOptions + ", PORT '" + this.port + "'" ;
+        }
+        if (this.database) {
+            cxnOptions = cxnOptions + ", DEFAULTDATABASE '" + this.database + "', TEMPDATABASE '" + this.database + "'" ;
+        }
+        if (this.options) {
+            cxnOptions = cxnOptions + ", " + this.options ;
+        }
+        
+        let loggedInUser = (api.authorization as unknown as LoginResponse).username ;
+        let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password }};
+        
+        return api.update_system_for_rec("N", this.name, { type: this.type, host: this.host } as unknown as string, cxnOptions, auth);
+    }
+
+    /**
+     * @param api  A logged-in DMService instance
+     * @returns This system's configuration
+     */
+     public async get(api: DMService) {
+        return api.get_system(this.name) ;
+    }
+
+    /**
+     * @param type   Required system type, e.g. ORACLE, POSTGRESQL,...
+     * @param driver Required driver name
+     * @returns 
+     */
+    public ofType(type: string, driver: string) : System {
+         this.type = type;
+         this.driver = driver;
+         return this ;
+    }
+
+    /**
+     * Set the address of the target resource
+     * @param host  Required host name or IP address of the target resource
+     * @param port  Required listening port of the target resource
+     * @returns 
+     */
+    public at(host: string, port: any) : System {
+        this.host = host;
+        this.port = port;
+        return this ;
+    }
+
+    /**
+     * Set the creadentials to use when connecting to the target resource
+     * @param user      Required user name
+     * @param password  Required password
+     * @returns 
+     */
+   public credentials(user: string, password: string) : System {
+        this.user = user;
+        this.password = password;
+        return this ;
+    }
+
+    /**
+     * For database systems, a database name is required to connect.
+     * @param database 
+     * @returns 
+     */
+    public defaultDatabase(database: string) : System {
+        this.database = database;
+        return this ;
+    }
+
+    /**
+     * More connection options are available in the full SQL syntax.
+     * E.g., for MySQL, "CONNECTION_PROPERTIES 'characterEncoding=UTF-8;useUnicode=yes'"
+     * @param options  Optional extras
+     * @returns 
+     */
+   public withOptions(options: string,) : System {
+        this.options = options;
+        return this ;
+    }
 }

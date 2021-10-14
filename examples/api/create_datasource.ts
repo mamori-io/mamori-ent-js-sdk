@@ -8,26 +8,36 @@
  */
 import { ExampleWrapper } from '../example_wrapper' ;
 import { DMService } from '../../dist/api';
+import { System } from '../../dist/api';
 import { ParsedArgs } from 'minimist';
 
-let eg = async function (dm: DMService, args: ParsedArgs) {
+let eg = async function (dm: DMService, _args: ParsedArgs) {
+  let egSystem = new System("test_system") ;
   try {
-    let dsystem = await dm.delete_system("test_system") ;
-    console.info("Delete system: ", dsystem);
+    await egSystem.delete(dm);
+    console.info("Delete system: ", egSystem);
   }
   catch (e) {
     console.info("Delete system: ", (e as Error).message);
   }
 
-  await dm.create_system_for_rec("N",
-    { name: "test_system", type: "POSTGRESQL", host: "10.0.2.2" },
-    "PORT '5432', DRIVER 'postgres', USER 'postgres', PASSWORD 'postgres', DEFAULTDATABASE 'mamori', TEMPDATABASE 'mamori'",
-    { a: { system_name: "test_system", cirro_user: args._[0], username: "postgres", password: "postgres" } }
-  );
+  egSystem.ofType("POSTGRESQL", 'postgres')
+          .at("10.0.2.2", 5431)
+          .credentials('postgres', 'postgres')
+          .defaultDatabase('mamori')
+          .withOptions("CONNECTION_PROPERTIES 'asasda=2;fdgdfgfd=3'");
+  await egSystem.create(dm) ;
 
   console.info("Fetching system...");
-  let system = await dm.get_system("test_system");
-  console.info("System: ", system);
+  let data1 = await egSystem.get(dm);
+  console.info("System: ", data1);
+  
+  egSystem.at("10.0.2.2", 5432)
+  await egSystem.update(dm) ;
+
+  console.info("Fetching system...");
+  let data2 = await egSystem.get(dm);
+  console.info("System: ", data2);
 }
 
 let rapt = new ExampleWrapper(eg, process.argv) ;
