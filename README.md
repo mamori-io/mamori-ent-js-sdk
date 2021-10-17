@@ -45,11 +45,7 @@ display_systems().catch(e => console.error("ERROR: ", e)).finally(() => process.
 For more examples, see `./examples/`.
 
 ## Documentation
-To generate:
-```sh
-yarn typedoc src/api.ts
-```
-and open `./docs/index.html` to view.
+To generate, execute `./generate_docs.sh` and open `./docs/index.html` to view.
 
 See [mamori.io](https://mamori.io/resources.html) for further documentation.
 
