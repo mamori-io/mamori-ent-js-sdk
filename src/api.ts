@@ -1436,7 +1436,7 @@ export class DMService {
     }
 
     public install_certs(name: string, ca_crt: string, key: string, crt: string) {
-        return this.callAPI("POST", "/v1/certs", {name: name, certs: {ca_crt: ca_crt, key: key, crt: crt}});
+        return this.callAPI("POST", "/v1/certs", {name: name, certs: {key: key, crt: crt, ca_crt: ca_crt}});
     }
 
 

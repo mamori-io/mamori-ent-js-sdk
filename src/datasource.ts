@@ -167,12 +167,19 @@ import { DMService, LoginResponse } from './api';
      */
     public withDatabase(database: string) : Datasource {
         this.database = database;
+        if (this.tempDatabase) {
+            // Do not override
+        }
+        else {
+            this.tempDatabase = database ;
+        }
         return this ;
     }
 
     /**
      * A database name is required for any temporary tables.
-     * @param database  Required. Database for any temporary tables.
+     * Defaults to the database value if not set.
+     * @param database  Database for any temporary tables.
      * @returns 
      */
      public withTempDatabase(tempDatabase: string) : Datasource {
