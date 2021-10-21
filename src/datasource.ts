@@ -261,6 +261,9 @@ import { DMService, LoginResponse } from './api';
         if (this.caseSensitive) {
             options = options + ", OBJECTNAMECASESENSITIVE 'TRUE'" ;
         }
+        if (this.group) {
+            options = options + ", GROUP '" + this.group + "'";
+        }
         if (this.urlProperties) {
             options = options + ", CONNECTION_PROPERTIES '" + this.urlProperties + "'";
         }
