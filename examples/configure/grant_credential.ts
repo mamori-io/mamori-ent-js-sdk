@@ -5,7 +5,6 @@
  * Parties accessing this software are required to maintain the confidentiality of all such information.
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
- *
  */
 
 import {DMService} from '../../dist/api';
@@ -31,16 +30,14 @@ class GrantCredential extends Runnable {
     }
 
     async run(dm: DMService, args: ParsedArgs): Promise<void> {
-
         let user_or_role = args._[2];
         let ds_name = args._[3];
         let ds_user = args._[4];
         let ds_pwd = args._[5];
 
-
         console.log(`Adding credential for datasource ${ds_name} to user ${user_or_role}`);
-        await dm.add_datasource_authorization_to(user_or_role,ds_name,ds_user,ds_pwd)
+        await dm.add_datasource_authorization_to(user_or_role, ds_name, ds_user, ds_pwd)
     }
 }
-new GrantCredential().execute();
 
+new GrantCredential().execute();

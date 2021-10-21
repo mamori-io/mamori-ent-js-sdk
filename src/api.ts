@@ -81,7 +81,7 @@ export interface LoginResponse {
     development_mode: boolean;
 }
 
-export interface SshLogin {
+export interface SshLoginDesc {
     name: string;
     uri: string;
     private_key_name: string;
@@ -815,11 +815,6 @@ export class DMService {
 
     public get_grantee_policies(grantee: string) {
         return this.callAPI("GET", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/policies");
-    }
-
-    public grant(grantee: string, grantable: string, object_name:string) {
-        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()),
-            {grantables: [grantable] ,object_name: object_name});
     }
 
     public permissions(scopes?: string[]) {
@@ -1807,7 +1802,7 @@ export class DMService {
         });
     }
 
-    public ssh_logins(): Promise<SshLogin[]> {
+    public ssh_logins(): Promise<SshLoginDesc[]> {
         return this.simple_query("call ssh_logins()");
     }
 

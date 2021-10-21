@@ -57,6 +57,7 @@ export abstract class Runnable {
             console.error(err);
         } 
         finally {
+            console.info("\nDisconnecting...");
             await dm.logout();
         }
     }
@@ -66,5 +67,5 @@ export abstract class Runnable {
      * @param dm   API client
      * @param args Command line arguments
      */
-    abstract async run(dm: DMService, args: ParsedArgs): Promise<void>;
+    abstract run(dm: DMService, args: ParsedArgs): Promise<void>;
 }

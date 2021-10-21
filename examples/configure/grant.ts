@@ -17,8 +17,8 @@ let usage: string =
     "   yarn ts-node --transpile-only examples/configure/grant.ts [--help] [--url <url>] <user> <password> <user_or_role> <grantable> <object_name>\n" +
     "where:\n" +
     "   user                mamori server user\n" +
-    "   password            user password" +
-    "   url                 Default: localhost:443" +
+    "   password            user password\n" +
+    "   url                 Default: localhost:443\n" +
     "   user_or_role        Grantee\n" +
     "   grantable           Privilege\n" +
     "   object_name         On resource\n";
@@ -32,17 +32,13 @@ class Grant extends Runnable {
     }
 
     async run(dm: DMService, args: ParsedArgs): Promise<void> {
-
-
         let user_or_role = args._[2];
         let grantable = args._[3];
         let object_name = args._[4];
 
         console.info(`Granting  ${grantable} to user/role ${user_or_role} on ${object_name}`);
-        await dm.grant(user_or_role,grantable,object_name);
-
-
+        await dm.grant_to(user_or_role, [grantable], object_name);
     }
 }
-new Grant().execute();
 
+new Grant().execute();

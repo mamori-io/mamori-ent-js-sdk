@@ -35,6 +35,8 @@ import { DMService, LoginResponse } from './api';
   *     urlProperties: "allowEncodingChanges=true;defaultNchar=true"
   * }).create(api)
   * ```
+  * 
+  * TODO Add user/role credentials/authorization for this database
   */
  export class Datasource {
 

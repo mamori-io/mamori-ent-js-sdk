@@ -26,11 +26,13 @@ export class Network {
     }
 
     public async create(api: DMService) {
-        return api.create_vpn_connection({
-         name: this.name, 
-         type: this.type, 
-         config: this.getConfig(),
-         secrets: this.getSecrets()
+        return api.callAPI("POST", "/v1/vpns", {
+            vpn: {
+                name: this.name, 
+                type: this.type, 
+                config: this.getConfig(),
+                secrets: this.getSecrets()
+            }
        }) ;
     }
      
