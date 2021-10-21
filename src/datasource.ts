@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2021 mamori.io.  All Rights Reserved.
+ *
+ * This software contains the confidential and proprietary information of mamori.io.
+ * Parties accessing this software are required to maintain the confidentiality of all such information.
+ * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
+ * unless a separate, written license is agreed to and signed by mamori.io.
+ */
 import { DMService, LoginResponse } from './api';
 
  /**
@@ -83,7 +91,10 @@ import { DMService, LoginResponse } from './api';
         let loggedInUser = (api.authorization as unknown as LoginResponse).username ;
         let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password }};
         
-        return api.create_system_for_rec("N", { name: this.name, type: this.type, host: this.host }, options, auth);
+        return api.callAPI("POST", "/v1/systems", {preview: 'N',
+                           system: { name: this.name, type: this.type, host: this.host }, 
+                           options: options, 
+                           authorizations: auth});
     }
 
     /**
@@ -92,7 +103,7 @@ import { DMService, LoginResponse } from './api';
      * @returns 
      */
      public async delete(api: DMService) {
-        return api.delete_system(this.name) ;
+        return api.callAPI("DELETE", "/v1/systems/" + this.name);
     }
 
     /**
@@ -105,7 +116,13 @@ import { DMService, LoginResponse } from './api';
         let loggedInUser = (api.authorization as unknown as LoginResponse).username ;
         let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password }};
         
-        return api.update_system_for_rec("N", this.name, { type: this.type, host: this.host } as unknown as string, options, auth);
+        return api.callAPI("PUT", "/v1/systems/" + this.name, 
+            {
+                preview: "N", 
+                system: { type: this.type, host: this.host }, 
+                options: options, 
+                authorizations: auth
+            });
     }
 
     /**
@@ -113,7 +130,7 @@ import { DMService, LoginResponse } from './api';
      * @returns This datasource's configuration
      */
      public async get(api: DMService) {
-        return api.get_system(this.name) ;
+        return api.callAPI("GET", "/v1/systems/" + this.name);
     }
 
     /**
@@ -225,6 +242,17 @@ import { DMService, LoginResponse } from './api';
         if (this.port) {
             options = options + ", PORT '" + this.port + "'";
         }
+        if (this.tempDatabase) {
+            options = options + ", TEMPDATABASE '" + this.tempDatabase + "'";
+        }
+        else {
+            if (this.database) {
+                options = options + ", TEMPDATABASE '" + this.database + "'";
+            }
+            else {
+                // Error
+            }
+        }
         if (this.database) {
             options = options + ", DEFAULTDATABASE '" + this.database + "'";
         }
@@ -239,4 +267,23 @@ import { DMService, LoginResponse } from './api';
         }
         return options;
     }
+
+    // return all users/roles and which systems they are authorized to access
+    // public get_role_authorization_by_system(params?: any) {
+    //     return this.callAPI("GET", "/v1/roles/auth/systems", params);
+    // }
+
+    // public add_datasource_authorization_to(grantee: string, datasource: string, username: string, password: string) {
+    //     return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization",
+    //         {datasource: datasource, username: username, password: password});
+    // }
+
+    // public drop_datasource_authorization_from(grantee: string, datasource: string) {
+    //     return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {datasource: datasource});
+    // }
+
+    // public validate_datasource_authorization(grantee: string, datasource: string, username: string, password: string) {
+    //     return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate",
+    //         {datasource: datasource, username: username, password: password});
+    // }
 }

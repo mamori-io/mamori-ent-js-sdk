@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2021 mamori.io.  All Rights Reserved.
+ *
+ * This software contains the confidential and proprietary information of mamori.io.
+ * Parties accessing this software are required to maintain the confidentiality of all such information.
+ * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
+ * unless a separate, written license is agreed to and signed by mamori.io.
+ */
 import axios from 'axios';
 import {AxiosInstance, Method} from 'axios';
 import { Channel, Socket } from "./phoenix";
@@ -416,7 +424,7 @@ export class DMService {
         delete ___api_request_cache___[key];
     }
 
-    private async callAPI(method: Method, url: string, params: any = null, callback: Nullable<ApiCallback> = null, cachable: boolean = false) : Promise<any> {
+    public async callAPI(method: Method, url: string, params: any = null, callback: Nullable<ApiCallback> = null, cachable: boolean = false) : Promise<any> {
         var deferred : Promise<any>;
         var cacheKey: string = cachable ? this.calculate_cache_key(url, params) : "";
 
@@ -569,37 +577,36 @@ export class DMService {
         return this.callAPI("GET", "/v1/drivers?type=" + driver_type);
     }
 
-    public update_system_for_rec(preview: any, system_name: string, rec: string, options: any, auths: any) {
-        return this.callAPI("PUT", "/v1/systems/" + system_name, {preview: preview, system: rec, options: options, authorizations: auths});
-    }
+    // public update_system_for_rec(preview: any, system_name: string, rec: string, options: any, auths: any) {
+    //     return this.callAPI("PUT", "/v1/systems/" + system_name, {preview: preview, system: rec, options: options, authorizations: auths});
+    // }
 
-    public create_system_for_rec(preview: any, rec: any, options: any, auths: any) {
-        return this.callAPI("POST", "/v1/systems", {preview: preview, system: rec, options: options, authorizations: auths});
-    }
+    // public create_system_for_rec(preview: any, rec: any, options: any, auths: any) {
+    //     return this.callAPI("POST", "/v1/systems", {preview: preview, system: rec, options: options, authorizations: auths});
+    // }
 
-    public delete_system(system_name: string) {
-        return this.callAPI("DELETE", "/v1/systems/" + system_name);
-    }
+    // public delete_system(system_name: string) {
+    //     return this.callAPI("DELETE", "/v1/systems/" + system_name);
+    // }
 
-    public get_system(system_name: string) {
-        return this.callAPI("GET", "/v1/systems/" + system_name);
-    }
+    // public get_system(system_name: string) {
+    //     return this.callAPI("GET", "/v1/systems/" + system_name);
+    // }
 
-    public get_system_advanced_options() {
-        return this.callAPI("GET", "/v1/system_options?advanced=Y");
-    }
+    // public get_system_advanced_options() {
+    //     return this.callAPI("GET", "/v1/system_options?advanced=Y");
+    // }
 
-    public get_system_federated_options() {
-        return this.callAPI("GET", "/v1/system_options?federated=Y");
-    }
+    // public get_system_federated_options() {
+    //     return this.callAPI("GET", "/v1/system_options?federated=Y");
+    // }
 
     public drop_access_rule(id: number) {
         return this.callAPI("DELETE", "/v1/access_rules/" + id);
     }
 
     public update_access_rule_position(id: number, position: number) {
-        let rec = {position: position}
-        //
+        let rec = {position: position};
         return this.callAPI("PUT", "/v1/access_rules/" + id, rec);
     }
 
@@ -642,9 +649,9 @@ export class DMService {
         return this.callAPI("GET", "/v1/access_rule_log", options);
     }
 
-    public get_connection_log(options: any) {
-        return this.callAPI("GET", "/v1/connection_log", options);
-    }
+    // public get_connection_log(options: any) {
+    //     return this.callAPI("GET", "/v1/connection_log", options);
+    // }
 
     public save_masking_procedure(rmsid: number, name: string, expression: string, description: string, data_type: string) {
         let rec = {
@@ -1108,13 +1115,13 @@ export class DMService {
         });
     }
 
-    public grant_encryption_keys_to(grantee: string, encryption_keys: string[]) {
-        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: encryption_keys});
-    }
+    // public grant_encryption_keys_to(grantee: string, encryption_keys: string[]) {
+    //     return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: encryption_keys});
+    // }
 
-    public revoke_encryption_keys_from(grantee: string, encryption_keys: string[]) {
-        return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: encryption_keys});
-    }
+    // public revoke_encryption_keys_from(grantee: string, encryption_keys: string[]) {
+    //     return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: encryption_keys});
+    // }
 
     public add_datasource_authorization_to(grantee: string, datasource: string, username: string, password: string) {
         return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization",
@@ -1166,34 +1173,33 @@ export class DMService {
         return this.callAPI("GET", "/ua/sessions/" + encodeURIComponent(username.toLowerCase()));
     }
 
-    public create_encryption_key(options: any) {
-        return this.callAPI("POST", "/v1/encryption_keys", options);
-    }
+    // public create_encryption_key(options: any) {
+    //     return this.callAPI("POST", "/v1/encryption_keys", options);
+    // }
 
+    // public create_rsa_pair(options: any) {
+    //     return this.callAPI("POST", "/v1/encryption_keys/create/rsapair", options);
+    // }
 
-    public create_rsa_pair(options: any) {
-        return this.callAPI("POST", "/v1/encryption_keys/create/rsapair", options);
-    }
+    // public update_encryption_key(name: string, value: any) {
+    //     return this.callAPI("PUT", "/v1/encryption_keys/" + name, {value: value});
+    // }
 
-    public update_encryption_key(name: string, value: any) {
-        return this.callAPI("PUT", "/v1/encryption_keys/" + name, {value: value});
-    }
+    // public drop_encryption_key(key: string) {
+    //     return this.callAPI("DELETE", "/v1/encryption_keys/" + key,);
+    // }
 
-    public drop_encryption_key(key: string) {
-        return this.callAPI("DELETE", "/v1/encryption_keys/" + key,);
-    }
+    // public get_encryption_keys() {
+    //     return this.callAPI("GET", "/v1/encryption_keys");
+    // }
 
-    public get_encryption_keys() {
-        return this.callAPI("GET", "/v1/encryption_keys");
-    }
+    // public grant_encryption_keys(username: string, keys_names: string[]) {
+    //     return this.callAPI("POST", "/v1/encryption_keys/username/" + encodeURIComponent(username.toLowerCase()), {key_names: keys_names});
+    // }
 
-    public grant_encryption_keys(username: string, keys_names: string[]) {
-        return this.callAPI("POST", "/v1/encryption_keys/username/" + encodeURIComponent(username.toLowerCase()), {key_names: keys_names});
-    }
-
-    public revoke_encryption_keys(username: string, keys_names: string[]) {
-        return this.callAPI("DELETE", "/v1/encryption_keys/username/" + encodeURIComponent(username.toLowerCase()), {key_names: keys_names});
-    }
+    // public revoke_encryption_keys(username: string, keys_names: string[]) {
+    //     return this.callAPI("DELETE", "/v1/encryption_keys/username/" + encodeURIComponent(username.toLowerCase()), {key_names: keys_names});
+    // }
 
     public grant_roles_to_user(username: string, roles: string[]) {
         return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
@@ -1250,21 +1256,21 @@ export class DMService {
         }
     }
 
-    public update_encryption_keys(username: string, deleted: string[], added: string[]) {
-        if (deleted.length > 0 && added.length > 0) {
-            return this.callAPI("PUT", "/v1/encryption_keys/username/" + encodeURIComponent(username.toLowerCase()),
-                {
-                    orig_key_names: deleted,
-                    selected_key_names: added
+    // public update_encryption_keys(username: string, deleted: string[], added: string[]) {
+    //     if (deleted.length > 0 && added.length > 0) {
+    //         return this.callAPI("PUT", "/v1/encryption_keys/username/" + encodeURIComponent(username.toLowerCase()),
+    //             {
+    //                 orig_key_names: deleted,
+    //                 selected_key_names: added
 
-                });
-        }
-        else if (deleted.length > 0) {
-            return this.revoke_encryption_keys(username, deleted);
-        } else if (added.length > 0) {
-            return this.grant_encryption_keys(username, added);
-        }
-    }
+    //             });
+    //     }
+    //     else if (deleted.length > 0) {
+    //         return this.revoke_encryption_keys(username, deleted);
+    //     } else if (added.length > 0) {
+    //         return this.grant_encryption_keys(username, added);
+    //     }
+    // }
 
     public get_role_user_count(roleid: string) {
         return this.callAPI("GET", "/v1/roles/" + roleid + "/usercount");
@@ -1351,26 +1357,6 @@ export class DMService {
         return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {db_credentials: credentials});
     }
 
-    public run_chart_duration(run_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/runcharts/duration/" + run_id);
-    }
-
-    public run_chart_rowspersec(run_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/runcharts/rowspersec/" + run_id);
-    }
-
-    public run_chart_issues(run_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/runcharts/issues/" + run_id);
-    }
-
-    public run_chart_stats(run_id: number, metric_type: number) {
-        return this.callAPI("GET", "/v1/datapuppy/runcharts/runstats/" + run_id + "/" + metric_type);
-    }
-
-    public project_query_details(query_id: number) {
-        return this.callAPI("GET", "/v1/datapuppy/querydetails/" + query_id);
-    }
-
     public cancel_session(ssid: string) {
         return this.callAPI("GET", "/v1/session/cancel/" + ssid);
     }
@@ -1395,40 +1381,12 @@ export class DMService {
         return this.callAPI("PUT", "/v1/server_properties/" + name, {value: value});
     }
 
-    public vpn_connections() {
-        return this.callAPI("GET", "/v1/vpns");
-    }
-
-    public create_vpn_connection(vpn: any) {
-        return this.callAPI("POST", "/v1/vpns", {vpn: vpn});
-    }
-
-    public start_vpn_connection(id: string) {
-        return this.callAPI("PUT", "/v1/vpns/" + id + "/start");
-    }
-
-    public stop_vpn_connection(id: string) {
-        return this.callAPI("PUT", "/v1/vpns/" + id + "/stop");
-    }
-
-    public vpn_connection_status(id: string) {
-        return this.callAPI("GET", "/v1/vpns/" + id + "/status");
-    }
-
-    public vpn_connection_logs(id: string) {
-        return this.callAPI("GET", "/v1/vpns/" + id + "/logs");
-    }
-
     public search_permission_log(options: any) {
         return this.callAPI("PUT", "/v1/search/permission_log", options);
     }
 
     public search_permission_log_sysview(options: any) {
         return this.callAPI("PUT", "/v1/search/permission_log_sysview", options);
-    }
-
-    public destroy_vpn_connection(id: string) {
-        return this.callAPI("DELETE", "/v1/vpns/" + id);
     }
 
     public certs() {
@@ -1438,7 +1396,6 @@ export class DMService {
     public install_certs(name: string, ca_crt: string, key: string, crt: string) {
         return this.callAPI("POST", "/v1/certs", {name: name, certs: {key: key, crt: crt, ca_crt: ca_crt}});
     }
-
 
     public get_log_entries(logname: string) {
         return this.callAPI("GET", "/v1/logs/system/" + logname);
@@ -1473,7 +1430,7 @@ export class DMService {
     }
 
     public get_detailed_logging_for_listener(listener: string) {
-            return this.callAPI("GET", "/v1/listeners/"+listener+"/logging");
+        return this.callAPI("GET", "/v1/listeners/"+listener+"/logging");
     }
 
     public update_listener(id: string, port: number) {
@@ -1601,7 +1558,6 @@ export class DMService {
         return this.callAPI("PUT", "/v1/policies/disable_http_apifilter/" + filter_id);
     }
 
-
     public policies_set_policy_projection(table_name: string, column_name: string, projection_expression: string, policy_name: string, table_type: string) {
         return this.callAPI("PUT", "/v1/policies/set_policy_projection", {
             table_name: table_name,
@@ -1610,17 +1566,6 @@ export class DMService {
             policy_name: policy_name ? policy_name : "default",
             table_type: table_type ? table_type : "table",
         });
-    }
-
-    // vpns
-
-    public get_vpns() {
-        return this.callAPI("GET", "/v1/vpns");
-    }
-
-    // providers
-    public  add_vpn(params: any){
-        return this.callAPI("POST", "/v1/vpns", params);
     }
 
     public enable_provider(name : string, type: string) {
@@ -1866,7 +1811,7 @@ export class DMService {
         return this.simple_query("call ssh_logins()");
     }
 
-    public ssh_matrix(params: any) {
-        return this.callAPI("GET", "/v1/ssh/matrix", params);
-    }
+    // public ssh_matrix(params: any) {
+    //     return this.callAPI("GET", "/v1/ssh/matrix", params);
+    // }
 }

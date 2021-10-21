@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2021 mamori.io.  All Rights Reserved.
+ *
+ * This software contains the confidential and proprietary information of mamori.io.
+ * Parties accessing this software are required to maintain the confidentiality of all such information.
+ * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
+ * unless a separate, written license is agreed to and signed by mamori.io.
+ */
 import { DMService } from './api';
 
  /**
@@ -32,8 +40,8 @@ import { DMService } from './api';
         return result ;
     }
 
-    public static get_all(api: DMService) {
-        return api.get_encryption_keys();
+    public static async get_all(api: DMService) {
+        return api.callAPI("GET", "/v1/encryption_keys");
     }
     
     name: string ;
@@ -62,13 +70,13 @@ import { DMService } from './api';
      */
     public async create(api: DMService) {
         if (this.type == 'RSA' && this.key == null) {
-            return api.create_rsa_pair({
+            return api.callAPI("POST", "/v1/encryption_keys/create/rsapair", {
                 name: this.name,
                 size: this.size
             });
         }
         else {
-            return api.create_encryption_key({
+            return api.callAPI("POST", "/v1/encryption_keys", {
                 name: this.name,
                 type: this.type,
                 password: this.password,
@@ -78,11 +86,11 @@ import { DMService } from './api';
     }
 
     public async delete(api: DMService) {
-        return api.drop_encryption_key(this.name) ;
+        return api.callAPI("DELETE", "/v1/encryption_keys/" + this.name) ;
     }
 
     public async rename(api: DMService, name: string) {
-        return api.update_encryption_key(this.name, {name: name});
+        return api.callAPI("PUT", "/v1/encryption_keys/" + this.name, {name: name});
     }
 
     /**
@@ -91,15 +99,15 @@ import { DMService } from './api';
      * @returns 
      */
     public async update(api: DMService) {
-        return api.update_encryption_key(this.name, this.key);
+        return api.callAPI("PUT", "/v1/encryption_keys/" + this.name, this.key);
     }
 
     public async grantTo(api: DMService, grantee: string) {
-        return api.grant_encryption_keys_to(grantee, [this.name]);
+        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: [this.name]});
     }
 
     public async revokeFrom(api: DMService, grantee: string) {
-        return api.revoke_encryption_keys_from(grantee, [this.name]);
+        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: [this.name]});
     }
 
     /**

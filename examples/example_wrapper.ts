@@ -26,7 +26,7 @@ export class ExampleWrapper {
     "where:\n" + 
     "   user      mamori server user\n" +
     "   password\n" +
-    "   url       Default: localhost:443" ;
+    "   url       Default: localhost:443\n" ;
 
   constructor(eg: ExampleCallback, argv: string[], parseOptions?: Object) {
     this.eg = eg;
@@ -55,8 +55,11 @@ export class ExampleWrapper {
     let login = await dm.login(this.args._[0] || "root", this.args._[1] || "test", "Example App");
     console.info("Login successful for: ", login.fullname || login.name, ", session: ", login.session_id);
     console.info("");
-
-    await this.eg(dm, this.args);
-    await dm.logout();
+    try {
+      await this.eg(dm, this.args);
+    }
+    finally {
+      await dm.logout();
+    }
   }
 }
