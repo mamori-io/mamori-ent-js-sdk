@@ -256,7 +256,7 @@ import { DMService, LoginResponse } from './api';
             options = options + ", OBJECTNAMECASESENSITIVE 'TRUE'" ;
         }
         if (this.group) {
-            options = options + ", GROUP '" + this.group + "'";
+            options = options + ", DATASOURCE GROUP '" + this.group + "'";
         }
         if (this.urlProperties) {
             options = options + ", CONNECTION_PROPERTIES '" + this.urlProperties + "'";
