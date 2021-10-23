@@ -239,21 +239,15 @@ import { DMService, LoginResponse } from './api';
         var options =
             "DRIVER '" + this.driver + "'" +
             ", USER '" + this.user + "'" +
-            ", PASSWORD '" + this.password + "'" + 
-            ", TEMPDATABASE '" + this.tempDatabase + "'";
+            ", PASSWORD '" + this.password + "'";
         if (this.port) {
             options = options + ", PORT '" + this.port + "'";
         }
         if (this.tempDatabase) {
             options = options + ", TEMPDATABASE '" + this.tempDatabase + "'";
         }
-        else {
-            if (this.database) {
-                options = options + ", TEMPDATABASE '" + this.database + "'";
-            }
-            else {
-                // Error
-            }
+        else if (this.database) {
+            options = options + ", TEMPDATABASE '" + this.database + "'";
         }
         if (this.database) {
             options = options + ", DEFAULTDATABASE '" + this.database + "'";
