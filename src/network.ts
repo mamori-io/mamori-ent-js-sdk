@@ -361,9 +361,9 @@ export class Network {
         result.host = vpn.host ;
         result.port = vpn.port ;
         result.user = vpn.user ;
-        result.privateKey = vpn.privateKey ;
+        result.privateKeyId = vpn.privateKeyId ;
 
-        result.localPort = vpn.localPort ;
+        result.localPort  = vpn.localPort ;
         result.remoteHost = vpn.remoteHost ;
         result.remotePort = vpn.remotePort ;
  
@@ -373,7 +373,7 @@ export class Network {
     host?: string ;
     port?: number ;
     user?: string ;
-    privateKey?: string ;
+    privateKeyId?: string ;
  
     localPort?: number ;
     remoteHost?: string ;
@@ -401,8 +401,8 @@ export class Network {
 
     getSecrets() {
         return  [{
-            name: "privateKey", 
-            value: this.privateKey
+            name: "privateKeyId", 
+            value: this.privateKeyId
         }] ;
     }
 
@@ -420,13 +420,13 @@ export class Network {
  
      /**
       * Set the credentials to use when connecting to the SSH server.
-      * @param user        Required user name
-      * @param privateKey  Required private key name (an existing SSH key), or the actual private key as text.
+      * @param user          Required user name
+      * @param privateKeyId  Required private key name (an existing SSH key).
       * @returns 
       */
-      public withCredentials(user: string, privateKey: string) : SshTunnel {
+      public withCredentials(user: string, privateKeyId: string) : SshTunnel {
          this.user = user;
-         this.privateKey = privateKey;
+         this.privateKeyId = privateKeyId;
          return this ;
      }
 
