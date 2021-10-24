@@ -9,7 +9,7 @@
 // allow for self signed certs
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import {DMService} from '../dist/api';
+import {DMService} from './api';
 import minimist = require('minimist');
 import {ParsedArgs} from 'minimist';
 
@@ -21,8 +21,20 @@ export abstract class Runnable {
     protected args: ParsedArgs;
     protected usage: string;
 
-    constructor(usage: string, parseOptions?: Object) {
-        this.usage = usage;
+    constructor(usage?: string, parseOptions?: Object) {
+        if (usage == void 0) {
+            this.usage =     
+            "Usage:\n" +
+            "   yarn ts-node --transpile-only " + this.constructor.name + " [--help] [--url url] user password\n" +
+            "where:\n" +
+            "   user\t\tmamori server user\n" +
+            "   password\tuser password" +
+            "   url\t\tDefault: localhost:443" ;
+        }
+        else {
+            this.usage = usage;
+        }
+
         if (parseOptions === void 0) {
             this.args = minimist(process.argv.slice(2), {
                 string: ['url'],

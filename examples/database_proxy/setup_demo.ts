@@ -8,6 +8,7 @@
  */
 import { ExampleWrapper } from '../example_wrapper' ;
 import { DMService } from '../../dist/api';
+import { Role } from '../../dist/role';
 import { ParsedArgs } from 'minimist';
   
 let revealRoleName: string  = "data_reveal";
@@ -28,43 +29,43 @@ let usage: string =
 "\n" +
 "After using this script to setup the data demonstration, a user with the data_user role can request access:\n\n" +
 "   yarn ts-node --transpile-only examples/request_workflow/access_request.ts [--help] [--url <url>] [<user> <password>] data_access [<message>] [--time=<N>]\n" + 
-"   \n" +
+"\n" +
 "This will output a request key, e.g. 03048fd3-017b-0c52-399a-00001660cb1e.\n" +
 "The request can be endorsed or denied by a user with the data_endorser role, or cancelled by the requester using:\n\n" +
 "   yarn ts-node --transpile-only examples/request_workflow/access_action.ts [--help] --url <url> <user> <action> <requestKey> [<message>]\n" +
-"   \n" +
+"\n" +
 "If endorsed, the requester will be granted the data_reveal role temporarily, revealing the masked data for N seconds.\n" ;
 
 let eg = async function (dm: DMService, args: ParsedArgs) {
   //
   // Roles
   //
-  var endorseRole = await dm.role(endorseRoleName);
-  if (endorseRole) {
-    console.info("Endorser role: ", endorseRoleName);
+  let endorseRole = await new Role(endorseRoleName) ;
+  if (await endorseRole.get(dm)) {
+    console.info("Endorser role: ", endorseRole.name);
   }
   else {
-    endorseRole = await dm.create_role({ roleid: endorseRoleName });
-    console.info("Created role: ", endorseRoleName);
-    await dm.grant_to(endorseRoleName, ['REQUEST'], "*", false) ;
+    await endorseRole.create(dm) ;
+    console.info("Created role: ", endorseRole.name);
+    await endorseRole.grant(dm, ['REQUEST'], "*", false) ;
   }
 
-  var userRole = await dm.role(userRoleName);
-  if (userRole) {
-    console.info("User role: ", userRoleName);
+  let userRole = await new Role(userRoleName) ;
+  if (await endorseRuserRoleole.get(dm)) {
+    console.info("User role: ", userRole.name);
   }
   else {
-    userRole = await dm.create_role({ roleid: userRoleName });
-    console.info("Created role: ", userRoleName);
+    await userRole.create(dm) ;
+    console.info("Created role: ", userRole.name);  
   }
 
-  var revealRole = await dm.role(revealRoleName);
-  if (revealRole) {
-    console.info("Reveal role: ", revealRoleName);
+  let revealRole = await new Role(revealRoleName) ;
+  if (await revealRole.get(dm)) {
+    console.info("Reveal role: ", revealRole.name);
   }
   else {
-    revealRole = await dm.create_role({ roleid: revealRoleName });
-    console.info("Created role: ", revealRoleName);
+    await revealRole.create(dm) ;
+    console.info("Created role: ", revealRole.name);
   }
 
   //

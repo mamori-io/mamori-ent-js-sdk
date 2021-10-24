@@ -8,9 +8,9 @@
  *
  */
 
-import {DMService} from '../../dist/api';
-import {SshLogin} from '../../dist/ssh_login';
-import {Runnable} from "../runnable";
+import {DMService} from '../dist/api';
+import {SshLogin} from '../dist/ssh_login';
+import {Runnable} from "../dist/runnable";
 import {ParsedArgs} from "minimist";
 
 let usage: string =

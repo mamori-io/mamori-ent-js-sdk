@@ -8,6 +8,7 @@
  */
 import { ExampleWrapper } from '../example_wrapper' ;
 import { DMService } from '../../dist/api';
+import { Role } from '../../dist/role';
 import { ParsedArgs } from 'minimist';
 
 let mgrRoleName = "appp_manager";
@@ -20,32 +21,33 @@ let eg = async function (dm: DMService, args: ParsedArgs) {
   //
   // appp roles
   //
-  var mgrRole = await dm.role(mgrRoleName);
-  if (mgrRole) {
-    console.info("Manager role: ", mgrRoleName);
+  let mgrRole = await new Role(mgrRoleName) ;
+  if (await mgrRole.get(dm)) {
+    console.info("Endorser role: ", mgrRole.name);
   }
   else {
-    mgrRole = await dm.create_role({ roleid: mgrRoleName });
-    console.info("Created role: ", mgrRoleName);
+    await mgrRole.create(dm) ;
+    console.info("Created role: ", mgrRole.name);
+    await mgrRole.grant(dm, ['REQUEST'], "*", false) ;
   }
 
-  var userRole = await dm.role(userRoleName);
-  if (userRole) {
-    console.info("User role: ", userRoleName);
+  let userRole = await new Role(userRoleName) ;
+  if (await userRole.get(dm)) {
+    console.info("User role: ", userRole.name);
   }
   else {
-    userRole = await dm.create_role({ roleid: userRoleName });
-    console.info("Created role: ", userRoleName);
+    await userRole.create(dm) ;
+    console.info("Created role: ", userRole.name);
   }
 
-  var endorseRole = await dm.role(endorseRoleName);
-  if (endorseRole) {
-    console.info("Endorser role: ", endorseRoleName);
+  let endorseRole = await new Role(endorseRoleName) ;
+  if (await endorseRole.get(dm)) {
+    console.info("Endorser role: ", endorseRole.name);
   }
   else {
-    endorseRole = await dm.create_role({ roleid: endorseRoleName });
-    console.info("Created role: ", endorseRoleName);
-    await dm.grant_to(endorseRoleName, ['REQUEST'], "*", false) ;
+    await endorseRole.create(dm) ;
+    console.info("Created role: ", endorseRole.name);
+    await endorseRole.grant(dm, ['REQUEST'], "*", false) ;
   }
 
   //

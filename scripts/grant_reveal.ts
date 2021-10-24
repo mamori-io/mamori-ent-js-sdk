@@ -8,8 +8,8 @@
  *
  */
 
-import {DMService} from '../../dist/api';
-import {Runnable} from "../runnable";
+import {DMService} from '../dist/api';
+import {Runnable} from "../dist/runnable";
 import {ParsedArgs} from "minimist";
 
 let usage: string =
@@ -32,27 +32,21 @@ class GrantReveal extends Runnable {
     }
 
     async run(dm: DMService, args: ParsedArgs): Promise<void> {
-
-
         let ds = args._[2];
         let db = args._[3];
         let schema = args._[4];
         let table = args._[5];
         let user_or_role = args._[6];
 
-
         let table_to_reveal = `\"${ds}\".\"${db}\".\"${schema}\".\"${table}\"`;
-
         let sql = `GRANT REVEAL * on ${table_to_reveal} to ${user_or_role}`;
-
         console.info(`Granting reveal on all columns for  ${table_to_reveal} to user/role ${user_or_role} ...`);
-
         await dm.query(sql);
 
         let cred = JSON.stringify(await dm.get_role_credentials(user_or_role));
-
         console.info(`${user_or_role} has ${cred}`);
     }
 }
+
 new GrantReveal().execute();
 

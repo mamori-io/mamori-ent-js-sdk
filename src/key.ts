@@ -40,7 +40,7 @@ import { DMService } from './api';
         return result ;
     }
 
-    public static async get_all(api: DMService) {
+    public static async getAll(api: DMService) {
         return api.callAPI("GET", "/v1/encryption_keys");
     }
     

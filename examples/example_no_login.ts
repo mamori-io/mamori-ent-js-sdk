@@ -14,11 +14,13 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 let argv = require('minimist')(process.argv.slice(2)) ;
 argv.url = argv.url || 'localhost:443';
 
-let dm = new DMService("https://" + argv.url + "/");
-
 async function no_login() {
+  let dm = new DMService("https://" + argv.url + "/");
+
   console.info("server status:", await dm.service_status());
   console.info("Server time: ", await dm.server_time());
 }
 
-no_login().catch(e => console.error("ERROR: ", e)).finally(() => process.exit(0));
+no_login()
+  .catch(e => console.error("ERROR: ", e))
+  .finally(() => process.exit(0));

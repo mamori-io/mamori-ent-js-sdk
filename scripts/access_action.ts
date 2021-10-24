@@ -6,8 +6,8 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { ExampleWrapper } from '../example_wrapper' ;
-import { DMService } from '../../dist/api';
+import { Runnable } from '../dist/runnable' ;
+import { DMService } from '../dist/api';
 import { ParsedArgs } from 'minimist';
 
 let usage = 
@@ -21,16 +21,22 @@ let usage =
 "   requestKey  Identifying request key, e.g. 4b9383f4-017a-e5f1-40b9-00001660cb1e, output by access_request.ts\n" +
 "   message     Execution message" ;
 
-let eg = async function (dm: DMService, args: ParsedArgs) {
-  let action = args._[2].toLocaleUpperCase() ;
-  let requestKey = args._[3] ;
+class AccessAction extends Runnable {
 
-  let ro = await dm.policies_request_action(action, requestKey, args._[4] || "")
-  console.info(action, " request: ", requestKey, " - ", ro);
+  constructor() {
+    super(usage);
+  }
+
+  async run(dm: DMService, args: ParsedArgs): Promise<void> {
+    let action = args._[2].toLocaleUpperCase() ;
+    let requestKey = args._[3] ;
+  
+    let ro = await dm.policies_request_action(action, requestKey, args._[4] || "")
+    console.info(action, " request: ", requestKey, " - ", ro);
+  }
 }
 
-let rapt = new ExampleWrapper(eg, process.argv) ;
-rapt.usage = usage ;
-rapt.execute()
-    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-    .finally(() => process.exit(0));
+new AccessAction()
+  .execute()
+  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+  .finally(() => process.exit(0));

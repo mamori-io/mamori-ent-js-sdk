@@ -43,19 +43,6 @@ export class PromiseWithProgress<T> extends Promise<T> {
     }
 }
 
-// based on the code from here: https://stackoverflow.com/a/52171480
-function cyrb53(str: string, seed: number = 0): string{
-    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-    for (let i = 0, ch; i < str.length; i++) {
-        ch = str.charCodeAt(i);
-        h1 = Math.imul(h1 ^ ch, 2654435761);
-        h2 = Math.imul(h2 ^ ch, 1597334677);
-    }
-    h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
-    h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
-    return (4294967296 * (2097151 & h2) + (h1>>>0)).toString(16);
-};
-
 export type Nullable<T> = T | null;
 
 export interface ServiceStatus {
@@ -259,22 +246,6 @@ export class DMService {
         return result;
     }
 
-    has_data_movement_license(): boolean {
-        if (this.claims &&
-            this.claims.license_info && ("data_movement" in this.claims.license_info)) {
-            return (this.claims.license_info.data_movement == "true");
-        }
-        return true;
-    }
-
-    has_secure_connect_license(): boolean {
-        if (this.claims &&
-            this.claims.license_info && ("secure_connect" in this.claims.license_info)) {
-            return (this.claims.license_info.secure_connect == "true");
-        }
-        return true;
-    }
-
     has_priv(name: string): boolean {
         return this.claims.privs.find((v:string) => (v == name) || (v == "ALL PRIVILEGES"));
     }
@@ -360,7 +331,6 @@ export class DMService {
     }
 
     public join(name: string, params: any, routeChangeCallback?: (channel: any) => any): Promise<Channel> {
-
         this.connect_socket();
 
         let deferred = this._to_join[name];
@@ -530,1100 +500,31 @@ export class DMService {
         }).then(resp => resp.data);
     }
 
-    public call_operation(operation: string, filter?: any): Promise<QueryResponse> {
-        return this.callAPI("POST", "/v1/query", {
-            operation: operation,
-            filter: filter,
-        });
-    }
-
-    public select(sql: string, search_query?: string): Promise<QueryResponse> {
-        return this.callAPI("POST", "/v1/query", {
-            sql: sql,
-            search_query: search_query,
-        });
-    }
-
-    public get_smtp_cfg() {
-        return this.callAPI("GET", "/v1/smtp");
-    }
-
-    public set_smtp_cfg(options: any) {
-        return this.callAPI("PUT", "/v1/smtp", options);
-    }
-
-    public send_test_email(options: any) {
-        return this.callAPI("POST", "/v1/smtp/test", options);
-    }
-
-    public driver_types() {
-        // NOTE: this is cached as the back end is returning a hard coded list of values for this request
-        return this.callAPI("GET", "/v1/driver_types", null, null, true);
-    }
-
-    public drivers() {
-        return this.callAPI("GET", "/v1/drivers");
-    }
-
-    public update_driver(drivername: string, options: any) {
-        return this.callAPI("PUT", "/v1/drivers/" + drivername, options);
-    }
-
-    public delete_driver(drivername: string) {
-        return this.callAPI("DELETE", "/v1/drivers/" + drivername);
-    }
-
-    public drivers_for_type(driver_type: string) {
-        return this.callAPI("GET", "/v1/drivers?type=" + driver_type);
-    }
-
-    // public update_system_for_rec(preview: any, system_name: string, rec: string, options: any, auths: any) {
-    //     return this.callAPI("PUT", "/v1/systems/" + system_name, {preview: preview, system: rec, options: options, authorizations: auths});
+    // public call_operation(operation: string, filter?: any): Promise<QueryResponse> {
+    //     return this.callAPI("POST", "/v1/query", {
+    //         operation: operation,
+    //         filter: filter,
+    //     });
     // }
 
-    // public create_system_for_rec(preview: any, rec: any, options: any, auths: any) {
-    //     return this.callAPI("POST", "/v1/systems", {preview: preview, system: rec, options: options, authorizations: auths});
+    // public select(sql: string, search_query?: string): Promise<QueryResponse> {
+    //     return this.callAPI("POST", "/v1/query", {
+    //         sql: sql,
+    //         search_query: search_query,
+    //     });
     // }
 
-    // public delete_system(system_name: string) {
-    //     return this.callAPI("DELETE", "/v1/systems/" + system_name);
+    // public get_smtp_cfg() {
+    //     return this.callAPI("GET", "/v1/smtp");
     // }
 
-    // public get_system(system_name: string) {
-    //     return this.callAPI("GET", "/v1/systems/" + system_name);
+    // public set_smtp_cfg(options: any) {
+    //     return this.callAPI("PUT", "/v1/smtp", options);
     // }
 
-    // public get_system_advanced_options() {
-    //     return this.callAPI("GET", "/v1/system_options?advanced=Y");
+    // public send_test_email(options: any) {
+    //     return this.callAPI("POST", "/v1/smtp/test", options);
     // }
-
-    // public get_system_federated_options() {
-    //     return this.callAPI("GET", "/v1/system_options?federated=Y");
-    // }
-
-    public drop_access_rule(id: number) {
-        return this.callAPI("DELETE", "/v1/access_rules/" + id);
-    }
-
-    public update_access_rule_position(id: number, position: number) {
-        let rec = {position: position};
-        return this.callAPI("PUT", "/v1/access_rules/" + id, rec);
-    }
-
-    public update_access_rule(id: number, type: string, clause: string, position: number, alert: string, description: string, enabled: boolean) {
-        let rec = {
-            id: id,
-            type: type,
-            clause: clause,
-            description: description,
-            position: position,
-            alert: alert,
-            enabled: enabled
-        };
-        //
-        return this.callAPI("PUT", "/v1/access_rules/" + id, rec);
-    }
-
-    public create_access_rule(type: string, clause: string, position: number, alert: string, description: string, enabled: boolean) {
-       let rec = {
-            type: type,
-            clause: clause,
-            description: description,
-            position: position,
-            alert: alert,
-            enabled: enabled
-        };
-        //
-        return this.callAPI("POST", "/v1/access_rules", rec);
-    }
-
-    public get_current_access_rules() {
-        return this.callAPI("GET", "/v1/access_rules?current=Y");
-    }
-
-    public get_access_rules(url_query: string) {
-        return this.callAPI("GET", "/v1/access_rules?" + url_query);
-    }
-
-    public get_access_rule_log(options: any) {
-        return this.callAPI("GET", "/v1/access_rule_log", options);
-    }
-
-    // public get_connection_log(options: any) {
-    //     return this.callAPI("GET", "/v1/connection_log", options);
-    // }
-
-    public save_masking_procedure(rmsid: number, name: string, expression: string, description: string, data_type: string) {
-        let rec = {
-            rmsid: rmsid,
-            name: name,
-            expression: expression,
-            description: description,
-            data_type: data_type,
-        };
-
-        return this.callAPI("POST", "/v1/maskingprocedures", rec);
-    }
-
-    public get_masking_procedures(options: any) {
-         return this.callAPI("GET", "/v1/maskingprocedures", options);
-    }
-
-    public delete_masking_procedure(rmsid: number, name: string) {
-        return this.callAPI("DELETE", "/v1/maskingprocedures/1",{name:name, rmsid: rmsid});
-    }
-
-    public get_restricted_columns() {
-        return this.callAPI("GET", "/v1/restricted_columns");
-    }
-
-    public add_restricted_column(rms: string, column: string) {
-        return this.callAPI("POST", "/v1/restricted_columns", {rms_name: rms, column_name: column});
-    }
-
-    public drop_restricted_column(rms: string, column: string) {
-        return this.callAPI("DELETE", "/v1/restricted_columns/1", {rms_name: rms, column_name: column});
-    }
-
-    public create_driver_for_rec(opt: DriverRec) {
-        return this.create_driver(opt.name,
-            opt.type,
-            opt.classname,
-            opt.include_parent_classpath,
-            opt.resource_files);
-    }
-
-    public create_driver(driver_name: string, driver_type: string, classname: string, include_parent_classpath: boolean, resource_files: any[]) {
-        let rec = {
-            name: driver_name,
-            type: driver_type,
-            classname: classname,
-            include_parent_classpath: include_parent_classpath,
-            resource_files: resource_files
-        };
-        return this.callAPI("POST", "/v1/drivers", rec);
-    }
-
-    public drivers_resources(drivername: string) {
-        return this.callAPI("GET", "/v1/drivers/" + drivername + "/files");
-    }
-
-
-    public get_grantee_roles(roleid: string) {
-        return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee");
-    }
-
-    public get_grantee_grantable_roles(roleid: string) {
-        return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee/grantable");
-    }
-
-
-    public get_roles_with_grantable(roleid: string) {
-        return this.callAPI("GET", "/v1/roles/" + roleid + "/roles");
-    }
-
-    public get_roles_by_username(roleid: string) {
-        return this.callAPI("GET", "/v1/username/" + roleid + "/roles");
-    }
-
-    public roles(query: string = "") {
-        return this.callAPI("GET", "/v1/roles?distinct=Y"+query);
-    }
-
-    public roles_search(query: any) {
-        return this.callAPI("PUT", "/v1/search/roles", query);
-    }
-
-    public roles_complete() {
-        return this.callAPI("GET", "/v1/roles");
-    }
-
-    public get_role_credentials(role: string) {
-        return this.callAPI("GET", "/v1/roles/" + role + "/credentials");
-    }
-
-    public update_role_credentials(role: string, deleted_creds: string[], new_creds: string[]) {
-        if (deleted_creds.length > 0 && new_creds.length > 0) {
-            return this.callAPI("PUT", "/v1/roles/" + role + "/credentials", {
-                db_credentials: new_creds,
-                deleted_credentials: deleted_creds
-            });
-        }
-        else if (deleted_creds.length > 0) {
-            return this.drop_role_credentials(role, deleted_creds);
-
-        } else if (new_creds.length) {
-            return this.add_role_credentials(role, new_creds);
-        }
-    }
-
-    public drop_role_credentials(role: string, credentials: string[]) {
-        return this.callAPI("DELETE", "/v1/roles/" + role + "/credentials", {db_credentials: credentials});
-    }
-
-    public add_role_credentials(role: string, credentials: string[]) {
-        return this.callAPI("POST", "/v1/roles/" + role + "/credentials", {db_credentials: credentials});
-    }
-
-    public role(rolename: string) {
-        return this.callAPI("GET", "/v1/roles/" + rolename);
-    }
-
-    public update_role(role: string, options: any) {
-        return this.callAPI("PUT", "/v1/roles/" + role, options);
-    }
-
-    public create_role(options: any) {
-        return this.callAPI("POST", "/v1/roles", options);
-    }
-
-    public attach_roles(name: string, roles: string[]) {
-        return this.callAPI("POST", "/v1/roles/" + name + "/attach", roles);
-    }
-
-    public grant_global_permission(role: string, permissions: any) {
-        return this.callAPI("POST", "/v1/roles/" + role + "/grant/global/permissions", permissions);
-    }
-
-    public revoke_global_permission(role: string, permissions: any) {
-        return this.callAPI("DELETE", "/v1/roles/" + role + "/grant/global/permissions", permissions);
-    }
-
-    public revoke_object_permission(role: string, permissions: any) {
-        return this.callAPI("DELETE", "/v1/roles/" + role + "/grant/object/permissions", permissions);
-    }
-
-    public grant_object_permission(role: string, permissions: any) {
-        return this.callAPI("POST", "/v1/roles/" + role + "/grant/object/permissions", permissions);
-    }
-
-    public permissions_by_role(roleid: string, scopes: string[]) {
-        return this.callAPI("GET", "/v1/roles/" + roleid + "/permissions", scopes ? {scope: scopes} : null);
-    }
-
-    public privileges(query: string) {
-        return this.callAPI("GET", "/v1/privileges"+query);
-    }
-
-    public grantee_privileges_recursive(grantees: string[]) {
-        return this.callAPI("GET", "/v1/privileges?recursive=Y", {"grantee":grantees});
-    }
-
-    public grantees() {
-        return this.callAPI("GET", "/v1/grantees");
-    }
-
-    public get_grantee_policies(grantee: string) {
-        return this.callAPI("GET", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/policies");
-    }
-
-    public permissions(scopes?: string[]) {
-        return this.callAPI("GET", '/v1/permissions', scopes ? {scope: scopes} : null);
-    }
-
-    public permissionsFiltered(scopes?: string[], permissionType?: string) {
-        let conditions: any = {};
-        if (scopes) {
-            conditions["scope"] = scopes;
-        }
-        if (permissionType) {
-            conditions["permissiontype"] = permissionType;
-        }
-        return this.callAPI("GET", '/v1/permissions', conditions);
-    }
-
-    public system() {
-        return this.callAPI("GET", '/v1/permissions/dbtree');
-    }
-
-    public user_systems() {
-        return this.callAPI("GET", '/v1/user_systems');
-    }
-
-    public user_roles(username: string) {
-        return this.callAPI("GET", "/v1/roles?isdef=N&grantee=" + encodeURIComponent(username.toLowerCase()));
-    }
-
-    public user_roles_recursive(username: string) {
-        return this.callAPI("GET", "/v1/roles?recursive=Y&grantee=" + encodeURIComponent(username.toLowerCase()));
-    }
-
-    public users_roles_recursive(userlist: string[]) {
-        return this.callAPI("GET", "/v1/roles?recursive=Y",{grantee: userlist});
-    }
-
-    public providers() {
-        return this.callAPI("GET", "/v1/providers");
-    }
-
-    public get_provider_options() {
-        return this.callAPI("GET", "/v1/providers?options=y");
-    }
-
-    public add_provider(options: any) {
-        return this.callAPI("POST", "/v1/providers", options);
-    }
-
-    public update_provider(name: string, options: any) {
-        return this.callAPI("PUT", "/v1/providers/" + name, options);
-    }
-
-    public drop_provider(name: string) {
-        return this.callAPI("DELETE", "/v1/providers/" + name);
-    }
-
-    public validate_provider(provider: string, username: string, password: string) {
-        return this.callAPI("POST", "/v1/provider/validate", {provider: provider, username: username, password: password});
-    }
-
-    public set_default_provider_chain(options: any) {
-        return this.callAPI("POST", "/v1/defaults/provider", options);
-    }
-
-    public set_totp_cache_time(time: number) {
-        return this.callAPI("PUT", "/v1/defaults/totpcachetime/" + time);
-    }
-
-    public set_totp_properties(seconds: number, url: string) {
-        return this.callAPI("PUT", "/v1/defaults/totpproperties",{seconds: seconds, url: url});
-    }
-
-    public ldap_search(options: any) {
-        return this.callAPI("POST", "/v1/ldap/search/", options);
-    }
-
-    public agents() {
-        return this.callAPI("GET", "/v1/agents");
-    }
-
-    public agent_drop(agent_name: string) {
-        return this.callAPI("DELETE", "/v1/agents/" + encodeURIComponent(agent_name));
-    }
-
-    public agent_create(agent_params: string) {
-        return this.callAPI("POST", "/v1/agents", agent_params);
-    }
-
-    public databases_filtered(conditions: string) {
-        return this.callAPI("GET", "/v1/objects/databases?" + conditions);
-    }
-
-    public databases_privileges(system: string) {
-        return this.callAPI("GET", "/v1/objects/databases/privileges", system);
-    }
-
-    public system_groups_search(options: any) {
-        return this.callAPI("PUT", "/v1/systemgroups", options);
-    }
-
-    public create_systemgroup(options: any) {
-        return this.callAPI("POST", "/v1/systemgroups", options);
-    }
-
-    public delete_systemgroup(name: string) {
-        return this.callAPI("DELETE", "/v1/systemgroups/" + name);
-    }
-
-    public alter_systemgroup(name: string, options: any) {
-        return this.callAPI("PUT", "/v1/systemgroups/" + name, options);
-    }
-
-
-    public system_group_systems_search(group: string, options: any) {
-        return this.callAPI("PUT", "/v1/systemgroups/" + group + "/systems", options);
-    }
-
-    public system_group_add_system(group: string, system: string) {
-        return this.callAPI("POST", "/v1/systemgroups/" + group + "/systems", {system: system});
-    }
-
-    public system_group_remove_system(group: string, system: string) {
-        return this.callAPI("DELETE", "/v1/systemgroups/" + group + "/systems/" + system);
-    }
-
-    public system_group_add_credential(group: string, grantee: string, login: string, pw: string, options: any) {
-        return this.callAPI("POST", "/v1/systemgroups/" + group + "/credentials", {
-            grantee: grantee,
-            login: login,
-            pw: pw,
-            options: options
-        });
-    }
-
-    public system_group_remove_credential(group: string, options: any) {
-        return this.callAPI("POST", "/v1/systemgroups/" + group + "/credentials/delete", options);
-    }
-
-    public system_group_credentials_search(group: string, options: any) {
-        return this.callAPI("PUT", "/v1/systemgroups/" + group + "/credentials", options);
-    }
-
-    public databases() {
-        return this.callAPI("GET", "/v1/objects/databases");
-    }
-
-    public database_validate_login(system_name: string, options: any) {
-        return this.callAPI("PUT", "/v1/objects/databases/" + encodeURIComponent(system_name) + "/validate", options);
-    }
-
-    public schemas(system_name: string) {
-        let url = "/v1/objects/databases/" + encodeURIComponent(system_name);
-        return this.callAPI("GET", url);
-    }
-
-    public database_schemas(system_name: string, database_name: string) {
-        let url = "/v1/objects/databases/" + encodeURIComponent(system_name) + "?database=" + database_name;
-        //console.info(url);
-        return this.callAPI("GET", url);
-    }
-
-    public get_tables_by_system_schema(system_name: string, schema: string) {
-        return this.callAPI("GET", "/v1/objects/system/" + encodeURIComponent(system_name) + "/schemas/" + encodeURIComponent(schema) + "/tables");
-    }
-
-    public objects(system_name: string, database_name: string, schema_name: string, name: string) {
-        let params: any = {"system_name": system_name, "database_name": database_name, "schema_name": schema_name};
-        if (name) {
-            params["object_name"] = name;
-        }
-        return this.callAPI("GET", "/v1/objects", params)
-    }
-
-    public update_license(content: string) {
-        return this.callAPI("POST", "/v1/license", content).then((data) => {
-            //update the claim
-            this.claims.license_info = data;
-            //update the store cache
-
-            // @TODO: implement this
-/*
-            let newValue = JSON.parse(sessionStorage.getItem('user-info'));
-            newValue.license_info = data;
-            sessionStorage.setItem('user-info', JSON.stringify(newValue));
-*/
-            //clear api cache
-            this.deleteFromCache("/v1/license");
-            this.trigger("authorization", this);
-        });
-    }
-
-    public license_details() {
-        return this.callAPI("GET", "/v1/license", null, null, true);
-    }
-
-    public license_limits() {
-        return this.callAPI("GET", "/v1//license/limits")
-    }
-
-    public pending_license_details() {
-        return this.callAPI("GET", "/v1/license?pending_license_info=1", null, null, true);
-    }
-
-    public license_stats() {
-        return this.callAPI("GET", "/v1/license/stats");
-    }
-
-    public get_qr_code(id: string) {
-        return this.callAPI("GET", "/ua/qrcheck/" + id);
-    }
-
-    public user_has_pending_validation(username: string) {
-        return this.callAPI("GET", "/ua/pending/" + encodeURIComponent(username.toLowerCase()));
-    }
-
-    public create_backup() {
-        return this.callAPI("GET", "/v1/backup");
-    }
-
-    public server_time() {
-        return this.callAPI("GET", "/v1/time");
-    }
-
-    public server_version() {
-        return this.callAPI("GET", "/v1/version");
-    }
-
-    public get_timezones() {
-        return this.callAPI("GET", "/v1/timezones", null, null, true);
-    }
-
-    public users(query: string = "") {
-        return this.callAPI("GET", "/v1/users"+query);
-    }
-
-    public users_search(query: any) {
-        return this.callAPI("PUT", "/v1/search/users", query);
-    }
-
-    public users_count() {
-        return this.callAPI("GET", "/v1/count/users");
-    }
-
-    public users_external() {
-        return this.callAPI("GET", "/v1/users?external=y");
-    }
-
-    public users_connected() {
-        return this.callAPI("GET", "/v1/users?connected=y");
-    }
-
-    public users_reload_all() {
-        return this.callAPI("GET", "/v1/users?reload_all=y");
-    }
-
-    public users_clear_authentication_requests() {
-        return this.callAPI("GET", "/v1/users?clear_authentication_requests=y");
-    }
-
-    public user(username: string) {
-        return this.callAPI("GET", "/v1/users/" + encodeURIComponent(username.toLowerCase()));
-    }
-
-    public create_user(options: any) {
-        return this.callAPI("POST", "/v1/users", options);
-    }
-
-    public delete_user(username: string) {
-        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()));
-    }
-
-    public update_user(username: string, options: any) {
-        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()), options);
-    }
-
-    public notify_user(username: string) {
-        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/notify");
-    }
-
-    public grant_to(grantee: string, grantables: string[], object_name?: string, withGrantOption?: boolean) {
-        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), {
-            grantables: grantables,
-            object_name: object_name,
-            with_grant_option: withGrantOption,
-        });
-    }
-
-    public revoke_from(grantee: string, grantables: string[], object_name?: string) {
-        return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), {
-            grantables: grantables,
-            object_name: object_name
-        });
-    }
-
-    // public grant_encryption_keys_to(grantee: string, encryption_keys: string[]) {
-    //     return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: encryption_keys});
-    // }
-
-    // public revoke_encryption_keys_from(grantee: string, encryption_keys: string[]) {
-    //     return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: encryption_keys});
-    // }
-
-    public add_datasource_authorization_to(grantee: string, datasource: string, username: string, password: string) {
-        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization",
-            {datasource: datasource, username: username, password: password});
-    }
-
-    public drop_datasource_authorization_from(grantee: string, datasource: string) {
-        return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {datasource: datasource});
-    }
-
-    public validate_datasource_authorization(grantee: string, datasource: string, username: string, password: string) {
-        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate",
-            {datasource: datasource, username: username, password: password});
-    }
-
-    public generate_password(username: string) {
-        return this.callAPI("GET", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/generate_password");
-    }
-
-    public user_update(username: string, options: any) {
-        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()), options);
-    }
-
-    public reset_user_password(username: string) {
-        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/reset_password");
-    }
-
-    public reset_external_user(username: string) {
-        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/reset_external");
-    }
-
-    public delete_external_user(username: string) {
-        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/external");
-    }
-
-    public disable_user(username: string) {
-        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/disable");
-    }
-
-    public unlock_user(username: string) {
-        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/unlock");
-    }
-
-    public user_options(username: string) {
-        return this.callAPI("GET", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/options");
-    }
-
-    public get_pending_user_sessions(username: string) {
-        return this.callAPI("GET", "/ua/sessions/" + encodeURIComponent(username.toLowerCase()));
-    }
-
-    // public create_encryption_key(options: any) {
-    //     return this.callAPI("POST", "/v1/encryption_keys", options);
-    // }
-
-    // public create_rsa_pair(options: any) {
-    //     return this.callAPI("POST", "/v1/encryption_keys/create/rsapair", options);
-    // }
-
-    // public update_encryption_key(name: string, value: any) {
-    //     return this.callAPI("PUT", "/v1/encryption_keys/" + name, {value: value});
-    // }
-
-    // public drop_encryption_key(key: string) {
-    //     return this.callAPI("DELETE", "/v1/encryption_keys/" + key,);
-    // }
-
-    // public get_encryption_keys() {
-    //     return this.callAPI("GET", "/v1/encryption_keys");
-    // }
-
-    // public grant_encryption_keys(username: string, keys_names: string[]) {
-    //     return this.callAPI("POST", "/v1/encryption_keys/username/" + encodeURIComponent(username.toLowerCase()), {key_names: keys_names});
-    // }
-
-    // public revoke_encryption_keys(username: string, keys_names: string[]) {
-    //     return this.callAPI("DELETE", "/v1/encryption_keys/username/" + encodeURIComponent(username.toLowerCase()), {key_names: keys_names});
-    // }
-
-    public grant_roles_to_user(username: string, roles: string[]) {
-        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
-    }
-
-    public revoke_roles_from_user(username: string, roles: string[]) {
-        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
-    }
-
-    public update_user_roles(username: string, deleted: string[], added: string[]) {
-        if (deleted.length > 0 && added.length > 0) {
-            return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {
-                selected_roles: added,
-                deleted_roles: deleted
-            });
-        }
-        else if (deleted.length > 0) {
-            return this.revoke_roles_from_user(username, deleted);
-        } else if (added.length > 0) {
-            return this.grant_roles_to_user(username, added);
-        } else {
-            return
-        }
-    }
-
-    public update_global_permission(rolename: string, deleted: string[], added: string[]) {
-        if (deleted.length > 0 && added.length > 0) {
-            return this.callAPI("PUT", "/v1/roles/" + rolename + "/global/permissions", {
-                selected_permission: added,
-                deleted_permission: deleted
-            });
-        }
-        else if (deleted.length > 0) {
-            return this.revoke_global_permission(rolename, {deleted_permission: deleted});
-        } else if (added.length > 0) {
-            return this.grant_global_permission(rolename, {selected_permissions_cirro: added});
-        } else {
-            return
-        }
-    }
-
-    public update_object_permission(rolename: string, deleted: string[], added: string[]) {
-        if (deleted.length > 0 && added.length > 0) {
-            return this.callAPI("PUT", "/v1/roles/" + rolename + "/object/permissions", {
-                selected_permissions_object: added,
-                deleted_permission: deleted
-            });
-
-        }
-        else if (deleted.length > 0) {
-            return this.revoke_object_permission(rolename, {deleted_permission_object: deleted});
-        } else if (added.length > 0) {
-            return this.grant_object_permission(rolename, {selected_permissions_object: added});
-        }
-    }
-
-    // public update_encryption_keys(username: string, deleted: string[], added: string[]) {
-    //     if (deleted.length > 0 && added.length > 0) {
-    //         return this.callAPI("PUT", "/v1/encryption_keys/username/" + encodeURIComponent(username.toLowerCase()),
-    //             {
-    //                 orig_key_names: deleted,
-    //                 selected_key_names: added
-
-    //             });
-    //     }
-    //     else if (deleted.length > 0) {
-    //         return this.revoke_encryption_keys(username, deleted);
-    //     } else if (added.length > 0) {
-    //         return this.grant_encryption_keys(username, added);
-    //     }
-    // }
-
-    public get_role_user_count(roleid: string) {
-        return this.callAPI("GET", "/v1/roles/" + roleid + "/usercount");
-    }
-
-    public search_users_with_role(roleid: string, options: any) {
-        return this.callAPI("PUT", "/v1/search/roles/" + roleid + "/users", options);
-    }
-
-    // return all users/roles and which systems they are authorized to access
-    public get_role_authorization_by_system(params?: any) {
-        return this.callAPI("GET", "/v1/roles/auth/systems", params);
-    }
-
-    public revoke_role_from_users(roleid: string, users: string[]) {
-        return this.callAPI("DELETE", "/v1/roles/" + roleid + "/users", {selected_users: users});
-    }
-
-    public revoke_role_from_grantee(roleid: string, grantee: string) {
-        return this.callAPI("DELETE", "/v1/roles/" + roleid + "/user", {selected_user: grantee});
-    }
-
-    public grant_role_to_users(roleid: string, users: string[]) {
-        return this.callAPI("POST", "/v1/roles/" + roleid + "/users", {selected_users: users});
-    }
-
-    public grant_role_to_grantee(roleid: string, grantee: string) {
-        return this.callAPI("POST", "/v1/roles/" + roleid + "/user", {selected_user: grantee});
-    }
-
-    public search_grantee_policies(grantee: string, options: any) {
-        return this.callAPI("PUT", "/v1//grantee/" + grantee + "/policies", options);
-    }
-
-    public delete_policy(policy: string) {
-        return this.callAPI("DELETE", "/v1/policies/" + encodeURIComponent(policy.toLowerCase()));
-    }
-
-    public update_role_users(roleid: string, deleted: any, added: any) {
-        if (deleted.length > 0 && added.length > 0) {
-            return this.callAPI("PUT", "/v1/roles/" + roleid + "/users", {
-                selected_users: added,
-                deleted_users: deleted
-            });
-        }
-        else if (deleted.length > 0) {
-            return this.revoke_role_from_users(roleid, deleted);
-
-        } else {
-            return this.grant_role_to_users(roleid, added);
-        }
-    }
-
-    //delete a specific role
-    public delete_role(roleid: string) {
-        return this.callAPI("DELETE", "/v1/roles/" + roleid);
-    }
-
-
-    public get_user_db_creds(username: string) {
-        return this.callAPI("GET", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials");
-    }
-
-    public update_user_db_creds(username: string, deleted_creds: any, new_creds: any) {
-        if (deleted_creds.length > 0 && new_creds.length > 0) {
-            return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {
-                db_credentials: new_creds,
-                deleted_credentials: deleted_creds
-            });
-        }
-        else if (deleted_creds.length > 0) {
-            return this.drop_user_db_creds(username, deleted_creds);
-
-        } else {
-            return this.add_user_db_creds(username, new_creds);
-        }
-    }
-
-    public drop_user_db_creds(username: string, credentials: any) {
-        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {db_credentials: credentials});
-    }
-
-    public add_user_db_creds(username: string, credentials: any) {
-        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {db_credentials: credentials});
-    }
-
-    public cancel_session(ssid: string) {
-        return this.callAPI("GET", "/v1/session/cancel/" + ssid);
-    }
-
-    public get_session_info(ssid: string) {
-        return this.callAPI("GET", "/v1/session/info/" + ssid);
-    }
-
-    public system_properties() {
-        return this.callAPI("GET", "/v1/server_properties");
-    }
-
-    public get_system_properties(query: string) {
-        return this.callAPI("GET", "/v1/server_properties"+query);
-    }
-
-    public set_system_properties(jsonProperties: any) {
-           return this.callAPI("PUT", "/v1/server_properties", {properties: jsonProperties});
-     }
-
-    public set_system_property(name: string, value: any) {
-        return this.callAPI("PUT", "/v1/server_properties/" + name, {value: value});
-    }
-
-    public search_permission_log(options: any) {
-        return this.callAPI("PUT", "/v1/search/permission_log", options);
-    }
-
-    public search_permission_log_sysview(options: any) {
-        return this.callAPI("PUT", "/v1/search/permission_log_sysview", options);
-    }
-
-    public certs() {
-        return this.callAPI("GET", "/v1/certs");
-    }
-
-    public install_certs(name: string, ca_crt: string, key: string, crt: string) {
-        return this.callAPI("POST", "/v1/certs", {name: name, certs: {key: key, crt: crt, ca_crt: ca_crt}});
-    }
-
-    public get_log_entries(logname: string) {
-        return this.callAPI("GET", "/v1/logs/system/" + logname);
-    }
-
-    public get_logs_zipfile() {
-        return this.callAPI("GET", "/v1/logs/download");
-    }
-
-    public alerts() {
-        return this.callAPI("GET", "/v1/alerts");
-    }
-
-    public get_alert(id: number) {
-        return this.callAPI("GET", "/v1/alerts/" + id);
-    }
-
-    public create_alert(alert: any) {
-        return this.callAPI("POST", "/v1/alerts", {alert: alert});
-    }
-
-    public update_alert(id: number, alert: any) {
-        return this.callAPI("PUT", "/v1/alerts/" + id, {alert: alert});
-    }
-
-    public delete_alert(id: number) {
-        return this.callAPI("DELETE", "/v1/alerts/" + id);
-    }
-
-    public listeners() {
-        return this.callAPI("GET", "/v1/listeners");
-    }
-
-    public get_detailed_logging_for_listener(listener: string) {
-        return this.callAPI("GET", "/v1/listeners/"+listener+"/logging");
-    }
-
-    public update_listener(id: string, port: number) {
-        return this.callAPI("PUT", "/v1/listeners/" + id, {port: port});
-    }
-
-    public update_listener_logging(id: string, flag: boolean) {
-        return this.callAPI("PUT", "/v1/listeners/" + id+"/logging", {detailed_logging: flag});
-    }
-
-    // policies
-    public policies_get_procedures(query: any) {
-        return this.callAPI("PUT", "/v1/policies/get_procedures", query);
-    }
-
-    public policies_get_requests(query: any) {
-        return this.callAPI("PUT", "/v1/policies/get_requests", query);
-    }
-
-    public policies_get_requests_to_endorse(query: any) {
-        return this.callAPI("PUT", "/v1/policies/endorse", query);
-    }
-
-    public policies_get_procedure_sql(procedure_name: string) {
-        return this.callAPI("GET", "/v1/policies/get_procedure_sql/" + procedure_name);
-    }
-
-    public policies_get_procedure_parameters(procedure_name: string) {
-        return this.callAPI("GET", "/v1/policies/get_procedure_parameters/" + procedure_name);
-    }
-
-    public policies_get_procedure_options(procedure_name: string) {
-        return this.callAPI("GET", "/v1/policies/get_procedure_options/" + procedure_name);
-    }
-
-    public policies_get_request_parameters(request_key: string) {
-        return this.callAPI("GET", "/v1/policies/get_request_parameters/" + request_key);
-    }
-
-    public policies_request_execute(procedure_name: string, parameters: any, message: string) {
-        return this.callAPI("POST", "/v1/policies/request_execute", {procedure_name: procedure_name, parameters: parameters, message: message});
-    }
-
-    public policies_request_action(action: string, request_key: string, message: string) {
-        return this.callAPI("POST", "/v1/policies/request_action", {action: action, request_key: request_key, message: message});
-    }
-
-    public policies_drop_procedure(procedure_name: string) {
-        return this.callAPI("GET", "/v1/policies/drop_procedure/" + procedure_name);
-    }
-
-    public policies_create_procedure(procedure_name: string,
-                                     parameters: any,
-                                     requires: string,
-                                     type: string,
-                                     description: string,
-                                     request_role: string,
-                                     request_alert: string,
-                                     request_default_message: string,
-                                     endorse_alert: string,
-                                     endorse_default_message: string,
-                                     endorse_agent_count: any,
-                                     deny_alert: string,
-                                     execute_on_endorse: string,
-                                     execute_alert: string,
-                                     sql: string) {
-        return this.callAPI("POST", "/v1/policies/create_procedure", {
-            procedure_name: procedure_name,
-            parameters: parameters,
-            requires: requires ? requires : "",
-            type: type ? type : "policy",
-            description: description ? description : procedure_name,
-            request_role: request_role ? request_role : "",
-            request_alert: request_alert ? request_alert : "",
-            request_default_message: request_default_message ? request_default_message : "",
-            endorse_alert: endorse_alert ? endorse_alert : "",
-            endorse_default_message: endorse_default_message ? endorse_default_message : "",
-            endorse_agent_count: endorse_agent_count,
-            deny_alert: deny_alert ? deny_alert : "",
-            execute_on_endorse: execute_on_endorse ? execute_on_endorse:"false",
-            execute_alert: execute_alert ? execute_alert : "",
-            sql: sql,
-        });
-    }
-
-    public policies_get_policy_projections(query: any) {
-        return this.callAPI("PUT", "/v1/policies/get_policy_projections", query);
-    }
-
-    public search_users_with_policy(policy: string, options: any) {
-        return this.callAPI("PUT", "/v1/policies/" + policy + "/users", options);
-    }
-
-    public search_roles_with_policy(policy: string, options: any) {
-        return this.callAPI("PUT", "/v1/policies/" + policy + "/roles", options);
-    }
-
-    // HTTP PROXY
-    public get_http_apifilters(query: any) {
-        return this.callAPI("GET", "/v1/policies/http_apifilters", query);
-    }
-
-    public get_http_apireveals(query: any) {
-        return this.callAPI("GET", "/v1/policies/http_apireveals", query);
-    }
-
-
-    public add_http_apifilter(filter: any) {
-        return this.callAPI("POST", "/v1/policies/create_http_apifilter", {filter: filter});
-    }
-
-    public set_http_apifilter(filter: any) {
-        return this.callAPI("PUT", "/v1/policies/set_http_apifilter/" + filter.id, {filter: filter});
-    }
-
-    public delete_http_apifilter(filter_id: Number) {
-        return this.callAPI("DELETE", "/v1/policies/delete_http_apifilter/" + filter_id);
-    }
-
-    public activate_http_apifilter(filter_id: Number) {
-        return this.callAPI("PUT", "/v1/policies/activate_http_apifilter/" + filter_id);
-    }
-
-    public disable_http_apifilter(filter_id: Number) {
-        return this.callAPI("PUT", "/v1/policies/disable_http_apifilter/" + filter_id);
-    }
-
-    public policies_set_policy_projection(table_name: string, column_name: string, projection_expression: string, policy_name: string, table_type: string) {
-        return this.callAPI("PUT", "/v1/policies/set_policy_projection", {
-            table_name: table_name,
-            column_name: column_name,
-            projection_expression: projection_expression ? projection_expression : "masked",
-            policy_name: policy_name ? policy_name : "default",
-            table_type: table_type ? table_type : "table",
-        });
-    }
-
-    public enable_provider(name : string, type: string) {
-        return this.callAPI("PUT", "/v1/providers/" + name, {
-            name: name,
-            type: type,
-            enabled: "true"
-        });
-    }
-
-    public disable_provider(name : string, type: string) {
-        return this.callAPI("PUT", "/v1/providers/" + name, {
-            name: name,
-            type: type,
-            enabled: "false"
-        });
-    }
-
-    // /policies
-
-    public get_catalogs() {
-        return this.callAPI("GET", "/v1/catalogs");
-    }
-
-    public search_wireguard_peers(options: any) {
-        return this.callAPI("GET", "/v1/wireguard", options);
-    }
-
-    public create_wireguard_peer(peer: WireguardPeer): Promise<AddWireguardPeerResponse> {
-        return this.callAPI("POST", "/v1/wireguard", {peer: peer});
-    }
-
-    public delete_wireguard_peer(id: string) {
-        return this.callAPI("DELETE", "/v1/wireguard/" + id);
-    }
-
-    public get_wireguard_log() {
-        return this.callAPI("GET", "/v1/wireguard/log");
-    }
-
-    public get_wireguard_status() {
-        return this.callAPI("GET", "/v1/wireguard/status");
-    }
-
-    public get_wireguard_peers() {
-        return this.callAPI("GET", "/v1/wireguard/all");
-    }
-
-    public reload_wireguard_config() {
-        return this.callAPI("POST", "/v1/wireguard/reload");
-    }
-
-    public grantee_object_grants(grantee:string, permissionType: string, objectName: string) {
-        return this.callAPI("GET", "/v1/grantee/" + grantee + "/grants", {permission: permissionType, object_name: objectName});
-    }
-
-    public connection_info(ssid: string) {
-        return this.callAPI("GET", "/v1/connection_log/" + ssid);
-    }
-
-    public ssh_session_log(ssid: string, options: any = null) {
-        return this.callAPI("GET", "/v1/ssh/" + ssid, options);
-    }
 
     private query_response_handler(message: any, channel: Channel) {
         if (message.task) {
@@ -1752,6 +653,45 @@ export class DMService {
         });
     }
 
+    public simple_query(sql: string, options: QueryOptions = {}): Promise<any[]> {
+        return new Promise<any[]>((resolve, reject) => {
+            let acc: any[] = [];
+
+            this.query(sql, options).progress(chunk => {
+                if(chunk.rows) {
+                    let cols = chunk.meta.map((c:any) => c.name);
+
+                    for(let row of chunk.rows) {
+                        let o: any = {};
+                        cols.map((col: string, idx: number) => o[col] = row[idx]);
+
+                        acc.push(o);
+                    }
+                }
+            }).then(() => {
+                resolve(acc);
+            }).catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    //
+    // Administration
+    //
+
+    public connection_info(ssid: string) {
+        return this.callAPI("GET", "/v1/connection_log/" + ssid);
+    }
+
+    public cancel_session(ssid: string) {
+        return this.callAPI("GET", "/v1/session/cancel/" + ssid);
+    }
+
+    public get_session_info(ssid: string) {
+        return this.callAPI("GET", "/v1/session/info/" + ssid);
+    }
+
     public active_sessions(show_root: boolean) {
         return new Promise((resolve, reject) => {
             this.new_query_job()
@@ -1779,34 +719,1006 @@ export class DMService {
         });
     }
 
-    public simple_query(sql: string, options: QueryOptions = {}): Promise<any[]> {
-        return new Promise<any[]>((resolve, reject) => {
-            let acc: any[] = [];
+    public ssh_session_log(ssid: string, options: any = null) {
+        return this.callAPI("GET", "/v1/ssh/" + ssid, options);
+    }
 
-            this.query(sql, options).progress(chunk => {
-                if(chunk.rows) {
-                    let cols = chunk.meta.map((c:any) => c.name);
+    public system_properties() {
+        return this.callAPI("GET", "/v1/server_properties");
+    }
 
-                    for(let row of chunk.rows) {
-                        let o: any = {};
-                        cols.map((col: string, idx: number) => o[col] = row[idx]);
+    public get_system_properties(query: string) {
+        return this.callAPI("GET", "/v1/server_properties"+query);
+    }
 
-                        acc.push(o);
-                    }
-                }
-            }).then(() => {
-                resolve(acc);
-            }).catch((e) => {
-                reject(e);
+    public set_system_properties(jsonProperties: any) {
+           return this.callAPI("PUT", "/v1/server_properties", {properties: jsonProperties});
+    }
+
+    public set_system_property(name: string, value: any) {
+        return this.callAPI("PUT", "/v1/server_properties/" + name, {value: value});
+    }
+
+    //
+    // Drivers
+    //
+
+    public driver_types() {
+        // NOTE: this is cached as the back end is returning a hard coded list of values for this request
+        return this.callAPI("GET", "/v1/driver_types", null, null, true);
+    }
+
+    public drivers_resources(drivername: string) {
+        return this.callAPI("GET", "/v1/drivers/" + drivername + "/files");
+    }
+
+    public drivers() {
+        return this.callAPI("GET", "/v1/drivers");
+    }
+
+    public drivers_for_type(driver_type: string) {
+        return this.callAPI("GET", "/v1/drivers?type=" + driver_type);
+    }
+
+    public create_driver_for_rec(opt: DriverRec) {
+        return this.create_driver(opt.name,
+            opt.type,
+            opt.classname,
+            opt.include_parent_classpath,
+            opt.resource_files);
+    }
+
+    public create_driver(driver_name: string, driver_type: string, classname: string, include_parent_classpath: boolean, resource_files: any[]) {
+        let rec = {
+            name: driver_name,
+            type: driver_type,
+            classname: classname,
+            include_parent_classpath: include_parent_classpath,
+            resource_files: resource_files
+        };
+        return this.callAPI("POST", "/v1/drivers", rec);
+    }
+
+    public update_driver(drivername: string, options: any) {
+        return this.callAPI("PUT", "/v1/drivers/" + drivername, options);
+    }
+
+    public delete_driver(drivername: string) {
+        return this.callAPI("DELETE", "/v1/drivers/" + drivername);
+    }
+
+    //
+    //  Access rules
+    //
+
+    public drop_access_rule(id: number) {
+        return this.callAPI("DELETE", "/v1/access_rules/" + id);
+    }
+
+    public update_access_rule_position(id: number, position: number) {
+        let rec = {position: position};
+        return this.callAPI("PUT", "/v1/access_rules/" + id, rec);
+    }
+
+    public update_access_rule(id: number, type: string, clause: string, position: number, alert: string, description: string, enabled: boolean) {
+        let rec = {
+            id: id,
+            type: type,
+            clause: clause,
+            description: description,
+            position: position,
+            alert: alert,
+            enabled: enabled
+        };
+
+        return this.callAPI("PUT", "/v1/access_rules/" + id, rec);
+    }
+
+    public create_access_rule(type: string, clause: string, position: number, alert: string, description: string, enabled: boolean) {
+       let rec = {
+            type: type,
+            clause: clause,
+            description: description,
+            position: position,
+            alert: alert,
+            enabled: enabled
+        };
+
+        return this.callAPI("POST", "/v1/access_rules", rec);
+    }
+
+    public get_current_access_rules() {
+        return this.callAPI("GET", "/v1/access_rules?current=Y");
+    }
+
+    public get_access_rules(url_query: string) {
+        return this.callAPI("GET", "/v1/access_rules?" + url_query);
+    }
+
+    public get_access_rule_log(options: any) {
+        return this.callAPI("GET", "/v1/access_rule_log", options);
+    }
+
+    //
+    // Masking
+    //
+
+    public save_masking_procedure(rmsid: number, name: string, expression: string, description: string, data_type: string) {
+        let rec = {
+            rmsid: rmsid,
+            name: name,
+            expression: expression,
+            description: description,
+            data_type: data_type,
+        };
+
+        return this.callAPI("POST", "/v1/maskingprocedures", rec);
+    }
+
+    public get_masking_procedures(options: any) {
+         return this.callAPI("GET", "/v1/maskingprocedures", options);
+    }
+
+    public delete_masking_procedure(rmsid: number, name: string) {
+        return this.callAPI("DELETE", "/v1/maskingprocedures/1",{name:name, rmsid: rmsid});
+    }
+
+    public get_restricted_columns() {
+        return this.callAPI("GET", "/v1/restricted_columns");
+    }
+
+    public add_restricted_column(rms: string, column: string) {
+        return this.callAPI("POST", "/v1/restricted_columns", {rms_name: rms, column_name: column});
+    }
+
+    public drop_restricted_column(rms: string, column: string) {
+        return this.callAPI("DELETE", "/v1/restricted_columns/1", {rms_name: rms, column_name: column});
+    }
+
+    //
+    // Roles
+    //
+
+    public get_grantee_roles(roleid: string) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee");
+    }
+
+    public get_grantee_grantable_roles(roleid: string) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee/grantable");
+    }
+
+    public get_roles_with_grantable(roleid: string) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/roles");
+    }
+
+    public get_roles_by_username(roleid: string) {
+        return this.callAPI("GET", "/v1/username/" + roleid + "/roles");
+    }
+
+    // public roles(query: string = "") {
+    //     return this.callAPI("GET", "/v1/roles?distinct=Y"+query);
+    // }
+
+    // public roles_search(query: any) {
+    //     return this.callAPI("PUT", "/v1/search/roles", query);
+    // }
+
+    // public roles_complete() {
+    //     return this.callAPI("GET", "/v1/roles");
+    // }
+
+    // public role(rolename: string) {
+    //     return this.callAPI("GET", "/v1/roles/" + rolename);
+    // }
+
+    // public update_role(role: string, options: any) {
+    //     return this.callAPI("PUT", "/v1/roles/" + role, options);
+    // }
+
+    // public create_role(options: any) {
+    //     return this.callAPI("POST", "/v1/roles", options);
+    // }
+
+    public attach_roles(name: string, roles: string[]) {
+        return this.callAPI("POST", "/v1/roles/" + name + "/attach", roles);
+    }
+
+    public user_roles(username: string) {
+        return this.callAPI("GET", "/v1/roles?isdef=N&grantee=" + encodeURIComponent(username.toLowerCase()));
+    }
+
+    public user_roles_recursive(username: string) {
+        return this.callAPI("GET", "/v1/roles?recursive=Y&grantee=" + encodeURIComponent(username.toLowerCase()));
+    }
+
+    public users_roles_recursive(userlist: string[]) {
+        return this.callAPI("GET", "/v1/roles?recursive=Y",{grantee: userlist});
+    }
+
+    //
+    // Credentials
+    //
+
+    public get_role_credentials(role: string) {
+        return this.callAPI("GET", "/v1/roles/" + role + "/credentials");
+    }
+
+    public update_role_credentials(role: string, deleted_creds: string[], new_creds: string[]) {
+        if (deleted_creds.length > 0 && new_creds.length > 0) {
+            return this.callAPI("PUT", "/v1/roles/" + role + "/credentials", {
+                db_credentials: new_creds,
+                deleted_credentials: deleted_creds
             });
+        }
+        else if (deleted_creds.length > 0) {
+            return this.drop_role_credentials(role, deleted_creds);
+
+        } else if (new_creds.length) {
+            return this.add_role_credentials(role, new_creds);
+        }
+    }
+
+    public drop_role_credentials(role: string, credentials: string[]) {
+        return this.callAPI("DELETE", "/v1/roles/" + role + "/credentials", {db_credentials: credentials});
+    }
+
+    public add_role_credentials(role: string, credentials: string[]) {
+        return this.callAPI("POST", "/v1/roles/" + role + "/credentials", {db_credentials: credentials});
+    }
+
+    public add_datasource_authorization_to(grantee: string, datasource: string, username: string, password: string) {
+        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization",
+            {datasource: datasource, username: username, password: password});
+    }
+
+    public drop_datasource_authorization_from(grantee: string, datasource: string) {
+        return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {datasource: datasource});
+    }
+
+    public validate_datasource_authorization(grantee: string, datasource: string, username: string, password: string) {
+        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate",
+            {datasource: datasource, username: username, password: password});
+    }
+
+    public grant_roles_to_user(username: string, roles: string[]) {
+        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
+    }
+
+    public revoke_roles_from_user(username: string, roles: string[]) {
+        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
+    }
+
+    public update_user_roles(username: string, deleted: string[], added: string[]) {
+        if (deleted.length > 0 && added.length > 0) {
+            return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {
+                selected_roles: added,
+                deleted_roles: deleted
+            });
+        }
+        else if (deleted.length > 0) {
+            return this.revoke_roles_from_user(username, deleted);
+        } else if (added.length > 0) {
+            return this.grant_roles_to_user(username, added);
+        } else {
+            return
+        }
+    }
+
+    //
+    // Permissions
+    //
+
+    public grant_to(grantee: string, grantables: string[], object_name?: string, withGrantOption?: boolean) {
+        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), {
+            grantables: grantables,
+            object_name: object_name,
+            with_grant_option: withGrantOption,
         });
     }
 
-    public ssh_logins(): Promise<SshLoginDesc[]> {
-        return this.simple_query("call ssh_logins()");
+    public revoke_from(grantee: string, grantables: string[], object_name?: string) {
+        return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), {
+            grantables: grantables,
+            object_name: object_name
+        });
     }
 
-    // public ssh_matrix(params: any) {
-    //     return this.callAPI("GET", "/v1/ssh/matrix", params);
+    public update_global_permission(rolename: string, deleted: string[], added: string[]) {
+        if (deleted.length > 0 && added.length > 0) {
+            return this.callAPI("PUT", "/v1/roles/" + rolename + "/global/permissions", {
+                selected_permission: added,
+                deleted_permission: deleted
+            });
+        }
+        else if (deleted.length > 0) {
+            return this.revoke_global_permission(rolename, {deleted_permission: deleted});
+        } else if (added.length > 0) {
+            return this.grant_global_permission(rolename, {selected_permissions_cirro: added});
+        } else {
+            return
+        }
+    }
+
+    public update_object_permission(rolename: string, deleted: string[], added: string[]) {
+        if (deleted.length > 0 && added.length > 0) {
+            return this.callAPI("PUT", "/v1/roles/" + rolename + "/object/permissions", {
+                selected_permissions_object: added,
+                deleted_permission: deleted
+            });
+
+        }
+        else if (deleted.length > 0) {
+            return this.revoke_object_permission(rolename, {deleted_permission_object: deleted});
+        } else if (added.length > 0) {
+            return this.grant_object_permission(rolename, {selected_permissions_object: added});
+        }
+    }
+
+    public grantee_object_grants(grantee:string, permissionType: string, objectName: string) {
+        return this.callAPI("GET", "/v1/grantee/" + grantee + "/grants", {permission: permissionType, object_name: objectName});
+    }
+
+    public get_role_user_count(roleid: string) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/usercount");
+    }
+
+    public search_users_with_role(roleid: string, options: any) {
+        return this.callAPI("PUT", "/v1/search/roles/" + roleid + "/users", options);
+    }
+
+    public grant_global_permission(role: string, permissions: any) {
+        return this.callAPI("POST", "/v1/roles/" + role + "/grant/global/permissions", permissions);
+    }
+
+    public revoke_global_permission(role: string, permissions: any) {
+        return this.callAPI("DELETE", "/v1/roles/" + role + "/grant/global/permissions", permissions);
+    }
+
+    public revoke_object_permission(role: string, permissions: any) {
+        return this.callAPI("DELETE", "/v1/roles/" + role + "/grant/object/permissions", permissions);
+    }
+
+    public grant_object_permission(role: string, permissions: any) {
+        return this.callAPI("POST", "/v1/roles/" + role + "/grant/object/permissions", permissions);
+    }
+
+    public permissions_by_role(roleid: string, scopes: string[]) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/permissions", scopes ? {scope: scopes} : null);
+    }
+
+    public privileges(query: string) {
+        return this.callAPI("GET", "/v1/privileges"+query);
+    }
+
+    public grantee_privileges_recursive(grantees: string[]) {
+        return this.callAPI("GET", "/v1/privileges?recursive=Y", {"grantee":grantees});
+    }
+
+    public grantees() {
+        return this.callAPI("GET", "/v1/grantees");
+    }
+
+    public permissions(scopes?: string[]) {
+        return this.callAPI("GET", '/v1/permissions', scopes ? {scope: scopes} : null);
+    }
+
+    public permissionsFiltered(scopes?: string[], permissionType?: string) {
+        let conditions: any = {};
+        if (scopes) {
+            conditions["scope"] = scopes;
+        }
+        if (permissionType) {
+            conditions["permissiontype"] = permissionType;
+        }
+        return this.callAPI("GET", '/v1/permissions', conditions);
+    }
+
+    public system() {
+        return this.callAPI("GET", '/v1/permissions/dbtree');
+    }
+
+    // public user_systems() {
+    //     return this.callAPI("GET", '/v1/user_systems');
     // }
+
+    //
+    // Authentication providers
+    //
+
+    public providers() {
+        return this.callAPI("GET", "/v1/providers");
+    }
+
+    public get_provider_options() {
+        return this.callAPI("GET", "/v1/providers?options=y");
+    }
+
+    public add_provider(options: any) {
+        return this.callAPI("POST", "/v1/providers", options);
+    }
+
+    public update_provider(name: string, options: any) {
+        return this.callAPI("PUT", "/v1/providers/" + name, options);
+    }
+
+    public drop_provider(name: string) {
+        return this.callAPI("DELETE", "/v1/providers/" + name);
+    }
+
+    public validate_provider(provider: string, username: string, password: string) {
+        return this.callAPI("POST", "/v1/provider/validate", {provider: provider, username: username, password: password});
+    }
+
+    public set_default_provider_chain(options: any) {
+        return this.callAPI("POST", "/v1/defaults/provider", options);
+    }
+
+    public set_totp_cache_time(time: number) {
+        return this.callAPI("PUT", "/v1/defaults/totpcachetime/" + time);
+    }
+
+    public set_totp_properties(seconds: number, url: string) {
+        return this.callAPI("PUT", "/v1/defaults/totpproperties",{seconds: seconds, url: url});
+    }
+
+    public ldap_search(options: any) {
+        return this.callAPI("POST", "/v1/ldap/search/", options);
+    }
+
+    public enable_provider(name : string, type: string) {
+        return this.callAPI("PUT", "/v1/providers/" + name, {
+            name: name,
+            type: type,
+            enabled: "true"
+        });
+    }
+
+    public disable_provider(name : string, type: string) {
+        return this.callAPI("PUT", "/v1/providers/" + name, {
+            name: name,
+            type: type,
+            enabled: "false"
+        });
+    }
+
+    //
+    // Agents
+    //
+
+    public agents() {
+        return this.callAPI("GET", "/v1/agents");
+    }
+
+    public agent_drop(agent_name: string) {
+        return this.callAPI("DELETE", "/v1/agents/" + encodeURIComponent(agent_name));
+    }
+
+    public agent_create(agent_params: string) {
+        return this.callAPI("POST", "/v1/agents", agent_params);
+    }
+
+    //
+    // Datasources, databases, schemas, tables,...
+    //
+
+    public databases_filtered(conditions: string) {
+        return this.callAPI("GET", "/v1/objects/databases?" + conditions);
+    }
+
+    public databases_privileges(system: string) {
+        return this.callAPI("GET", "/v1/objects/databases/privileges", system);
+    }
+
+    public databases() {
+        return this.callAPI("GET", "/v1/objects/databases");
+    }
+
+    public get_catalogs() {
+        return this.callAPI("GET", "/v1/catalogs");
+    }
+
+    public database_validate_login(system_name: string, options: any) {
+        return this.callAPI("PUT", "/v1/objects/databases/" + encodeURIComponent(system_name) + "/validate", options);
+    }
+
+    public schemas(system_name: string) {
+        let url = "/v1/objects/databases/" + encodeURIComponent(system_name);
+        return this.callAPI("GET", url);
+    }
+
+    public database_schemas(system_name: string, database_name: string) {
+        let url = "/v1/objects/databases/" + encodeURIComponent(system_name) + "?database=" + database_name;
+        //console.info(url);
+        return this.callAPI("GET", url);
+    }
+
+    public get_tables_by_system_schema(system_name: string, schema: string) {
+        return this.callAPI("GET", "/v1/objects/system/" + encodeURIComponent(system_name) + "/schemas/" + encodeURIComponent(schema) + "/tables");
+    }
+
+    public objects(system_name: string, database_name: string, schema_name: string, name: string) {
+        let params: any = {"system_name": system_name, "database_name": database_name, "schema_name": schema_name};
+        if (name) {
+            params["object_name"] = name;
+        }
+        return this.callAPI("GET", "/v1/objects", params)
+    }
+
+    //
+    // System groups
+    //
+
+    public system_groups_search(options: any) {
+        return this.callAPI("PUT", "/v1/systemgroups", options);
+    }
+
+    public create_systemgroup(options: any) {
+        return this.callAPI("POST", "/v1/systemgroups", options);
+    }
+
+    public delete_systemgroup(name: string) {
+        return this.callAPI("DELETE", "/v1/systemgroups/" + name);
+    }
+
+    public alter_systemgroup(name: string, options: any) {
+        return this.callAPI("PUT", "/v1/systemgroups/" + name, options);
+    }
+
+    public system_group_systems_search(group: string, options: any) {
+        return this.callAPI("PUT", "/v1/systemgroups/" + group + "/systems", options);
+    }
+
+    public system_group_add_system(group: string, system: string) {
+        return this.callAPI("POST", "/v1/systemgroups/" + group + "/systems", {system: system});
+    }
+
+    public system_group_remove_system(group: string, system: string) {
+        return this.callAPI("DELETE", "/v1/systemgroups/" + group + "/systems/" + system);
+    }
+
+    public system_group_add_credential(group: string, grantee: string, login: string, pw: string, options: any) {
+        return this.callAPI("POST", "/v1/systemgroups/" + group + "/credentials", {
+            grantee: grantee,
+            login: login,
+            pw: pw,
+            options: options
+        });
+    }
+
+    public system_group_remove_credential(group: string, options: any) {
+        return this.callAPI("POST", "/v1/systemgroups/" + group + "/credentials/delete", options);
+    }
+
+    public system_group_credentials_search(group: string, options: any) {
+        return this.callAPI("PUT", "/v1/systemgroups/" + group + "/credentials", options);
+    }
+
+    // public license_details() {
+    //     return this.callAPI("GET", "/v1/license", null, null, true);
+    // }
+
+    // public license_limits() {
+    //     return this.callAPI("GET", "/v1//license/limits")
+    // }
+
+    // public pending_license_details() {
+    //     return this.callAPI("GET", "/v1/license?pending_license_info=1", null, null, true);
+    // }
+
+    // public license_stats() {
+    //     return this.callAPI("GET", "/v1/license/stats");
+    // }
+
+    // public get_qr_code(id: string) {
+    //     return this.callAPI("GET", "/ua/qrcheck/" + id);
+    // }
+
+    public create_backup() {
+        return this.callAPI("GET", "/v1/backup");
+    }
+
+    public server_time() {
+        return this.callAPI("GET", "/v1/time");
+    }
+
+    public server_version() {
+        return this.callAPI("GET", "/v1/version");
+    }
+
+    public get_timezones() {
+        return this.callAPI("GET", "/v1/timezones", null, null, true);
+    }
+
+    //
+    // Users
+    //
+
+    public users(query: string = "") {
+        return this.callAPI("GET", "/v1/users"+query);
+    }
+
+    // public user_has_pending_validation(username: string) {
+    //     return this.callAPI("GET", "/ua/pending/" + encodeURIComponent(username.toLowerCase()));
+    // }
+
+    public users_search(query: any) {
+        return this.callAPI("PUT", "/v1/search/users", query);
+    }
+
+    public users_count() {
+        return this.callAPI("GET", "/v1/count/users");
+    }
+
+    public users_external() {
+        return this.callAPI("GET", "/v1/users?external=y");
+    }
+
+    public users_connected() {
+        return this.callAPI("GET", "/v1/users?connected=y");
+    }
+
+    public users_reload_all() {
+        return this.callAPI("GET", "/v1/users?reload_all=y");
+    }
+
+    public users_clear_authentication_requests() {
+        return this.callAPI("GET", "/v1/users?clear_authentication_requests=y");
+    }
+
+    public user(username: string) {
+        return this.callAPI("GET", "/v1/users/" + encodeURIComponent(username.toLowerCase()));
+    }
+
+    public create_user(options: any) {
+        return this.callAPI("POST", "/v1/users", options);
+    }
+
+    public delete_user(username: string) {
+        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()));
+    }
+
+    public update_user(username: string, options: any) {
+        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()), options);
+    }
+
+    public notify_user(username: string) {
+        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/notify");
+    }
+
+    public generate_password(username: string) {
+        return this.callAPI("GET", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/generate_password");
+    }
+
+    public user_update(username: string, options: any) {
+        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()), options);
+    }
+
+    public reset_user_password(username: string) {
+        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/reset_password");
+    }
+
+    public reset_external_user(username: string) {
+        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/reset_external");
+    }
+
+    public delete_external_user(username: string) {
+        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/external");
+    }
+
+    public disable_user(username: string) {
+        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/disable");
+    }
+
+    public unlock_user(username: string) {
+        return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/unlock");
+    }
+
+    public user_options(username: string) {
+        return this.callAPI("GET", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/options");
+    }
+
+    public get_pending_user_sessions(username: string) {
+        return this.callAPI("GET", "/ua/sessions/" + encodeURIComponent(username.toLowerCase()));
+    }
+
+    // return all users/roles and which systems they are authorized to access
+    public get_role_authorization_by_system(params?: any) {
+        return this.callAPI("GET", "/v1/roles/auth/systems", params);
+    }
+
+    public revoke_role_from_users(roleid: string, users: string[]) {
+        return this.callAPI("DELETE", "/v1/roles/" + roleid + "/users", {selected_users: users});
+    }
+
+    public revoke_role_from_grantee(roleid: string, grantee: string) {
+        return this.callAPI("DELETE", "/v1/roles/" + roleid + "/user", {selected_user: grantee});
+    }
+
+    public grant_role_to_users(roleid: string, users: string[]) {
+        return this.callAPI("POST", "/v1/roles/" + roleid + "/users", {selected_users: users});
+    }
+
+    public grant_role_to_grantee(roleid: string, grantee: string) {
+        return this.callAPI("POST", "/v1/roles/" + roleid + "/user", {selected_user: grantee});
+    }
+
+    public get_grantee_policies(grantee: string) {
+        return this.callAPI("GET", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/policies");
+    }
+
+    public search_grantee_policies(grantee: string, options: any) {
+        return this.callAPI("PUT", "/v1//grantee/" + grantee + "/policies", options);
+    }
+
+    public update_role_users(roleid: string, deleted: any, added: any) {
+        if (deleted.length > 0 && added.length > 0) {
+            return this.callAPI("PUT", "/v1/roles/" + roleid + "/users", {
+                selected_users: added,
+                deleted_users: deleted
+            });
+        }
+        else if (deleted.length > 0) {
+            return this.revoke_role_from_users(roleid, deleted);
+
+        } else {
+            return this.grant_role_to_users(roleid, added);
+        }
+    }
+
+    public delete_role(roleid: string) {
+        return this.callAPI("DELETE", "/v1/roles/" + roleid);
+    }
+
+    public get_user_db_creds(username: string) {
+        return this.callAPI("GET", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials");
+    }
+
+    public update_user_db_creds(username: string, deleted_creds: any, new_creds: any) {
+        if (deleted_creds.length > 0 && new_creds.length > 0) {
+            return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {
+                db_credentials: new_creds,
+                deleted_credentials: deleted_creds
+            });
+        }
+        else if (deleted_creds.length > 0) {
+            return this.drop_user_db_creds(username, deleted_creds);
+
+        } else {
+            return this.add_user_db_creds(username, new_creds);
+        }
+    }
+
+    public drop_user_db_creds(username: string, credentials: any) {
+        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {db_credentials: credentials});
+    }
+
+    public add_user_db_creds(username: string, credentials: any) {
+        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {db_credentials: credentials});
+    }
+
+    public search_permission_log(options: any) {
+        return this.callAPI("PUT", "/v1/search/permission_log", options);
+    }
+
+    public search_permission_log_sysview(options: any) {
+        return this.callAPI("PUT", "/v1/search/permission_log_sysview", options);
+    }
+
+    public certs() {
+        return this.callAPI("GET", "/v1/certs");
+    }
+
+    public install_certs(name: string, ca_crt: string, key: string, crt: string) {
+        return this.callAPI("POST", "/v1/certs", {name: name, certs: {key: key, crt: crt, ca_crt: ca_crt}});
+    }
+
+    public get_log_entries(logname: string) {
+        return this.callAPI("GET", "/v1/logs/system/" + logname);
+    }
+
+    public get_logs_zipfile() {
+        return this.callAPI("GET", "/v1/logs/download");
+    }
+
+    public alerts() {
+        return this.callAPI("GET", "/v1/alerts");
+    }
+
+    public get_alert(id: number) {
+        return this.callAPI("GET", "/v1/alerts/" + id);
+    }
+
+    public create_alert(alert: any) {
+        return this.callAPI("POST", "/v1/alerts", {alert: alert});
+    }
+
+    public update_alert(id: number, alert: any) {
+        return this.callAPI("PUT", "/v1/alerts/" + id, {alert: alert});
+    }
+
+    public delete_alert(id: number) {
+        return this.callAPI("DELETE", "/v1/alerts/" + id);
+    }
+
+    public listeners() {
+        return this.callAPI("GET", "/v1/listeners");
+    }
+
+    public get_detailed_logging_for_listener(listener: string) {
+        return this.callAPI("GET", "/v1/listeners/"+listener+"/logging");
+    }
+
+    public update_listener(id: string, port: number) {
+        return this.callAPI("PUT", "/v1/listeners/" + id, {port: port});
+    }
+
+    public update_listener_logging(id: string, flag: boolean) {
+        return this.callAPI("PUT", "/v1/listeners/" + id+"/logging", {detailed_logging: flag});
+    }
+
+    //
+    // Policies
+    //
+
+    public delete_policy(policy: string) {
+        return this.callAPI("DELETE", "/v1/policies/" + encodeURIComponent(policy.toLowerCase()));
+    }
+
+    public policies_get_procedures(query: any) {
+        return this.callAPI("PUT", "/v1/policies/get_procedures", query);
+    }
+
+    public policies_get_requests(query: any) {
+        return this.callAPI("PUT", "/v1/policies/get_requests", query);
+    }
+
+    public policies_get_requests_to_endorse(query: any) {
+        return this.callAPI("PUT", "/v1/policies/endorse", query);
+    }
+
+    public policies_get_procedure_sql(procedure_name: string) {
+        return this.callAPI("GET", "/v1/policies/get_procedure_sql/" + procedure_name);
+    }
+
+    public policies_get_procedure_parameters(procedure_name: string) {
+        return this.callAPI("GET", "/v1/policies/get_procedure_parameters/" + procedure_name);
+    }
+
+    public policies_get_procedure_options(procedure_name: string) {
+        return this.callAPI("GET", "/v1/policies/get_procedure_options/" + procedure_name);
+    }
+
+    public policies_get_request_parameters(request_key: string) {
+        return this.callAPI("GET", "/v1/policies/get_request_parameters/" + request_key);
+    }
+
+    public policies_request_execute(procedure_name: string, parameters: any, message: string) {
+        return this.callAPI("POST", "/v1/policies/request_execute", {procedure_name: procedure_name, parameters: parameters, message: message});
+    }
+
+    public policies_request_action(action: string, request_key: string, message: string) {
+        return this.callAPI("POST", "/v1/policies/request_action", {action: action, request_key: request_key, message: message});
+    }
+
+    public policies_drop_procedure(procedure_name: string) {
+        return this.callAPI("GET", "/v1/policies/drop_procedure/" + procedure_name);
+    }
+
+    public policies_create_procedure(procedure_name: string,
+                                     parameters: any,
+                                     requires: string,
+                                     type: string,
+                                     description: string,
+                                     request_role: string,
+                                     request_alert: string,
+                                     request_default_message: string,
+                                     endorse_alert: string,
+                                     endorse_default_message: string,
+                                     endorse_agent_count: any,
+                                     deny_alert: string,
+                                     execute_on_endorse: string,
+                                     execute_alert: string,
+                                     sql: string) {
+        return this.callAPI("POST", "/v1/policies/create_procedure", {
+            procedure_name: procedure_name,
+            parameters: parameters,
+            requires: requires ? requires : "",
+            type: type ? type : "policy",
+            description: description ? description : procedure_name,
+            request_role: request_role ? request_role : "",
+            request_alert: request_alert ? request_alert : "",
+            request_default_message: request_default_message ? request_default_message : "",
+            endorse_alert: endorse_alert ? endorse_alert : "",
+            endorse_default_message: endorse_default_message ? endorse_default_message : "",
+            endorse_agent_count: endorse_agent_count,
+            deny_alert: deny_alert ? deny_alert : "",
+            execute_on_endorse: execute_on_endorse ? execute_on_endorse:"false",
+            execute_alert: execute_alert ? execute_alert : "",
+            sql: sql,
+        });
+    }
+
+    public policies_get_policy_projections(query: any) {
+        return this.callAPI("PUT", "/v1/policies/get_policy_projections", query);
+    }
+
+    public policies_set_policy_projection(table_name: string, column_name: string, projection_expression: string, policy_name: string, table_type: string) {
+        return this.callAPI("PUT", "/v1/policies/set_policy_projection", {
+            table_name: table_name,
+            column_name: column_name,
+            projection_expression: projection_expression ? projection_expression : "masked",
+            policy_name: policy_name ? policy_name : "default",
+            table_type: table_type ? table_type : "table",
+        });
+    }
+
+    public search_users_with_policy(policy: string, options: any) {
+        return this.callAPI("PUT", "/v1/policies/" + policy + "/users", options);
+    }
+
+    public search_roles_with_policy(policy: string, options: any) {
+        return this.callAPI("PUT", "/v1/policies/" + policy + "/roles", options);
+    }
+
+    // HTTP PROXY
+    public get_http_apifilters(query: any) {
+        return this.callAPI("GET", "/v1/policies/http_apifilters", query);
+    }
+
+    public get_http_apireveals(query: any) {
+        return this.callAPI("GET", "/v1/policies/http_apireveals", query);
+    }
+
+
+    public add_http_apifilter(filter: any) {
+        return this.callAPI("POST", "/v1/policies/create_http_apifilter", {filter: filter});
+    }
+
+    public set_http_apifilter(filter: any) {
+        return this.callAPI("PUT", "/v1/policies/set_http_apifilter/" + filter.id, {filter: filter});
+    }
+
+    public delete_http_apifilter(filter_id: Number) {
+        return this.callAPI("DELETE", "/v1/policies/delete_http_apifilter/" + filter_id);
+    }
+
+    public activate_http_apifilter(filter_id: Number) {
+        return this.callAPI("PUT", "/v1/policies/activate_http_apifilter/" + filter_id);
+    }
+
+    public disable_http_apifilter(filter_id: Number) {
+        return this.callAPI("PUT", "/v1/policies/disable_http_apifilter/" + filter_id);
+    }
+
+    //
+    // Wireguard
+    //
+
+    public search_wireguard_peers(options: any) {
+        return this.callAPI("GET", "/v1/wireguard", options);
+    }
+
+    public create_wireguard_peer(peer: WireguardPeer): Promise<AddWireguardPeerResponse> {
+        return this.callAPI("POST", "/v1/wireguard", {peer: peer});
+    }
+
+    public delete_wireguard_peer(id: string) {
+        return this.callAPI("DELETE", "/v1/wireguard/" + id);
+    }
+
+    public get_wireguard_log() {
+        return this.callAPI("GET", "/v1/wireguard/log");
+    }
+
+    public get_wireguard_status() {
+        return this.callAPI("GET", "/v1/wireguard/status");
+    }
+
+    public get_wireguard_peers() {
+        return this.callAPI("GET", "/v1/wireguard/all");
+    }
+
+    public reload_wireguard_config() {
+        return this.callAPI("POST", "/v1/wireguard/reload");
+    }
 }

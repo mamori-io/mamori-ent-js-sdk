@@ -41,6 +41,14 @@ import { DMService, LoginResponse } from './api';
  export class Datasource {
 
     /**
+     * @param api 
+     * @returns All the datasources this user has access to.
+     */
+    public static async getAll(api: DMService) {
+        return api.callAPI("GET", '/v1/user_systems');
+    }
+
+    /**
      * @param ds 
      * @returns 
      */

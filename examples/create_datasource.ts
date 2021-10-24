@@ -6,19 +6,19 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { ExampleWrapper } from '../example_wrapper' ;
-import { DMService } from '../../dist/api';
-import { Datasource } from '../../dist/datasource';
+import { ExampleWrapper } from './example_wrapper' ;
+import { DMService } from '../dist/api';
+import { Datasource } from '../dist/datasource';
 import { ParsedArgs } from 'minimist';
 
 let eg = async function (dm: DMService, _args: ParsedArgs) {
   let egSystem = new Datasource("test_system") ;
   try {
     await egSystem.delete(dm);
-    console.info("Delete system: ", egSystem);
+    console.info("Delete system: ", egSystem.name);
   }
   catch (e) {
-    console.info("Delete system: ", (e as Error).message);
+    console.info("Delete system ", egSystem.name, ": ", (e as Error).message);
   }
 
   egSystem.ofType("POSTGRESQL", 'postgres')
@@ -28,7 +28,7 @@ let eg = async function (dm: DMService, _args: ParsedArgs) {
           .withDatabase('mamori')
           .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
   await egSystem.create(dm) ;
-  console.info("Created system: ", egSystem);
+  console.info("Created ", egSystem);
 
   
   // Alternative
@@ -37,7 +37,7 @@ let eg = async function (dm: DMService, _args: ParsedArgs) {
     console.info("Delete system: test2_system");
   }
   catch (e) {
-    console.info("Delete system: ", (e as Error).message);
+    console.info("Delete system test2_system: ", (e as Error).message);
   }
 
   await Datasource.build({

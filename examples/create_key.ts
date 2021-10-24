@@ -6,57 +6,59 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { ExampleWrapper } from '../example_wrapper' ;
-import { DMService } from '../../dist/api';
-import { Key } from '../../dist/key';
+import { Runnable } from '../dist/runnable' ;
+import { DMService } from '../dist/api';
+import { Key } from '../dist/key';
 import { ParsedArgs } from 'minimist';
 
-let eg = async function (dm: DMService, _args: ParsedArgs) {
-  console.info("All keys: ", await Key.get_all(dm));
-
-  // AES
-  let aesKey = new Key("test_aes") ;
-  try {
-    await aesKey.delete(dm);
-    console.info("Delete key: ", aesKey);
-  }
-  catch (e) {
-    console.info("Delete key: ", aesKey, (e as Error).message);
-  }
-  aesKey.ofType('AES')
-          .withKey('JaNdRgUjXn2r5u8x/A?D(G+KbPeShVmY');
-  await aesKey.create(dm) ;
-  console.info("Created key: ", aesKey);
+class CreateKeyExample extends Runnable {
   
-  // RSA
-  try {
-    await Key.build({name: "test_rsa_public"}).delete(dm);
-    console.info("Delete key: test_rsa_public");
-  }
-  catch (e) {
-    console.info("Delete key: test_rsa_public", (e as Error).message);
-  }
-  try {
-    await Key.build({name: "test_rsa_private"}).delete(dm);
-    console.info("Delete key: test_rsa_private");
-  }
-  catch (e) {
-    console.info("Delete key: test_rsa_private", (e as Error).message);
-  }
-  await Key.build({name: "test_rsa", type: 'RSA', size: 2048}).create(dm) ;
-  console.info("Created key pair: test_rsa");
+  async run(dm: DMService, _args: ParsedArgs): Promise<void> {
+    console.info("All keys: ", await Key.getAll(dm));
 
-  // SSH
-  let sshKey = new Key("test_ssh") ;
-  try {
-    await sshKey.delete(dm);
-    console.info("Delete key: ", sshKey);
-  }
-  catch (e) {
-    console.info("Delete key: ", sshKey, (e as Error).message);
-  }
-  sshKey.ofType('SSH')
-        .withKey(
+    // AES
+    let aesKey = new Key("test_aes") ;
+    try {
+      await aesKey.delete(dm);
+      console.info("Delete key: ", aesKey);
+    }
+    catch (e) {
+      console.info("Delete key: ", aesKey, (e as Error).message);
+    }
+    aesKey.ofType('AES')
+            .withKey('JaNdRgUjXn2r5u8x/A?D(G+KbPeShVmY');
+    await aesKey.create(dm) ;
+    console.info("Created key: ", aesKey);
+    
+    // RSA
+    try {
+      await Key.build({name: "test_rsa_public"}).delete(dm);
+      console.info("Delete key: test_rsa_public");
+    }
+    catch (e) {
+      console.info("Delete key: test_rsa_public", (e as Error).message);
+    }
+    try {
+      await Key.build({name: "test_rsa_private"}).delete(dm);
+      console.info("Delete key: test_rsa_private");
+    }
+    catch (e) {
+      console.info("Delete key: test_rsa_private", (e as Error).message);
+    }
+    await Key.build({name: "test_rsa", type: 'RSA', size: 2048}).create(dm) ;
+    console.info("Created key pair: test_rsa");
+
+    // SSH
+    let sshKey = new Key("test_ssh") ;
+    try {
+      await sshKey.delete(dm);
+      console.info("Delete key: ", sshKey);
+    }
+    catch (e) {
+      console.info("Delete key: ", sshKey, (e as Error).message);
+    }
+    sshKey.ofType('SSH')
+          .withKey(
 '-----BEGIN OPENSSH PRIVATE KEY-----\n' +
 'b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn\n' +
 'NhAAAAAwEAAQAAAYEA7zCptx89c/5WLXAAIFHtFQ5o2JuA3VSMv9y2PCRStCLM+jxyR6OI\n' +
@@ -95,14 +97,14 @@ let eg = async function (dm: DMService, _args: ParsedArgs) {
 'NORYW6zyLKhpr+j3Tt0znpMjDrSz1k7JhfSZXdFGL5jYDrKk80HXhowZwXwsgqJCp1HsoM\n' +
 '+652+fpaJc9+KTAAAAD3BldGVyQEVhc3liZWF0cwECAw==\n' +
 '-----END OPENSSH PRIVATE KEY-----'
-        );
-  await sshKey.create(dm) ;
-  console.info("Created key: ", sshKey);
-  
-  console.info("All keys: ", await Key.get_all(dm));
+          );
+    await sshKey.create(dm) ;
+    console.info("Created key: ", sshKey);
+    
+    console.info("All keys: ", await Key.getAll(dm));
+  }
 }
 
-let rapt = new ExampleWrapper(eg, process.argv) ;
-rapt.execute()
-    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-    .finally(() => process.exit(0));
+new CreateKeyExample().execute()
+  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+  .finally(() => process.exit(0));

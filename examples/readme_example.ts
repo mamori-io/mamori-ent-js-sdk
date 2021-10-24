@@ -11,21 +11,24 @@
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 import { DMService } from '../dist/api';
+import { Datasource } from '../dist/datasource';
 
 let mamoriUrl  = "https://localhost:443/" ;
 let mamoriUser = "alice" ;
 let mamoriPwd  = "mirror" ;
 
-let dm = new DMService(mamoriUrl);
-
 async function display_systems() {
+  let dm = new DMService(mamoriUrl);
+
   console.info("Connecting...");
   let login = await dm.login(mamoriUser, mamoriPwd);
   console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
 
   console.info("Fetching user systems...");
-  let systems = await dm.user_systems();
+  let systems = await Datasource.getAll(dm);
   console.info("User systems: ", systems);
 }
 
-display_systems().catch(e => console.error("ERROR: ", e)).finally(() => process.exit(0));
+display_systems()
+  .catch(e => console.error("ERROR: ", e))
+  .finally(() => process.exit(0));

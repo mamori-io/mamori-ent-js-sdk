@@ -8,6 +8,8 @@ yarn add typescript
 yarn add typedoc
 yarn add @types/node
 yarn add @types/minimist
+
+yarn build
 ```
 
 ## Usage
@@ -22,6 +24,7 @@ Example script: login and list available datasources
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 import { DMService } from 'mamori-ent-js-api';
+import { Datasource } from 'mamori-ent-js-api';
 
 let mamoriUrl  = "https://localhost/" ;
 let mamoriUser = "alice" ;
@@ -29,20 +32,26 @@ let mamoriPwd  = "mirror" ;
 
 let dm = new DMService(mamoriUrl);
 
-async function display_systems() {
+async function display_datasources() {
+  let api = new DMService(mamoriUrl);
+
   console.info("Connecting...");
-  let login = await dm.login(mamoriUser, mamoriPwd);
+  let login = await api.login(mamoriUser, mamoriPwd);
   console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
 
-  console.info("Fetching user systems...");
-  let systems = await dm.user_systems();
-  console.info("User systems: ", systems);
+  console.info("Fetching user datasources...");
+  let datasources = await Datasource.getAll(api);
+  console.info("User datasources: ", datasources);
 }
 
-display_systems().catch(e => console.error("ERROR: ", e)).finally(() => process.exit(0));
+display_datasources()
+  .catch(e => console.error("ERROR: ", e))
+  .finally(() => process.exit(0));
 ```
 
 For more examples, see `./examples/`.
+
+For several useful one-task scripts, see `./scripts/`.
 
 ## Documentation
 To generate, execute `./generate_docs.sh` and open `./docs/index.html` to view.

@@ -6,8 +6,9 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { ExampleWrapper } from '../example_wrapper' ;
-import { DMService } from '../../dist/api';
+import { ExampleWrapper } from './example_wrapper' ;
+import { DMService } from '../dist/api';
+import { Role } from '../dist/role';
 import { ParsedArgs } from 'minimist';
 
 let mgrRoleName = "data_manager";
@@ -21,32 +22,34 @@ let eg = async function (dm: DMService, args: ParsedArgs) {
 
   // Roles
   //
-  var mgrRole = await dm.role(mgrRoleName);
-  if (mgrRole) {
-    console.info("mgrRole: ", mgrRoleName);
+  let mgrRole = await new Role(mgrRoleName) ;
+  if (await mgrRole.get(dm)) {
+    console.info("Endorser role: ", mgrRole.name);
   }
   else {
-    mgrRole = await dm.create_role({ roleid: mgrRoleName });
-    console.info("Created role: ", mgrRoleName);
+    await mgrRole.create(dm) ;
+    console.info("Created role: ", mgrRole.name);
+    await mgrRole.grant(dm, ['REQUEST'], "*", false) ;
   }
 
-  var userRole = await dm.role(userRoleName);
-  if (userRole) {
-    console.info("userRole: ", userRoleName);
+  let userRole = await new Role(userRoleName) ;
+  if (await userRole.get(dm)) {
+    console.info("User role: ", userRole.name);
   }
   else {
-    userRole = await dm.create_role({ roleid: userRoleName });
-    console.info("Created role: ", userRoleName);
+    await userRole.create(dm) ;
+    console.info("Created role: ", userRole.name);
   }
 
-  var revealRole = await dm.role(revealRoleName);
-  if (revealRole) {
-    console.info("revealRole: ", revealRoleName);
+  let endorseRole = await new Role(revealRoleName) ;
+  if (await endorseRole.get(dm)) {
+    console.info("Endorser role: ", endorseRole.name);
   }
   else {
-    revealRole = await dm.create_role({ roleid: revealRoleName });
-    console.info("Created role: ", revealRoleName);
+    await endorseRole.create(dm) ;
+    console.info("Created role: ", endorseRole.name);
   }
+
   console.info("");
 
   //  https://world.openfoodfacts.org/
