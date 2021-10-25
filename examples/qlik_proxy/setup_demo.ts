@@ -6,10 +6,11 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { ExampleWrapper } from '../example_wrapper' ;
+import { ParsedArgs } from 'minimist';
+
 import { DMService } from '../../dist/api';
 import { Role } from '../../dist/role';
-import { ParsedArgs } from 'minimist';
+import { Runnable } from '../../dist/runnable' ;
   
 let mgrRoleName: string = "qlik_manager";
 let userRoleName: string = "qlik_user";
@@ -34,97 +35,103 @@ let usage: string =
 "   \n" +
 "If endorsed, the requester will be granted the qlik_manager role temporarily, revealing the masked data for N seconds.\n" ;
 
-let eg = async function (dm: DMService, args: ParsedArgs) {
-  //
-  // Qlik roles
-  //
-  let mgrRole = await new Role(mgrRoleName) ;
-  if (await mgrRole.get(dm)) {
-    console.info("Endorser role: ", mgrRole.name);
-  }
-  else {
-    await mgrRole.create(dm) ;
-    console.info("Created role: ", mgrRole.name);
-    await mgrRole.grant(dm, ['REQUEST'], "*", false) ;
+class QlikDemo extends Runnable {
+
+  constructor() {
+    super(usage) ;
   }
 
-  let userRole = await new Role(userRoleName) ;
-  if (await userRole.get(dm)) {
-    console.info("User role: ", userRole.name);
-  }
-  else {
-    await userRole.create(dm) ;
-    console.info("Created role: ", userRole.name);
-  }
+  async run(dm: DMService, _args: ParsedArgs): Promise<void> {
+    //
+    // Qlik roles
+    //
+    let mgrRole = await new Role(mgrRoleName) ;
+    if (await mgrRole.get(dm)) {
+      console.info("Endorser role: ", mgrRole.name);
+    }
+    else {
+      await mgrRole.create(dm) ;
+      console.info("Created role: ", mgrRole.name);
+      await mgrRole.grant(dm, ['REQUEST'], "*", false) ;
+    }
 
-  let endorseRole = await new Role(endorseRoleName) ;
-  if (await endorseRole.get(dm)) {
-    console.info("Endorser role: ", endorseRole.name);
-  }
-  else {
-    await endorseRole.create(dm) ;
-    console.info("Created role: ", endorseRole.name);
-    await endorseRole.grant(dm, ['REQUEST'], "*", false) ;
-  }
+    let userRole = await new Role(userRoleName) ;
+    if (await userRole.get(dm)) {
+      console.info("User role: ", userRole.name);
+    }
+    else {
+      await userRole.create(dm) ;
+      console.info("Created role: ", userRole.name);
+    }
 
-  //
-  //  Qliksense filter
-  //
+    let endorseRole = await new Role(endorseRoleName) ;
+    if (await endorseRole.get(dm)) {
+      console.info("Endorser role: ", endorseRole.name);
+    }
+    else {
+      await endorseRole.create(dm) ;
+      console.info("Created role: ", endorseRole.name);
+      await endorseRole.grant(dm, ['REQUEST'], "*", false) ;
+    }
 
-  // Teardown existing
-  var filterResult = await dm.get_http_apifilters([["name", "=", filterName]]);
-  if (filterResult.data && filterResult.data.length > 0) {
-    await dm.delete_http_apifilter(filterResult.data[0].id);
-    console.info("Deleted filter: ", filterName);
-  }
-  await dm.policies_drop_procedure(accessName);
-  console.info("Deleted procedure: ", accessName);
+    //
+    //  Qliksense filter
+    //
 
-  // Setup anew
-  await dm.add_http_apifilter({
-    name: filterName,
-    system: "qlik",
-    type: "qlik",
-    path: "Customer Detail",
-    method: "",
-    queryparameters: "",
-    headers: "",
-    body: "",
-    owner: args._[0],
-    transformations: 
-      '[{"name":"default","priority":1,"function":"MASK HASH","elementSpec":"Customer Name","functionArgs":"MD5"},' +
-      '{"name":"default","priority":1,"function":"MASK FULL","elementSpec":"Customer Gender"},' +
-      '{"name":"default","priority":1,"function":"MASK FULL","elementSpec":"Sales Revenue (Current Year)","functionArgs":"9|$,"},' +
-      '{"name":"qlik_manager","priority":1,"function":"REVEAL","elementSpec":"*"}]',
-  });
-  console.info("Created Qlik filter: ", filterName);
+    // Teardown existing
+    var filterResult = await dm.get_http_apifilters([["name", "=", filterName]]);
+    if (filterResult.data && filterResult.data.length > 0) {
+      await dm.delete_http_apifilter(filterResult.data[0].id);
+      console.info("Deleted filter: ", filterName);
+    }
+    await dm.policies_drop_procedure(accessName);
+    console.info("Deleted procedure: ", accessName);
 
-  await dm.policies_create_procedure(accessName,
-    {a: {name: "time", description: "Duration of access", default_value: "30"}},
-    endorseRoleName,
-    "policy",
-    "Grant access to Qlik data",
-    userRoleName,
-    "",
-    "",
-    "",
-    "",
-    "1",
-    "",
-    "true",
-    "",
-    "BEGIN; GRANT " + mgrRoleName + " TO :applicant VALID FOR :time seconds; END");
-  console.info("Created access policy: ", accessName);
+    // Setup anew
+    await dm.add_http_apifilter({
+      name: filterName,
+      system: "qlik",
+      type: "qlik",
+      path: "Customer Detail",
+      method: "",
+      queryparameters: "",
+      headers: "",
+      body: "",
+      owner: args._[0],
+      transformations: 
+        '[{"name":"default","priority":1,"function":"MASK HASH","elementSpec":"Customer Name","functionArgs":"MD5"},' +
+        '{"name":"default","priority":1,"function":"MASK FULL","elementSpec":"Customer Gender"},' +
+        '{"name":"default","priority":1,"function":"MASK FULL","elementSpec":"Sales Revenue (Current Year)","functionArgs":"9|$,"},' +
+        '{"name":"qlik_manager","priority":1,"function":"REVEAL","elementSpec":"*"}]',
+    });
+    console.info("Created Qlik filter: ", filterName);
 
-  var filterResult = await dm.get_http_apifilters({ filter: ["name", "=", filterName] });
-  if (filterResult) {
-    await dm.activate_http_apifilter(filterResult.data[0].id);
-    console.info("Activated filter: ", filterName);
+    await dm.policies_create_procedure(accessName,
+      {a: {name: "time", description: "Duration of access", default_value: "30"}},
+      endorseRoleName,
+      "policy",
+      "Grant access to Qlik data",
+      userRoleName,
+      "",
+      "",
+      "",
+      "",
+      "1",
+      "",
+      "true",
+      "",
+      "BEGIN; GRANT " + mgrRoleName + " TO :applicant VALID FOR :time seconds; END");
+    console.info("Created access policy: ", accessName);
+
+    var filterResult = await dm.get_http_apifilters({ filter: ["name", "=", filterName] });
+    if (filterResult) {
+      await dm.activate_http_apifilter(filterResult.data[0].id);
+      console.info("Activated filter: ", filterName);
+    }
   }
 }
 
-let rapt = new ExampleWrapper(eg, process.argv) ;
-rapt.usage = usage ;
-rapt.execute()
-    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-    .finally(() => process.exit(0));
+new QlikDemo()
+  .execute()
+  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+  .finally(() => process.exit(0));

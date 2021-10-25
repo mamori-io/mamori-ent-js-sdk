@@ -40,7 +40,7 @@ import { DMService } from './api';
         return result ;
     }
 
-    public static async getAll(api: DMService) {
+    public static getAll(api: DMService) : Promise<any> {
         return api.callAPI("GET", "/v1/encryption_keys");
     }
     
@@ -68,7 +68,7 @@ import { DMService } from './api';
      * @param api 
      * @returns 
      */
-    public async create(api: DMService) {
+    public create(api: DMService) : Promise<any> {
         if (this.type == 'RSA' && this.key == null) {
             return api.callAPI("POST", "/v1/encryption_keys/create/rsapair", {
                 name: this.name,
@@ -85,11 +85,11 @@ import { DMService } from './api';
         }
     }
 
-    public async delete(api: DMService) {
+    public delete(api: DMService) : Promise<any> {
         return api.callAPI("DELETE", "/v1/encryption_keys/" + this.name) ;
     }
 
-    public async rename(api: DMService, name: string) {
+    public rename(api: DMService, name: string) : Promise<any> {
         return api.callAPI("PUT", "/v1/encryption_keys/" + this.name, {name: name});
     }
 
@@ -98,15 +98,15 @@ import { DMService } from './api';
      * @param api 
      * @returns 
      */
-    public async update(api: DMService) {
+    public update(api: DMService) : Promise<any> {
         return api.callAPI("PUT", "/v1/encryption_keys/" + this.name, this.key);
     }
 
-    public async grantTo(api: DMService, grantee: string) {
+    public grantTo(api: DMService, grantee: string) : Promise<any> {
         return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: [this.name]});
     }
 
-    public async revokeFrom(api: DMService, grantee: string) {
+    public revokeFrom(api: DMService, grantee: string) : Promise<any> {
         return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: [this.name]});
     }
 

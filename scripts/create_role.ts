@@ -13,11 +13,11 @@ import {Runnable} from "../dist/runnable";
 
 let usage: string =
     "Usage:\n" +
-    "   yarn ts-node --transpile-only examples/configure/create_role.ts [--help] [--url <url>] <user> <password> <role> [externalName [priority]]\n" +
+    "   yarn ts-node --transpile-only script/create_role.ts [--help] [--url <url>] <user> <password> <role> [externalName [priority]]\n" +
     "where:\n" +
     "   user                mamori server user\n" +
-    "   password            user password" +
-    "   url                 Default: localhost:443" +
+    "   password            user password\n" +
+    "   url                 Default: localhost:443\n" +
     "   role                role name\n";
 
 class CreateRole extends Runnable {

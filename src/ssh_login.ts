@@ -34,7 +34,7 @@ import { sqlEscape } from './utils';
   */
  export class SshLogin {
 
-    public static async getAll(api: DMService): Promise<SshLoginDesc[]> {
+    public static getAll(api: DMService): Promise<SshLoginDesc[]> {
         return api.simple_query("call ssh_logins()");
     }
 
@@ -72,7 +72,7 @@ import { sqlEscape } from './utils';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-    public async create(api: DMService) {
+    public create(api: DMService) : Promise<any> {
         let uri =  "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port);
         let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" + sqlEscape(uri) + "', '" + this.privateKey +  "', '" +  sqlEscape(this.password || "") + "')" ;
         return api.query(query) ;       
@@ -83,15 +83,15 @@ import { sqlEscape } from './utils';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-     public async delete(api: DMService) {
+     public delete(api: DMService) : Promise<any> {
         return api.query("CALL DELETE_SSH_LOGIN('" + sqlEscape(this.name) + "')") ;
     }
 
-    public async grantTo(api: DMService, grantee: string) {
+    public grantTo(api: DMService, grantee: string) : Promise<any> {
         return api.grant_to(grantee, ['SSH'], this.name);
     }
 
-    public async revokeFrom(api: DMService, grantee: string) {
+    public revokeFrom(api: DMService, grantee: string) : Promise<any> {
         return api.revoke_from(grantee, ['SSH'], this.name);
     }
 

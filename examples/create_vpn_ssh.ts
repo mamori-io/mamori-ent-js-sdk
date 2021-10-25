@@ -6,13 +6,14 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { Runnable } from '../dist/runnable' ;
+import * as fs from "fs";
+import { ParsedArgs } from 'minimist';
+import { promisify } from "util";
+
 import { DMService } from '../dist/api';
 import { Key } from '../dist/key';
+import { Runnable } from '../dist/runnable' ;
 import { SshTunnel } from '../dist/network';
-import { ParsedArgs } from 'minimist';
-import * as fs from "fs";
-import { promisify } from "util";
 
 let usage =
 "Usage:\n" + 

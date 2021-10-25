@@ -8,15 +8,15 @@
  *
   *  */
 
-import {DMService} from '../../dist/api';
-import {Runnable} from "../runnable";
+import {DMService} from '../dist/api';
+import {Runnable} from "../dist/runnable";
 import {ParsedArgs} from "minimist";
 
 let grantRole = "mamori_admin";
 
 let usage: string =
     "Usage:\n" +
-    "   yarn ts-node --transpile-only examples/configure/create_admin.ts [--help] [--url <url>] <user> <password> <admin user> <admin password>\n" +
+    "   yarn ts-node --transpile-only scripts/create_admin.ts [--help] [--url <url>] <user> <password> <admin user> <admin password>\n" +
     "where:\n" +
     "   user                mamori server user\n" +
     "   password            user password" +

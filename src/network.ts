@@ -10,7 +10,7 @@ import { DMService } from './api';
 
 export class Network {
 
-    public static async getAll(api: DMService) {
+    public static getAll(api: DMService) : Promise<any> {
         return api.callAPI("GET", "/v1/vpns");
     }
 
@@ -25,7 +25,7 @@ export class Network {
         this.type = type;
     }
 
-    public async create(api: DMService) {
+    public create(api: DMService) : Promise<any> {
         return api.callAPI("POST", "/v1/vpns", {
             vpn: {
                 name: this.name, 
@@ -36,23 +36,23 @@ export class Network {
        }) ;
     }
      
-    public async delete(api: DMService) {
+    public delete(api: DMService) : Promise<any> {
         return api.callAPI("DELETE", "/v1/vpns/" + this.name) ;
     }
 
-    public async start(api: DMService) {
+    public start(api: DMService) : Promise<any> {
         return api.callAPI("PUT", "/v1/vpns/" + this.name + "/start");
     }
 
-    public async status(api: DMService) {
+    public status(api: DMService) : Promise<any> {
         return api.callAPI("GET", "/v1/vpns/" + this.name + "/status");
     }
 
-    public async stop(api: DMService) {
+    public stop(api: DMService) : Promise<any> {
         return api.callAPI("PUT", "/v1/vpns/" + this.name + "/stop");
     }
 
-    public async getConnectionLog(api: DMService) {
+    public getConnectionLog(api: DMService) : Promise<any> {
         return api.callAPI("GET", "/v1/vpns/" + this.name + "/logs");
     }
 

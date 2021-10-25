@@ -9,9 +9,10 @@
 // allow for self signed certs
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import {DMService} from './api';
 import minimist = require('minimist');
 import {ParsedArgs} from 'minimist';
+
+import {DMService} from './api';
 
 /**
  * Base class for runnable script snippets. Sublass and implement the run method.
@@ -57,20 +58,20 @@ export abstract class Runnable {
             return;
         }
 
-        let dm = new DMService("https://" + this.args.url + "/");
+        let api = new DMService("https://" + this.args.url + "/");
         try {
             console.info("\nConnecting...");
-            let login = await dm.login(this.args._[0] || "root", this.args._[1] || "test");
+            let login = await api.login(this.args._[0], this.args._[1]);
             console.info("Login successful for: ", login.fullname || login.name, ", session: ", login.session_id);
 
-            await this.run(dm, this.args);
+            await this.run(api, this.args);
         } 
         catch (err) {
             console.error(err);
         } 
         finally {
             console.info("\nDisconnecting...");
-            await dm.logout();
+            await api.logout();
         }
     }
 

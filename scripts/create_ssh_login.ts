@@ -5,17 +5,15 @@
  * Parties accessing this software are required to maintain the confidentiality of all such information.
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
- *
  */
-
-import {DMService} from '../dist/api';
-import {SshLogin} from '../dist/ssh_login';
-import {Runnable} from "../dist/runnable";
 import {ParsedArgs} from "minimist";
+import {DMService} from '../dist/api';
+import {Runnable} from "../dist/runnable";
+import {SshLogin} from '../dist/ssh_login';
 
 let usage: string =
     "Usage:\n" +
-    "   yarn ts-node --transpile-only examples/configure/create_mssql_ds.ts [--help] [--url url] user password name host[:port] user key_name [ssh_password] [--force] \n" +
+    "   yarn ts-node --transpile-only script/create_ssh_login.ts [--help] [--url url] user password name host[:port] user key_name [ssh_password] [--force] \n" +
     "where:\n" + 
     "   user\t\tmamori server user\n" +
     "   password\n" +

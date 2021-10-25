@@ -111,6 +111,7 @@ export interface QueryResponse {
 }
 
 export class DMService {
+
     private _base: string;
     private _http: AxiosInstance;
     private _csrf = "";
@@ -126,6 +127,8 @@ export class DMService {
     private _queries: StringIndexed<PromiseHolder> = {};
     private _lastAccess: Nullable<number> = null;
     private _authorization: Nullable<string> = null;
+
+    username?: string ;
 
     constructor(base: string, httpsAgent?: https.Agent) {
         this._base = base;
@@ -232,17 +235,20 @@ export class DMService {
 
     logout(): Promise<void> {
         this.disconnectSocket();
-        let result;
 
+        let result;
         if (this.claims) {
-            result = this._http.request({method: 'DELETE', url: '/sessions/logout'}).then(() => {
+            result = this._http.request({method: 'DELETE', url: '/sessions/logout'})
+            .then(() => {
                 this.authorization = null;
             });
-        } else {
+        } 
+        else {
             result = Promise.resolve();
             this.authorization = null;
         }
 
+        this.username = undefined ;
         return result;
     }
 
@@ -252,7 +258,7 @@ export class DMService {
 
     // websocket stuff
 
-    private resetSocket(reason: string) {
+    private resetSocket(_reason: string) {
         if (this._socket && this._socket.reconnectTimer) {
             this._socket.reconnectTimer.callback = () => console.log("nop");
             this._socket.reconnectTimer.reset();
@@ -327,7 +333,6 @@ export class DMService {
                 console.error(e);
             }
         }
-        // this.resetSocket("Disconnect");
     }
 
     public join(name: string, params: any, routeChangeCallback?: (channel: any) => any): Promise<Channel> {
@@ -456,9 +461,12 @@ export class DMService {
         return this._http.request({
             method: "GET",
             url: "/"
-        }).then(root => {
+        })
+        .then(root => {
             let body = root.data;
-            this._csrf = body.split(/[<>]/).filter((s: string) => s.match(/csrf-token/)).map((s: string) => s.replace(/^.*content="/, "").replace(/".*$/, ""))[0];
+            this._csrf = body.split(/[<>]/)
+                             .filter((s: string) => s.match(/csrf-token/))
+                             .map((s: string) => s.replace(/^.*content="/, "").replace(/".*$/, ""))[0];
             this._cookies = root.headers['set-cookie'].map((s: string) => {
                 let parts = s.split(";");
                 return parts[0];
@@ -476,8 +484,10 @@ export class DMService {
                     "Cookie": this._cookies,
                     "X-CSRF-Token": this._csrf
                 }
-            }).then(resp => {
+            })
+            .then(resp => {
                 this.authorization = resp.data;
+                this.username = username ;
                 return resp.data as LoginResponse;
             });
         });
@@ -680,17 +690,37 @@ export class DMService {
     // Administration
     //
 
+    public system_properties() {
+        return this.callAPI("GET", "/v1/server_properties");
+    }
+
+    public get_system_properties(query: string) {
+        return this.callAPI("GET", "/v1/server_properties"+query);
+    }
+
+    public set_system_properties(jsonProperties: any) {
+           return this.callAPI("PUT", "/v1/server_properties", {properties: jsonProperties});
+    }
+
+    public set_system_property(name: string, value: any) {
+        return this.callAPI("PUT", "/v1/server_properties/" + name, {value: value});
+    }
+
+    //
+    // Activity monitoring
+    //
+
     public connection_info(ssid: string) {
         return this.callAPI("GET", "/v1/connection_log/" + ssid);
     }
 
-    public cancel_session(ssid: string) {
-        return this.callAPI("GET", "/v1/session/cancel/" + ssid);
-    }
+    // public cancel_session(ssid: string) {
+    //     return this.callAPI("GET", "/v1/session/cancel/" + ssid);
+    // }
 
-    public get_session_info(ssid: string) {
-        return this.callAPI("GET", "/v1/session/info/" + ssid);
-    }
+    // public get_session_info(ssid: string) {
+    //     return this.callAPI("GET", "/v1/session/info/" + ssid);
+    // }
 
     public active_sessions(show_root: boolean) {
         return new Promise((resolve, reject) => {
@@ -723,38 +753,22 @@ export class DMService {
         return this.callAPI("GET", "/v1/ssh/" + ssid, options);
     }
 
-    public system_properties() {
-        return this.callAPI("GET", "/v1/server_properties");
-    }
-
-    public get_system_properties(query: string) {
-        return this.callAPI("GET", "/v1/server_properties"+query);
-    }
-
-    public set_system_properties(jsonProperties: any) {
-           return this.callAPI("PUT", "/v1/server_properties", {properties: jsonProperties});
-    }
-
-    public set_system_property(name: string, value: any) {
-        return this.callAPI("PUT", "/v1/server_properties/" + name, {value: value});
-    }
-
     //
     // Drivers
     //
 
-    public driver_types() {
-        // NOTE: this is cached as the back end is returning a hard coded list of values for this request
-        return this.callAPI("GET", "/v1/driver_types", null, null, true);
-    }
+    // public driver_types() {
+    //     // NOTE: this is cached as the back end is returning a hard coded list of values for this request
+    //     return this.callAPI("GET", "/v1/driver_types", null, null, true);
+    // }
 
     public drivers_resources(drivername: string) {
         return this.callAPI("GET", "/v1/drivers/" + drivername + "/files");
     }
 
-    public drivers() {
-        return this.callAPI("GET", "/v1/drivers");
-    }
+    // public drivers() {
+    //     return this.callAPI("GET", "/v1/drivers");
+    // }
 
     public drivers_for_type(driver_type: string) {
         return this.callAPI("GET", "/v1/drivers?type=" + driver_type);
@@ -879,9 +893,9 @@ export class DMService {
     // Roles
     //
 
-    public get_grantee_roles(roleid: string) {
-        return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee");
-    }
+    // public get_grantee_roles(roleid: string) {
+    //     return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee");
+    // }
 
     public get_grantee_grantable_roles(roleid: string) {
         return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee/grantable");
@@ -891,9 +905,9 @@ export class DMService {
         return this.callAPI("GET", "/v1/roles/" + roleid + "/roles");
     }
 
-    public get_roles_by_username(roleid: string) {
-        return this.callAPI("GET", "/v1/username/" + roleid + "/roles");
-    }
+    // public get_roles_by_username(roleid: string) {
+    //     return this.callAPI("GET", "/v1/username/" + roleid + "/roles");
+    // }
 
     // public roles(query: string = "") {
     //     return this.callAPI("GET", "/v1/roles?distinct=Y"+query);
@@ -966,19 +980,19 @@ export class DMService {
         return this.callAPI("POST", "/v1/roles/" + role + "/credentials", {db_credentials: credentials});
     }
 
-    public add_datasource_authorization_to(grantee: string, datasource: string, username: string, password: string) {
-        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization",
-            {datasource: datasource, username: username, password: password});
-    }
+    // public add_datasource_authorization_to(grantee: string, datasource: string, username: string, password: string) {
+    //     return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization",
+    //         {datasource: datasource, username: username, password: password});
+    // }
 
-    public drop_datasource_authorization_from(grantee: string, datasource: string) {
-        return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {datasource: datasource});
-    }
+    // public drop_datasource_authorization_from(grantee: string, datasource: string) {
+    //     return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {datasource: datasource});
+    // }
 
-    public validate_datasource_authorization(grantee: string, datasource: string, username: string, password: string) {
-        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate",
-            {datasource: datasource, username: username, password: password});
-    }
+    // public validate_datasource_authorization(grantee: string, datasource: string, username: string, password: string) {
+    //     return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate",
+    //         {datasource: datasource, username: username, password: password});
+    // }
 
     public grant_roles_to_user(username: string, roles: string[]) {
         return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
@@ -1113,12 +1127,8 @@ export class DMService {
         return this.callAPI("GET", '/v1/permissions', conditions);
     }
 
-    public system() {
-        return this.callAPI("GET", '/v1/permissions/dbtree');
-    }
-
-    // public user_systems() {
-    //     return this.callAPI("GET", '/v1/user_systems');
+    // public system() {
+    //     return this.callAPI("GET", '/v1/permissions/dbtree');
     // }
 
     //

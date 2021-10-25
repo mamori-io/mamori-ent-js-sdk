@@ -6,10 +6,11 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { ExampleWrapper } from '../example_wrapper' ;
+import { ParsedArgs } from 'minimist';
+
 import { DMService } from '../../dist/api';
 import { Role } from '../../dist/role';
-import { ParsedArgs } from 'minimist';
+import { Runnable } from '../../dist/runnable' ;
   
 let revealRoleName: string  = "data_reveal";
 let endorseRoleName: string = "data_endorser";
@@ -36,74 +37,80 @@ let usage: string =
 "\n" +
 "If endorsed, the requester will be granted the data_reveal role temporarily, revealing the masked data for N seconds.\n" ;
 
-let eg = async function (dm: DMService, args: ParsedArgs) {
-  //
-  // Roles
-  //
-  let endorseRole = await new Role(endorseRoleName) ;
-  if (await endorseRole.get(dm)) {
-    console.info("Endorser role: ", endorseRole.name);
-  }
-  else {
-    await endorseRole.create(dm) ;
-    console.info("Created role: ", endorseRole.name);
-    await endorseRole.grant(dm, ['REQUEST'], "*", false) ;
+class DatabaseDemo extends Runnable {
+  
+  constructor() {
+    super(usage) ;
   }
 
-  let userRole = await new Role(userRoleName) ;
-  if (await endorseRuserRoleole.get(dm)) {
-    console.info("User role: ", userRole.name);
-  }
-  else {
-    await userRole.create(dm) ;
-    console.info("Created role: ", userRole.name);  
-  }
+  async run(dm: DMService, args: ParsedArgs): Promise<void> {
+    //
+    // Roles
+    //
+    let endorseRole = await new Role(endorseRoleName) ;
+    if (await endorseRole.get(dm)) {
+      console.info("Endorser role: ", endorseRole.name);
+    }
+    else {
+      await endorseRole.create(dm) ;
+      console.info("Created role: ", endorseRole.name);
+      await endorseRole.grant(dm, ['REQUEST'], "*", false) ;
+    }
 
-  let revealRole = await new Role(revealRoleName) ;
-  if (await revealRole.get(dm)) {
-    console.info("Reveal role: ", revealRole.name);
-  }
-  else {
-    await revealRole.create(dm) ;
-    console.info("Created role: ", revealRole.name);
-  }
+    let userRole = await new Role(userRoleName) ;
+    if (await endorseRuserRoleole.get(dm)) {
+      console.info("User role: ", userRole.name);
+    }
+    else {
+      await userRole.create(dm) ;
+      console.info("Created role: ", userRole.name);  
+    }
 
-  //
-  //  Access policy 
-  //
-  let system = args._[2] || "oracle" ;
+    let revealRole = await new Role(revealRoleName) ;
+    if (await revealRole.get(dm)) {
+      console.info("Reveal role: ", revealRole.name);
+    }
+    else {
+      await revealRole.create(dm) ;
+      console.info("Created role: ", revealRole.name);
+    }
 
-  // Setup anew
-  await dm.policies_set_policy_projection(system + ".orcl.DEMO.customer_pii", "CREDIT_CARD_NO", "MASKED BY credit_card()", "default", null) ;
-  await dm.policies_set_policy_projection(system + ".orcl.DEMO.customer_pii", "*", "REVEAL", projectionName, null) ;
-  console.info("Created data projection: ", projectionName);
+    //
+    //  Access policy 
+    //
+    let system = args._[2] || "oracle" ;
 
-  await dm.policies_create_procedure(accessName,
-    {a: {name: "time", description: "Duration of access", default_value: "30"}},
-    endorseRoleName,
-    "policy",
-    "Grant access to customer data",
-    userRoleName,
-    "",
-    "",
-    "",
-    "",
-    "1",
-    "",
-    "true",
-    "",
-    "BEGIN; GRANT " + revealRoleName + " TO :applicant VALID FOR :time seconds; END");
-  console.info("Created access policy: ", accessName);
+    // Setup anew
+    await dm.policies_set_policy_projection(system + ".orcl.DEMO.customer_pii", "CREDIT_CARD_NO", "MASKED BY credit_card()", "default", null) ;
+    await dm.policies_set_policy_projection(system + ".orcl.DEMO.customer_pii", "*", "REVEAL", projectionName, null) ;
+    console.info("Created data projection: ", projectionName);
 
-  var projectionResult = await dm.get_http_apifilters({ filter: ["name", "=", projectionName] });
-  if (projectionResult) {
-    await dm.activate_http_apifilter(projectionResult.data[0].id);
-    console.info("Activated filter: ", projectionName);
+    await dm.policies_create_procedure(accessName,
+      {a: {name: "time", description: "Duration of access", default_value: "30"}},
+      endorseRoleName,
+      "policy",
+      "Grant access to customer data",
+      userRoleName,
+      "",
+      "",
+      "",
+      "",
+      "1",
+      "",
+      "true",
+      "",
+      "BEGIN; GRANT " + revealRoleName + " TO :applicant VALID FOR :time seconds; END");
+    console.info("Created access policy: ", accessName);
+
+    var projectionResult = await dm.get_http_apifilters({ filter: ["name", "=", projectionName] });
+    if (projectionResult) {
+      await dm.activate_http_apifilter(projectionResult.data[0].id);
+      console.info("Activated filter: ", projectionName);
+    }
   }
 }
 
-let rapt = new ExampleWrapper(eg, process.argv) ;
-rapt.usage = usage ;
-rapt.execute()
-    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-    .finally(() => process.exit(0));
+new DatabaseDemo()
+  .execute()
+  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+  .finally(() => process.exit(0));

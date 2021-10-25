@@ -35,17 +35,31 @@ import { DMService, LoginResponse } from './api';
   *     urlProperties: "allowEncodingChanges=true;defaultNchar=true"
   * }).create(api)
   * ```
-  * 
-  * TODO Add user/role credentials/authorization for this database
   */
  export class Datasource {
 
     /**
      * @param api 
-     * @returns All the datasources this user has access to.
+     * @returns All the datasources the logged-in user has access to.
      */
-    public static async getAll(api: DMService) {
+     public static getAll(api: DMService) : Promise<any> {
         return api.callAPI("GET", '/v1/user_systems');
+    }
+
+    /**
+     * @param api 
+     * @returns The database drivers configured.
+     */
+     public static getDrivers(api: DMService) : Promise<any> {
+        return api.callAPI("GET", '/v1/drivers');
+    }
+
+    /**
+     * @param api 
+     * @returns The datasource types supported.
+     */
+     public static getTypes(api: DMService) : Promise<any> {
+        return api.callAPI("GET", '/v1/driver_types');
     }
 
     /**
@@ -96,7 +110,7 @@ import { DMService, LoginResponse } from './api';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-    public async create(api: DMService) {
+    public create(api: DMService) : Promise<any> {
         var options = this.makeOptionsSql();
         let loggedInUser = (api.authorization as unknown as LoginResponse).username ;
         let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password }};
@@ -112,7 +126,7 @@ import { DMService, LoginResponse } from './api';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-     public async delete(api: DMService) {
+     public delete(api: DMService) : Promise<any> {
         return api.callAPI("DELETE", "/v1/systems/" + this.name);
     }
 
@@ -121,7 +135,7 @@ import { DMService, LoginResponse } from './api';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-     public async update(api: DMService) {
+     public update(api: DMService) : Promise<any> {
         var options = this.makeOptionsSql();
         let loggedInUser = (api.authorization as unknown as LoginResponse).username ;
         let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password }};
@@ -139,8 +153,56 @@ import { DMService, LoginResponse } from './api';
      * @param api  A logged-in DMService instance
      * @returns This datasource's configuration
      */
-     public async get(api: DMService) {
+     public get(api: DMService) : Promise<any> {
         return api.callAPI("GET", "/v1/systems/" + this.name);
+    }
+
+    /**
+     * 
+     * @param api 
+     * @param grantee    A user or role to be granted a credential to access this datasource.
+     * @param dbUser     Database user
+     * @param dbPassword Database user's password
+     * @returns 
+     */
+    public addCredential(api: DMService, grantee: string, dbUser: string, dbPassword: string) {
+        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {
+            datasource: this.name, 
+            username: dbUser, 
+            password: dbPassword
+        });
+    }
+
+    // return all users/roles and which systems they are authorized to access
+    public getCredentials(api: DMService) {
+        return api.callAPI("GET", "/v1/roles/auth/systems", {
+            filter: "systemname = '" + this.name + "'"
+        });
+    }
+
+    /**
+     * @param api 
+     * @param grantee    A user or role with a credential to access this datasource.
+     * @returns 
+     */
+    public removeCredential(api: DMService, grantee: string) {
+        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {datasource: this.name});
+    }
+
+    /**
+     * Validate credential details.
+     * @param api 
+     * @param grantee    A user or role to be granted a credential to access this datasource.
+     * @param dbUser     Database user
+     * @param dbPassword Database user's password
+     * @returns 
+     */
+    public validateCredential(api: DMService, grantee: string, dbUser: string, dbPassword: string) {
+        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate",{
+            datasource: this.name, 
+            username: dbUser, 
+            password: dbPassword
+        });
     }
 
     /**
@@ -274,23 +336,4 @@ import { DMService, LoginResponse } from './api';
         }
         return options;
     }
-
-    // return all users/roles and which systems they are authorized to access
-    // public get_role_authorization_by_system(params?: any) {
-    //     return this.callAPI("GET", "/v1/roles/auth/systems", params);
-    // }
-
-    // public add_datasource_authorization_to(grantee: string, datasource: string, username: string, password: string) {
-    //     return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization",
-    //         {datasource: datasource, username: username, password: password});
-    // }
-
-    // public drop_datasource_authorization_from(grantee: string, datasource: string) {
-    //     return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {datasource: datasource});
-    // }
-
-    // public validate_datasource_authorization(grantee: string, datasource: string, username: string, password: string) {
-    //     return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate",
-    //         {datasource: datasource, username: username, password: password});
-    // }
 }

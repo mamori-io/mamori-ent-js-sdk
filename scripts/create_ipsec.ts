@@ -6,14 +6,14 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import {DMService} from '../../dist/api';
-import {IpSecVpn} from '../../dist/network';
-import {Runnable} from "../runnable";
+import {DMService} from '../dist/api';
+import {IpSecVpn} from '../dist/network';
 import {ParsedArgs} from "minimist";
+import {Runnable} from "../dist/runnable";
 
 let usage: string =
     "Usage:\n" +
-    "   yarn ts-node --transpile-only examples/configure/create_ipsec.ts [--help] [--url <url>] <user> <password> <ipsec name> [--force] <ipsec host> <ipsec pwd> <ipsec psk>\n" +
+    "   yarn ts-node --transpile-only scripts/create_ipsec.ts [--help] [--url <url>] <user> <password> <ipsec name> [--force] <ipsec host> <ipsec pwd> <ipsec psk>\n" +
     "where:\n" +
     "   user                mamori server user\n" +
     "   password            user password\n" +

@@ -12,7 +12,7 @@ import { ParsedArgs } from 'minimist';
 
 let usage = 
 "Usage:\n" + 
-"   yarn ts-node examples/request_workflow/access_action.ts [--help] --url <url> <user> <action> <requestKey> [<message>]\n" + 
+"   yarn ts-node scripts/access_action.ts [--help] --url <url> <user> <action> <requestKey> [<message>]\n" + 
 "where:\n" + 
 "   url         Default: localhost:443\n" +
 "   user        mamori user\n" +
