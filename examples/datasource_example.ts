@@ -12,12 +12,12 @@ import { DMService } from '../dist/api';
 import { Datasource } from '../dist/datasource';
 import { Runnable } from '../dist/runnable' ;
 
-class CreateDatasourceExample extends Runnable {
+class DatasourceExample extends Runnable {
   
-  async run(dm: DMService, _args: ParsedArgs): Promise<void> {
+  async run(api: DMService, _args: ParsedArgs): Promise<void> {
     let egSystem = new Datasource("test_system") ;
     try {
-      await egSystem.delete(dm);
+      await egSystem.delete(api);
       console.info("Delete system: ", egSystem.name);
     }
     catch (e) {
@@ -30,12 +30,14 @@ class CreateDatasourceExample extends Runnable {
             .withTempDatabase('mamori')
             .withDatabase('mamori')
             .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
-    await egSystem.create(dm) ;
+    await egSystem.create(api) ;
     console.info("Created ", egSystem);
+
+    await egSystem.addCredential(api, 'test_user', 'postgres', 'postgres') ;
 
     // Alternative
     try {
-      await Datasource.build({name: "test2_system"}).delete(dm);
+      await Datasource.build({name: "test2_system"}).delete(api);
       console.info("Delete system: test2_system");
     }
     catch (e) {
@@ -53,12 +55,9 @@ class CreateDatasourceExample extends Runnable {
         tempDatabase: "mamori",
         database: "mamori",
         urlProperties: 'allowEncodingChanges=true;defaultNchar=true'
-    }).create(dm) ;
+    }).create(api) ;
     console.info("Created system: test2_system");
   }
 }
 
-new CreateDatasourceExample()
-  .execute()
-  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-  .finally(() => process.exit(0));
+new DatasourceExample().execute() ;

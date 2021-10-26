@@ -52,7 +52,4 @@ class Example extends Runnable {
   }
 }
 
-new Example()
-  .execute()
-  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-  .finally(() => process.exit(0));
+new Example().execute();

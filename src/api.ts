@@ -510,19 +510,19 @@ export class DMService {
         }).then(resp => resp.data);
     }
 
-    // public call_operation(operation: string, filter?: any): Promise<QueryResponse> {
-    //     return this.callAPI("POST", "/v1/query", {
-    //         operation: operation,
-    //         filter: filter,
-    //     });
-    // }
+    public call_operation(operation: string, filter?: any): Promise<QueryResponse> {
+        return this.callAPI("POST", "/v1/query", {
+            operation: operation,
+            filter: filter,
+        });
+    }
 
-    // public select(sql: string, search_query?: string): Promise<QueryResponse> {
-    //     return this.callAPI("POST", "/v1/query", {
-    //         sql: sql,
-    //         search_query: search_query,
-    //     });
-    // }
+    public select(sql: string, search_query?: string): Promise<QueryResponse> {
+        return this.callAPI("POST", "/v1/query", {
+            sql: sql,
+            search_query: search_query,
+        });
+    }
 
     // public get_smtp_cfg() {
     //     return this.callAPI("GET", "/v1/smtp");
@@ -893,9 +893,9 @@ export class DMService {
     // Roles
     //
 
-    // public get_grantee_roles(roleid: string) {
-    //     return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee");
-    // }
+    public get_grantee_roles(roleid: string) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee");
+    }
 
     public get_grantee_grantable_roles(roleid: string) {
         return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee/grantable");
@@ -949,6 +949,40 @@ export class DMService {
         return this.callAPI("GET", "/v1/roles?recursive=Y",{grantee: userlist});
     }
 
+    public grant_roles_to_user(username: string, roles: string[]) {
+        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
+    }
+
+    public revoke_roles_from_user(username: string, roles: string[]) {
+        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
+    }
+
+    public update_user_roles(username: string, deleted: string[], added: string[]) {
+        if (deleted.length > 0 && added.length > 0) {
+            return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {
+                selected_roles: added,
+                deleted_roles: deleted
+            });
+        }
+        else if (deleted.length > 0) {
+            return this.revoke_roles_from_user(username, deleted);
+        } 
+        else if (added.length > 0) {
+            return this.grant_roles_to_user(username, added);
+        } 
+        else {
+            return
+        }
+    }
+
+    public get_role_user_count(roleid: string) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/usercount");
+    }
+
+    public search_users_with_role(roleid: string, options: any) {
+        return this.callAPI("PUT", "/v1/search/roles/" + roleid + "/users", options);
+    }
+
     //
     // Credentials
     //
@@ -994,30 +1028,6 @@ export class DMService {
     //         {datasource: datasource, username: username, password: password});
     // }
 
-    public grant_roles_to_user(username: string, roles: string[]) {
-        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
-    }
-
-    public revoke_roles_from_user(username: string, roles: string[]) {
-        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
-    }
-
-    public update_user_roles(username: string, deleted: string[], added: string[]) {
-        if (deleted.length > 0 && added.length > 0) {
-            return this.callAPI("PUT", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {
-                selected_roles: added,
-                deleted_roles: deleted
-            });
-        }
-        else if (deleted.length > 0) {
-            return this.revoke_roles_from_user(username, deleted);
-        } else if (added.length > 0) {
-            return this.grant_roles_to_user(username, added);
-        } else {
-            return
-        }
-    }
-
     //
     // Permissions
     //
@@ -1046,9 +1056,11 @@ export class DMService {
         }
         else if (deleted.length > 0) {
             return this.revoke_global_permission(rolename, {deleted_permission: deleted});
-        } else if (added.length > 0) {
+        } 
+        else if (added.length > 0) {
             return this.grant_global_permission(rolename, {selected_permissions_cirro: added});
-        } else {
+        } 
+        else {
             return
         }
     }
@@ -1059,25 +1071,17 @@ export class DMService {
                 selected_permissions_object: added,
                 deleted_permission: deleted
             });
-
         }
         else if (deleted.length > 0) {
             return this.revoke_object_permission(rolename, {deleted_permission_object: deleted});
-        } else if (added.length > 0) {
+        } 
+        else if (added.length > 0) {
             return this.grant_object_permission(rolename, {selected_permissions_object: added});
         }
     }
 
     public grantee_object_grants(grantee:string, permissionType: string, objectName: string) {
         return this.callAPI("GET", "/v1/grantee/" + grantee + "/grants", {permission: permissionType, object_name: objectName});
-    }
-
-    public get_role_user_count(roleid: string) {
-        return this.callAPI("GET", "/v1/roles/" + roleid + "/usercount");
-    }
-
-    public search_users_with_role(roleid: string, options: any) {
-        return this.callAPI("PUT", "/v1/search/roles/" + roleid + "/users", options);
     }
 
     public grant_global_permission(role: string, permissions: any) {
@@ -1475,9 +1479,9 @@ export class DMService {
         }
     }
 
-    public delete_role(roleid: string) {
-        return this.callAPI("DELETE", "/v1/roles/" + roleid);
-    }
+    // public delete_role(roleid: string) {
+    //     return this.callAPI("DELETE", "/v1/roles/" + roleid);
+    // }
 
     public get_user_db_creds(username: string) {
         return this.callAPI("GET", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials");

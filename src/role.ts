@@ -8,62 +8,82 @@
  */
 import { DMService } from './api';
 
- /**
-  * A role and all the grantables.
+export interface RoleGrant {
+    roleid: string;
+    externalname?: string;
+    position?: string;
+    withadminoption: string;
+
+    uuid: string;
+    isdef: string;
+    grantable?: string;
+    grantee: string;
+    grantor: string;
+    lastupdate: string;
+    valid_from?: string;
+    valid_until?: string;
+}
+
+/**
+  * A role.
   */
- export class Role {
+export class Role {
 
     /**
      * @param api 
      * @returns All roles
      */
-    public static getAll(api: DMService) : Promise<any> {
-        return api.callAPI("GET", "/v1/roles?type=role");
+    public static getAll(api: DMService): Promise<any> {
+        return api.callAPI("GET", "/v1/roles");
     }
 
     /**
+     * All roles granted, directly or indirectly.
      * @param api 
      * @param user_or_role  Optional user or role name. If null, use the logged-in user.
-     * @returns All roles granted, directly or indirectly.
+     * @returns Array of arrays of columns 'uuid', 'roleid', 'grantee', 'valid_from', 'valid_until'
      */
-     public static getAllGrantedRoles(api: DMService, user_or_role?: string) : Promise<any> {
-        let name = user_or_role || api.username || "" ;
-        return api.callAPI("GET", "/v1/roles?recursive=Y&grantee=" + encodeURIComponent(name.toLowerCase()));
+    public static async getAllGrantedRoles(api: DMService, user_or_role?: string): Promise<any> {
+        let name = user_or_role || api.username || "";
+        let result = await api.callAPI("GET", "/v1/roles?recursive=Y&grantee=" + encodeURIComponent(name.toLowerCase()));
+        return result.rows ;
     }
 
     /**
+     * All roles directly granted.
      * @param api 
      * @param user_or_role  Optional user or role name. If null, use the logged-in user.
-     * @returns All roles directly granted.
+     * @returns Array of Role objects
      */
-     public static getGrantedRoles(api: DMService, user_or_role?: string) : Promise<any> {
-        let name = user_or_role || api.username || "" ;
-        return api.callAPI("GET", "/v1/roles/" + encodeURIComponent(name.toLowerCase()) + "/grantee?distinct=Y");
+    public static getGrantedRoles(api: DMService, user_or_role?: string): Promise<any> {
+        let name = user_or_role || api.username || "";
+        return api.callAPI("GET", "/v1/roles?isdef=N&grantee=" + encodeURIComponent(name.toLowerCase())) ;
     }
 
     /**
-     * @param role 
+     * @param role
      * @returns 
      */
     public static build(role: any): Role {
-        let result = new Role(role.name) ;
-        result.externalName = role.externalName ;
-        result.position = role.position ;
+        let result = new Role(role.roleid, role.externalName);
+        result.position = role.position;
 
-        return result ;
+        return result;
     }
 
-    name: string ;
-    externalName: string ;
-    position: number ;
+    roleid: string;
+    externalname?: string;
+    position?: string;
+    withadminoption: string;
 
     /**
-     * @param name  Unique Role name
+     * @param roleid  Unique Role name
      */
-    public constructor(name: string) {
-        this.name = name;
-        this.externalName = "" ;
-        this.position = 0 ;
+    public constructor(roleid: string, externalname: string = "") {
+        this.roleid = roleid;
+        this.externalname = externalname;
+
+        this.withadminoption = 'N';
     }
 
     /**
@@ -71,12 +91,12 @@ import { DMService } from './api';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-    public create(api: DMService) : Promise<any> {
+    public create(api: DMService): Promise<any> {
         let options = {
-            roleid: this.name,
-            externalname: this.externalName,
+            roleid: this.roleid,
+            externalname: this.externalname,
             position: this.position,
-        } ;
+        };
         return api.callAPI("POST", "/v1/roles", options);
     }
 
@@ -85,16 +105,16 @@ import { DMService } from './api';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-     public delete(api: DMService) : Promise<any> {
-        return api.callAPI("DELETE", "/v1/roles/" + this.name);
+    public delete(api: DMService): Promise<any> {
+        return api.callAPI("DELETE", "/v1/roles/" + this.roleid);
     }
 
     /**
      * @param api  A logged-in DMService instance
      * @returns This Role's configuration
      */
-     public get(api: DMService) : Promise<any> {
-        return api.callAPI("GET", "/v1/roles/" + this.name);
+    public get(api: DMService): Promise<RoleGrant> {
+        return api.callAPI("GET", "/v1/roles/" + this.roleid);
     }
 
     /**
@@ -102,23 +122,24 @@ import { DMService } from './api';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-     public update(api: DMService) : Promise<any> {
-        return api.callAPI("PUT", "/v1/roles/" + this.name, {
-            roleid: this.name,
-            externalname: this.externalName,
+    public update(api: DMService): Promise<any> {
+        return api.callAPI("PUT", "/v1/roles/" + this.roleid, {
+            roleid: this.roleid,
+            externalname: this.externalname,
             position: this.position,
         });
     }
 
     /**
+     * Grant permissions to this role.
      * @param api 
-     * @param grantables       Array of permissions.
+     * @param grantables       E.g. ROLE
      * @param object_name      Optional object, e.g. a table <datasource>.<database>.<schema>.<table>
      * @param withGrantOption  Optional.
      * @returns 
      */
-     public grant(api: DMService, grantables: string[], object_name?: string, withGrantOption?: boolean) : Promise<any> {
-        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(this.name.toLowerCase()), {
+    public grant(api: DMService, grantables: string[], object_name?: string, withGrantOption?: boolean): Promise<any> {
+        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(this.roleid.toLowerCase()), {
             grantables: grantables,
             object_name: object_name,
             with_grant_option: withGrantOption,
@@ -126,41 +147,59 @@ import { DMService } from './api';
     }
 
     /**
+     * Grant this role to a user or role.
      * @param api 
-     * @param grantables       Array of permissions.
+     * @param user_or_role 
+     * @returns 
+     */
+    public grantTo(api: DMService, user_or_role: string): Promise<any> {
+        return api.callAPI("POST", "/v1/roles/" + this.roleid + "/user", { selected_user: user_or_role });
+    }
+
+    /**
+     * Revoke permissions from this role.
+     * @param api 
+     * @param grantables       E.g. ROLE
      * @param object_name      Optional object, e.g. a table <datasource>.<database>.<schema>.<table>
      * @returns 
      */
-     public revoke(api: DMService, grantables: string[], object_name?: string) : Promise<any> {
-        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(this.name.toLowerCase()), {
+    public revoke(api: DMService, grantables: string[], object_name?: string): Promise<any> {
+        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(this.roleid.toLowerCase()), {
             grantables: grantables,
             object_name: object_name
         });
     }
 
     /**
-     * @param api  A logged-in DMService instance
-     * @returns All users and roles this Role has been granted to, directly or indirectly.
+     * Revoke this role from a user or role.
+     * @param api 
+     * @param user_or_role
+     * @returns 
      */
-     public getGrantees(api: DMService) : Promise<any> {
-        return api.callAPI("GET", "/v1/roles/" + this.name);
+    public revokeFrom(api: DMService, user_or_role: string): Promise<any> {
+        return api.callAPI("DELETE", "/v1/roles/" + this.roleid + "/user", { selected_user: user_or_role });
     }
 
     /**
-     * @param externalName  Role display name
-     * @returns 
+     * All users or roles this Role has been directly granted to.
+     * @param api  A logged-in DMService instance
+     * @returns Array of RoleGrant objects with an extra type attribute with values: role or user.
      */
-    public as(externalName: string) : Role {
-        this.externalName = externalName;
-        return this ;
+    public getGrantees(api: DMService): Promise<any> {
+        let sql =
+            "SELECT g.*, CASE WHEN EXISTS(SELECT 1 FROM SYS.SYSROLES r WHERE r.isDef = 'Y' AND r.roleid = g.grantee) THEN 'role' ELSE 'user' END AS type" +
+            "  FROM SYS.SYSROLES g" +
+            " WHERE g.isDef = 'N'" +
+            "   AND g.roleId = '" + this.roleid + "'" ;
+        return api.select(sql) ;
     }
 
     /**
      * @param position  Role position or priority
      * @returns 
      */
-     public at(position: number) : Role {
+    public at(position: string): Role {
         this.position = position;
-        return this ;
+        return this;
     }
 }

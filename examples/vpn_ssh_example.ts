@@ -98,7 +98,4 @@ class VpnSshExample extends Runnable {
   }
 }
 
-new VpnSshExample()
-  .execute()
-  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-  .finally(() => process.exit(0));
+new VpnSshExample().execute();

@@ -18,7 +18,7 @@ let revealRoleName = "data_reveal";
 
 let filterName = "openfoodfacts";
 
-class CreateFilterExample extends Runnable {
+class FilterExample extends Runnable {
   
   async run(dm: DMService, args: ParsedArgs): Promise<void> {
     let mamoriUser = args._[0] ;
@@ -27,30 +27,30 @@ class CreateFilterExample extends Runnable {
     //
     let mgrRole = await new Role(mgrRoleName) ;
     if (await mgrRole.get(dm)) {
-      console.info("Endorser role: ", mgrRole.name);
+      console.info("Endorser role: ", mgrRole.roleid);
     }
     else {
       await mgrRole.create(dm) ;
-      console.info("Created role: ", mgrRole.name);
+      console.info("Created role: ", mgrRole.roleid);
       await mgrRole.grant(dm, ['REQUEST'], "*", false) ;
     }
 
     let userRole = await new Role(userRoleName) ;
     if (await userRole.get(dm)) {
-      console.info("User role: ", userRole.name);
+      console.info("User role: ", userRole.roleid);
     }
     else {
       await userRole.create(dm) ;
-      console.info("Created role: ", userRole.name);
+      console.info("Created role: ", userRole.roleid);
     }
 
     let endorseRole = await new Role(revealRoleName) ;
     if (await endorseRole.get(dm)) {
-      console.info("Endorser role: ", endorseRole.name);
+      console.info("Endorser role: ", endorseRole.roleid);
     }
     else {
       await endorseRole.create(dm) ;
-      console.info("Created role: ", endorseRole.name);
+      console.info("Created role: ", endorseRole.roleid);
     }
 
     console.info("");
@@ -93,7 +93,4 @@ class CreateFilterExample extends Runnable {
   }
 }
 
-new CreateFilterExample()
-  .execute()
-  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-  .finally(() => process.exit(0));
+new FilterExample().execute();

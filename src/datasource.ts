@@ -8,41 +8,41 @@
  */
 import { DMService, LoginResponse } from './api';
 
- /**
-  * A datasource represents a target database.
-  * 
-  * Example use:
-  * ```javascript
-  * await new Datasource("test")
-  *     .ofType("POSTGRESQL", 'postgres')
-  *     .at("10.0.2.2", 5432)
-  *     .withCredentials('postgres', 'postgres')
-  *     .withDatabase('mamori')
-  *     .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true')
-  *     .create(api) ;
-  * ```
-  * or
-  * ```javascript
-  * await Datasource.build({
-  *     name: "test", 
-  *     type: "POSTGRESQL", 
-  *     driver: "postgres", 
-  *     host: "10.0.2.2", 
-  *     port: 5432
-  *     user: "postgres",
-  *     password: "postgres",
-  *     database: "mamori",
-  *     urlProperties: "allowEncodingChanges=true;defaultNchar=true"
-  * }).create(api)
-  * ```
-  */
- export class Datasource {
+/**
+ * A datasource represents a target database.
+ * 
+ * Example use:
+ * ```javascript
+ * await new Datasource("test")
+ *     .ofType("POSTGRESQL", 'postgres')
+ *     .at("10.0.2.2", 5432)
+ *     .withCredentials('postgres', 'postgres')
+ *     .withDatabase('mamori')
+ *     .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true')
+ *     .create(api) ;
+ * ```
+ * or
+ * ```javascript
+ * await Datasource.build({
+ *     name: "test", 
+ *     type: "POSTGRESQL", 
+ *     driver: "postgres", 
+ *     host: "10.0.2.2", 
+ *     port: 5432
+ *     user: "postgres",
+ *     password: "postgres",
+ *     database: "mamori",
+ *     urlProperties: "allowEncodingChanges=true;defaultNchar=true"
+ * }).create(api)
+ * ```
+ */
+export class Datasource {
 
     /**
      * @param api 
      * @returns All the datasources the logged-in user has access to.
      */
-     public static getAll(api: DMService) : Promise<any> {
+    public static getAll(api: DMService): Promise<any> {
         return api.callAPI("GET", '/v1/user_systems');
     }
 
@@ -50,7 +50,7 @@ import { DMService, LoginResponse } from './api';
      * @param api 
      * @returns The database drivers configured.
      */
-     public static getDrivers(api: DMService) : Promise<any> {
+    public static getDrivers(api: DMService): Promise<any> {
         return api.callAPI("GET", '/v1/drivers');
     }
 
@@ -58,7 +58,7 @@ import { DMService, LoginResponse } from './api';
      * @param api 
      * @returns The datasource types supported.
      */
-     public static getTypes(api: DMService) : Promise<any> {
+    public static getTypes(api: DMService): Promise<any> {
         return api.callAPI("GET", '/v1/driver_types');
     }
 
@@ -67,36 +67,38 @@ import { DMService, LoginResponse } from './api';
      * @returns 
      */
     public static build(ds: any): Datasource {
-        let result = new Datasource(ds.name) ;
-        result.type = ds.type ;
-        result.driver = ds.driver ;
-        result.host = ds.host ;
-        result.port = ds.port ;
-        result.group = ds.group ;
-        result.user = ds.user ;
-        result.password = ds.password ;
-        result.tempDatabase = ds.tempDatabase ;
-        result.database = ds.database ;
-        result.urlProperties = ds.cxnOptions ;
-        result.caseSensitive = ds.caseSensitive ;
-        result.extraOptions = ds.extraOptions ;
+        let result = new Datasource(ds.name);
+        result.type = ds.type;
+        result.driver = ds.driver;
+        result.host = ds.host;
+        result.port = ds.port;
+        result.group = ds.group;
+        result.user = ds.user;
+        result.password = ds.password;
+        result.tempDatabase = ds.tempDatabase;
+        result.database = ds.database;
+        result.caseSensitive = ds.caseSensitive;
+        result.enabled = ds.enabled;
+        result.urlProperties = ds.urlProperties;
+        result.extraOptions = ds.extraOptions;
 
-        return result ;
+        return result;
     }
 
-    name: string ;
-    type?: string ;
-    driver?: string ;
-    host?: string ;
-    port?: string ;
-    group?: string ;
-    user?: string ;
-    password?: string ;
+    name: string;
+    type?: string;
+    driver?: string;
+    host?: string;
+    port?: string;
+    group?: string;
+    user?: string;
+    password?: string;
     tempDatabase?: string;
-    database?: string ;
-    caseSensitive?: boolean ;
-    urlProperties?: string ;
-    extraOptions?: string ;
+    database?: string;
+    caseSensitive?: boolean;
+    enabled?: boolean;
+    urlProperties?: string;
+    extraOptions?: string;
 
     /**
      * @param name  Unique datasource name
@@ -110,15 +112,17 @@ import { DMService, LoginResponse } from './api';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-    public create(api: DMService) : Promise<any> {
+    public create(api: DMService): Promise<any> {
         var options = this.makeOptionsSql();
-        let loggedInUser = (api.authorization as unknown as LoginResponse).username ;
-        let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password }};
-        
-        return api.callAPI("POST", "/v1/systems", {preview: 'N',
-                           system: { name: this.name, type: this.type, host: this.host }, 
-                           options: options, 
-                           authorizations: auth});
+        let loggedInUser = (api.authorization as unknown as LoginResponse).username;
+        let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password } };
+
+        return api.callAPI("POST", "/v1/systems", {
+            preview: 'N',
+            system: { name: this.name, type: this.type, host: this.host },
+            options: options,
+            authorizations: auth
+        });
     }
 
     /**
@@ -126,7 +130,7 @@ import { DMService, LoginResponse } from './api';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-     public delete(api: DMService) : Promise<any> {
+    public delete(api: DMService): Promise<any> {
         return api.callAPI("DELETE", "/v1/systems/" + this.name);
     }
 
@@ -135,16 +139,15 @@ import { DMService, LoginResponse } from './api';
      * @param api  A logged-in DMService instance
      * @returns 
      */
-     public update(api: DMService) : Promise<any> {
+    public update(api: DMService): Promise<any> {
         var options = this.makeOptionsSql();
-        let loggedInUser = (api.authorization as unknown as LoginResponse).username ;
-        let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password }};
-        
-        return api.callAPI("PUT", "/v1/systems/" + this.name, 
-            {
-                preview: "N", 
-                system: { type: this.type, host: this.host }, 
-                options: options, 
+        let loggedInUser = (api.authorization as unknown as LoginResponse).username;
+        let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password } };
+
+        return api.callAPI("PUT", "/v1/systems/" + this.name, {
+                preview: "N",
+                system: { type: this.type, host: this.host },
+                options: options,
                 authorizations: auth
             });
     }
@@ -153,7 +156,7 @@ import { DMService, LoginResponse } from './api';
      * @param api  A logged-in DMService instance
      * @returns This datasource's configuration
      */
-     public get(api: DMService) : Promise<any> {
+    public get(api: DMService): Promise<Datasource> {
         return api.callAPI("GET", "/v1/systems/" + this.name);
     }
 
@@ -167,16 +170,9 @@ import { DMService, LoginResponse } from './api';
      */
     public addCredential(api: DMService, grantee: string, dbUser: string, dbPassword: string) {
         return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {
-            datasource: this.name, 
-            username: dbUser, 
+            datasource: this.name,
+            username: dbUser,
             password: dbPassword
-        });
-    }
-
-    // return all users/roles and which systems they are authorized to access
-    public getCredentials(api: DMService) {
-        return api.callAPI("GET", "/v1/roles/auth/systems", {
-            filter: "systemname = '" + this.name + "'"
         });
     }
 
@@ -186,7 +182,7 @@ import { DMService, LoginResponse } from './api';
      * @returns 
      */
     public removeCredential(api: DMService, grantee: string) {
-        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {datasource: this.name});
+        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", { datasource: this.name });
     }
 
     /**
@@ -198,9 +194,9 @@ import { DMService, LoginResponse } from './api';
      * @returns 
      */
     public validateCredential(api: DMService, grantee: string, dbUser: string, dbPassword: string) {
-        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate",{
-            datasource: this.name, 
-            username: dbUser, 
+        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate", {
+            datasource: this.name,
+            username: dbUser,
             password: dbPassword
         });
     }
@@ -210,10 +206,10 @@ import { DMService, LoginResponse } from './api';
      * @param driver Required datasource name
      * @returns 
      */
-    public ofType(type: string, driver: string) : Datasource {
-         this.type = type;
-         this.driver = driver;
-         return this ;
+    public ofType(type: string, driver: string): Datasource {
+        this.type = type;
+        this.driver = driver;
+        return this;
     }
 
     /**
@@ -222,19 +218,19 @@ import { DMService, LoginResponse } from './api';
      * @param port  Required listening port of the target resource
      * @returns 
      */
-    public at(host: string, port: any) : Datasource {
+    public at(host: string, port: any): Datasource {
         this.host = host;
         this.port = port;
-        return this ;
+        return this;
     }
 
     /**
      * @param group  Optional datasource group
      * @returns 
      */
-     public inGroup(group: string) : Datasource {
+    public inGroup(group: string): Datasource {
         this.group = group;
-        return this ;
+        return this;
     }
 
     /**
@@ -243,10 +239,10 @@ import { DMService, LoginResponse } from './api';
      * @param password  Required password
      * @returns 
      */
-   public withCredentials(user: string, password: string) : Datasource {
+    public withCredentials(user: string, password: string): Datasource {
         this.user = user;
         this.password = password;
-        return this ;
+        return this;
     }
 
     /**
@@ -254,15 +250,15 @@ import { DMService, LoginResponse } from './api';
      * @param database  Optional default database
      * @returns 
      */
-    public withDatabase(database: string) : Datasource {
+    public withDatabase(database: string): Datasource {
         this.database = database;
         if (this.tempDatabase) {
             // Do not override
         }
         else {
-            this.tempDatabase = database ;
+            this.tempDatabase = database;
         }
-        return this ;
+        return this;
     }
 
     /**
@@ -271,27 +267,36 @@ import { DMService, LoginResponse } from './api';
      * @param database  Database for any temporary tables.
      * @returns 
      */
-     public withTempDatabase(tempDatabase: string) : Datasource {
+    public withTempDatabase(tempDatabase: string): Datasource {
         this.tempDatabase = tempDatabase;
-        return this ;
+        return this;
     }
 
     /**
      * @param caseSensitive  Optionally specify case sensitivity of the datasource names. Default: false  
      * @returns 
      */
-     public withCaseSensitive(caseSensitive: boolean) : Datasource {
+    public withCaseSensitive(caseSensitive: boolean): Datasource {
         this.caseSensitive = caseSensitive;
-        return this ;
+        return this;
+    }
+
+    /**
+     * @param enabled  Optionally enable or disable this datasource 
+     * @returns 
+     */
+    public enable(enabled: boolean): Datasource {
+        this.enabled = enabled;
+        return this;
     }
 
     /**
      * @param urlProperties  Optional properties to add to the JDBC URL
      * @returns 
      */
-   public withConnectionProperties(urlProperties: string) : Datasource {
+    public withConnectionProperties(urlProperties: string): Datasource {
         this.urlProperties = urlProperties;
-        return this ;
+        return this;
     }
 
     /**
@@ -300,9 +305,9 @@ import { DMService, LoginResponse } from './api';
      * @param extraOptions  Optional extras
      * @returns 
      */
-     public withOptions(extraOptions: string) : Datasource {
+    public withOptions(extraOptions: string): Datasource {
         this.extraOptions = extraOptions;
-        return this ;
+        return this;
     }
 
     private makeOptionsSql() {
@@ -323,7 +328,10 @@ import { DMService, LoginResponse } from './api';
             options = options + ", DEFAULTDATABASE '" + this.database + "'";
         }
         if (this.caseSensitive) {
-            options = options + ", OBJECTNAMECASESENSITIVE 'TRUE'" ;
+            options = options + ", OBJECTNAMECASESENSITIVE 'TRUE'";
+        }
+        if (this.enabled != undefined) {
+            options = options + ", ENABLED '" + (this.enabled ? "TRUE" : "FALSE") + "'";
         }
         if (this.group) {
             options = options + ", DATASOURCE GROUP '" + this.group + "'";

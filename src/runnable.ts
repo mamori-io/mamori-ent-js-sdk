@@ -29,8 +29,8 @@ export abstract class Runnable {
             "   yarn ts-node --transpile-only " + this.constructor.name + " [--help] [--url url] user password\n" +
             "where:\n" +
             "   user\t\tmamori server user\n" +
-            "   password\tuser password" +
-            "   url\t\tDefault: localhost:443" ;
+            "   password\tuser password\n" +
+            "   url\t\tDefault: localhost:443\n" ;
         }
         else {
             this.usage = usage;
@@ -62,16 +62,20 @@ export abstract class Runnable {
         try {
             console.info("\nConnecting...");
             let login = await api.login(this.args._[0], this.args._[1]);
-            console.info("Login successful for: ", login.fullname || login.name, ", session: ", login.session_id);
+            console.info("Login successful for: ", login.fullname || login.name, ", session: ", login.session_id, "\n");
 
             await this.run(api, this.args);
         } 
-        catch (err) {
-            console.error(err);
+        catch (e) {
+            console.error(e.response == undefined ? e : e.response.status + " " + e.response.statusText + " - " + JSON.stringify(e.response.data));
+            process.exitCode = -1;
+            if (e.response && e.response.status) {
+                process.exitCode = e.response.status;
+            }
         } 
         finally {
             console.info("\nDisconnecting...");
-            await api.logout();
+            api.logout();
         }
     }
 

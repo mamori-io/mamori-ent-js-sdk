@@ -13,7 +13,7 @@ import { DMService } from '../dist/api';
 
 let testUser  = "test_user" ;
 
-class CreateUserExample extends Runnable {
+class UserExample extends Runnable {
   
   async run(dm: DMService, _args: ParsedArgs): Promise<void> {
     try {
@@ -40,6 +40,4 @@ class CreateUserExample extends Runnable {
   }
 }
 
-new CreateUserExample().execute()
-    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-    .finally(() => process.exit(0));
+new UserExample().execute();

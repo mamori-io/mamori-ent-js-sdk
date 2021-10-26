@@ -12,7 +12,7 @@ import { DMService } from '../dist/api';
 import { Key } from '../dist/key';
 import { Runnable } from '../dist/runnable' ;
 
-class CreateKeyExample extends Runnable {
+class KeyExample extends Runnable {
   
   async run(dm: DMService, _args: ParsedArgs): Promise<void> {
     console.info("All keys: ", await Key.getAll(dm));
@@ -106,6 +106,4 @@ class CreateKeyExample extends Runnable {
   }
 }
 
-new CreateKeyExample().execute()
-  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-  .finally(() => process.exit(0));
+new KeyExample().execute() ;
