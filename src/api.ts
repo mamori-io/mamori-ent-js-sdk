@@ -11,8 +11,13 @@ import { AxiosInstance, Method } from 'axios';
 import { Channel, Socket } from "./phoenix";
 import * as https from 'https';
 import { Datasource } from "./datasource";
+import { Key } from "./key";
+import { Network } from "./network";
+import { SshLogin } from "./ssh_login";
+import { RoleGrant, Role } from "./role";
 
-export { Datasource };
+
+export { Datasource, Key, Network, SshLogin, Role, RoleGrant };
 
 type ApiCacheEntry = { deferred: Promise<any>, resolved: boolean, value?: any }
 
