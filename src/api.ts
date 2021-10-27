@@ -12,13 +12,12 @@ import { Channel, Socket } from "./phoenix";
 import * as https from 'https';
 import { Datasource } from "./datasource";
 import { Key } from "./key";
-import { Network } from "./network";
+import { Network, IpSecVpn, OpenVPN, SshTunnel } from "./network";
 import { SshLogin } from "./ssh_login";
 import { RoleGrant, Role } from "./role";
 import { Runnable } from './runnable';
 
-
-export { Datasource, Key, Network, SshLogin, Role, RoleGrant, Runnable };
+export { Datasource, Key, Network, SshLogin, Role, RoleGrant, IpSecVpn, OpenVPN, SshTunnel, Runnable };
 
 type ApiCacheEntry = { deferred: Promise<any>, resolved: boolean, value?: any }
 
