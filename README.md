@@ -21,8 +21,8 @@ Example script: login and list available datasources
 // allow for self-signed certificates
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import { DMService } from 'mamori-ent-js-api';
-import { Datasource } from 'mamori-ent-js-api';
+import { DMService } from 'mamori-ent-js-sdk';
+import { Datasource } from 'mamori-ent-js-sdk';
 
 let mamoriUrl  = "https://localhost/" ;
 let mamoriUser = "alice" ;
