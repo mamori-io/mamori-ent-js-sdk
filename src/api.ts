@@ -15,9 +15,10 @@ import { Key } from "./key";
 import { Network } from "./network";
 import { SshLogin } from "./ssh_login";
 import { RoleGrant, Role } from "./role";
+import { Runnable } from './runnable';
 
 
-export { Datasource, Key, Network, SshLogin, Role, RoleGrant };
+export { Datasource, Key, Network, SshLogin, Role, RoleGrant, Runnable };
 
 type ApiCacheEntry = { deferred: Promise<any>, resolved: boolean, value?: any }
 
