@@ -10,9 +10,9 @@
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 import minimist = require('minimist');
-import {ParsedArgs} from 'minimist';
+import { ParsedArgs } from 'minimist';
 
-import {DMService} from './api';
+import { DMService } from './api';
 
 /**
  * Base class for runnable script snippets. Sublass and implement the run method.
@@ -24,13 +24,13 @@ export abstract class Runnable {
 
     constructor(usage?: string, parseOptions?: Object) {
         if (usage == void 0) {
-            this.usage =     
-            "Usage:\n" +
-            "   yarn ts-node --transpile-only " + this.constructor.name + " [--help] [--url url] user password\n" +
-            "where:\n" +
-            "   user\t\tmamori server user\n" +
-            "   password\tuser password\n" +
-            "   url\t\tDefault: localhost:443\n" ;
+            this.usage =
+                "Usage:\n" +
+                "   yarn ts-node --transpile-only " + this.constructor.name + " [--help] [--url url] user password\n" +
+                "where:\n" +
+                "   user\t\tmamori server user\n" +
+                "   password\tuser password\n" +
+                "   url\t\tDefault: localhost:443\n";
         }
         else {
             this.usage = usage;
@@ -39,11 +39,11 @@ export abstract class Runnable {
         if (parseOptions === void 0) {
             this.args = minimist(process.argv.slice(2), {
                 string: ['url'],
-                alias: {h: 'help'},
-                default: {url: 'localhost:443'},
+                alias: { h: 'help' },
+                default: { url: 'localhost:443' },
                 '--': true,
             });
-        } 
+        }
         else {
             this.args = minimist(process.argv.slice(2), parseOptions);
         }
@@ -58,21 +58,24 @@ export abstract class Runnable {
             return;
         }
 
-        let api = new DMService("https://" + this.args.url + "/");
+        let host = "https://" + this.args.url + "/";
+        let api = new DMService(host);
         try {
-            console.info("\nConnecting...");
-            let login = await api.login(this.args._[0], this.args._[1]);
+            console.info("\nConnecting to %s...", host);
+            let uname = this.args._[0];
+            let pw = this.args._[1].toString();
+            let login = await api.login(uname, pw);
             console.info("Login successful for: ", login.fullname || login.name, ", session: ", login.session_id, "\n");
 
             await this.run(api, this.args);
-        } 
+        }
         catch (e) {
             console.error(e.response == undefined ? e : e.response.status + " " + e.response.statusText + " - " + JSON.stringify(e.response.data));
             process.exitCode = -1;
             if (e.response && e.response.status) {
                 process.exitCode = e.response.status;
             }
-        } 
+        }
         finally {
             console.info("\nDisconnecting...");
             api.logout();
