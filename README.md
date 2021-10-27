@@ -5,11 +5,9 @@
 yarn add mamori-ent-js-sdk
 yarn add ts-node
 yarn add typescript
-yarn add typedoc
 yarn add @types/node
 yarn add @types/minimist
 
-yarn build
 ```
 
 ## Usage
