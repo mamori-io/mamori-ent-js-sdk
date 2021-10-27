@@ -17,7 +17,8 @@ import { SshTunnel } from '../dist/network';
 
 let usage =
 "Usage:\n" + 
-"   yarn ts-node <example script> [--help] [--url url] [user password] vpnName [-i identity_file] [-n key_name] -L localPort:remoteHost:remotePort user@ssh_server\n" + 
+"   yarn ts-node <example script> [--help] [--url url] [user password]\n" +
+"\t\t\t\tvpnName [-i identity_file] [-n key_name] -L localPort:remoteHost:remotePort user@ssh_server\n" +
 "where:\n" + 
 "   user\t\tmamori server user\n" +
 "   password\n" +
@@ -80,16 +81,13 @@ class VpnSshExample extends Runnable {
       }
   
       let privateKey: string = await promisify(fs.readFile)(keyFile, { encoding: "UTF-8" }) ;
-      await key.withKey(privateKey)
-               .create(dm) ;
+      await key.withKey(privateKey).create(dm) ;
     }
   
-    await tunnel.at(server, 22)
-                .withCredentials(user, keyName)
-                .forward(localPort, remoteHost, remotePort)
-                .create(dm) ;
+    tunnel.at(server, 22).withCredentials(user, keyName).forward(localPort, remoteHost, remotePort);
+    await tunnel.create(dm);
     console.info("Created SSH tunnel: ", tunnel.name);
-  
+
     console.info(tunnel.name, ': ', await tunnel.start(dm));
     let status = await tunnel.status(dm) ;
     console.info("SSH tunnel after start: ", tunnel.name, " status: ", status[0].Status);
