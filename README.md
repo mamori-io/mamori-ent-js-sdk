@@ -2,7 +2,7 @@
 
 ## Installation
 ```sh
-yarn add mamori-ent-js-api
+yarn add mamori-ent-js-sdk
 yarn add ts-node
 yarn add typescript
 yarn add typedoc
