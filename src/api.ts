@@ -7,18 +7,21 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 import axios from 'axios';
-import {AxiosInstance, Method} from 'axios';
+import { AxiosInstance, Method } from 'axios';
 import { Channel, Socket } from "./phoenix";
 import * as https from 'https';
+import { Datasource } from "./datasource";
+
+export { Datasource };
 
 type ApiCacheEntry = { deferred: Promise<any>, resolved: boolean, value?: any }
 
 interface StringIndexed<T> {
-    [key : string] : T;
+    [key: string]: T;
 }
 
 // Storage for the opt in DM API request cache
-let ___api_request_cache___ : StringIndexed<ApiCacheEntry> = {};
+let ___api_request_cache___: StringIndexed<ApiCacheEntry> = {};
 
 type PromiseCallback = (value: any) => void;
 type ApiCallback = (result: any, resolve: PromiseCallback, reject: PromiseCallback) => void;
@@ -128,7 +131,7 @@ export class DMService {
     private _lastAccess: Nullable<number> = null;
     private _authorization: Nullable<string> = null;
 
-    username?: string ;
+    username?: string;
 
     constructor(base: string, httpsAgent?: https.Agent) {
         this._base = base;
@@ -181,7 +184,7 @@ export class DMService {
         let auth = this.authorization;
         if (auth) {
             if (!this._claims) {
-                if(typeof(auth) ==  "string") {
+                if (typeof (auth) == "string") {
                     this._claims = JSON.parse(auth);
                 } else {
                     this._claims = auth;
@@ -238,22 +241,22 @@ export class DMService {
 
         let result;
         if (this.claims) {
-            result = this._http.request({method: 'DELETE', url: '/sessions/logout'})
-            .then(() => {
-                this.authorization = null;
-            });
-        } 
+            result = this._http.request({ method: 'DELETE', url: '/sessions/logout' })
+                .then(() => {
+                    this.authorization = null;
+                });
+        }
         else {
             result = Promise.resolve();
             this.authorization = null;
         }
 
-        this.username = undefined ;
+        this.username = undefined;
         return result;
     }
 
     has_priv(name: string): boolean {
-        return this.claims.privs.find((v:string) => (v == name) || (v == "ALL PRIVILEGES"));
+        return this.claims.privs.find((v: string) => (v == name) || (v == "ALL PRIVILEGES"));
     }
 
     // websocket stuff
@@ -399,14 +402,14 @@ export class DMService {
         delete ___api_request_cache___[key];
     }
 
-    public async callAPI(method: Method, url: string, params: any = null, callback: Nullable<ApiCallback> = null, cachable: boolean = false) : Promise<any> {
-        var deferred : Promise<any>;
+    public async callAPI(method: Method, url: string, params: any = null, callback: Nullable<ApiCallback> = null, cachable: boolean = false): Promise<any> {
+        var deferred: Promise<any>;
         var cacheKey: string = cachable ? this.calculate_cache_key(url, params) : "";
 
-        if(cachable) {
+        if (cachable) {
             var cached = ___api_request_cache___[cacheKey];
-            if(cached) {
-                if(cached.resolved) {
+            if (cached) {
+                if (cached.resolved) {
                     // we have already received a response to this request so return a new resolved "Deferred" with the cached value
                     return Promise.resolve(cached.value);
                 }
@@ -416,10 +419,10 @@ export class DMService {
         }
 
         let that = this;
-        deferred = new Promise(function(resolve : any, reject : any) {
-            if(!callback) {
+        deferred = new Promise(function (resolve: any, reject: any) {
+            if (!callback) {
                 // default callback
-                callback = function(result, xresolve, _reject) {
+                callback = function (result, xresolve, _reject) {
                     xresolve(result);
                 };
             }
@@ -432,20 +435,20 @@ export class DMService {
                     "Cookie": that._cookies,
                     "X-CSRF-Token": that._csrf
                 }
-            }).then(function(x : any) {
-                if(callback) {
+            }).then(function (x: any) {
+                if (callback) {
                     callback(x.data, resolve, reject);
                 } else {
                     resolve(x.data);
                 }
-            }).catch(function(error : any) {
+            }).catch(function (error: any) {
                 reject(error);
             });
         });
 
-        if(cachable) {
+        if (cachable) {
             ___api_request_cache___[cacheKey] = { deferred: deferred, resolved: false, value: null };
-            deferred.then(function(result : any) {
+            deferred.then(function (result: any) {
                 ___api_request_cache___[cacheKey].resolved = true;
                 ___api_request_cache___[cacheKey].value = result;
             });
@@ -462,35 +465,35 @@ export class DMService {
             method: "GET",
             url: "/"
         })
-        .then(root => {
-            let body = root.data;
-            this._csrf = body.split(/[<>]/)
-                             .filter((s: string) => s.match(/csrf-token/))
-                             .map((s: string) => s.replace(/^.*content="/, "").replace(/".*$/, ""))[0];
-            this._cookies = root.headers['set-cookie'].map((s: string) => {
-                let parts = s.split(";");
-                return parts[0];
-            });
+            .then(root => {
+                let body = root.data;
+                this._csrf = body.split(/[<>]/)
+                    .filter((s: string) => s.match(/csrf-token/))
+                    .map((s: string) => s.replace(/^.*content="/, "").replace(/".*$/, ""))[0];
+                this._cookies = root.headers['set-cookie'].map((s: string) => {
+                    let parts = s.split(";");
+                    return parts[0];
+                });
 
-            return this._http.request({
-                method: 'POST',
-                url: '/sessions/login',
-                data: {
-                    username: username.toLowerCase(),
-                    password: password,
-                    otp_password: otp_password,
-                },
-                headers: {
-                    "Cookie": this._cookies,
-                    "X-CSRF-Token": this._csrf
-                }
-            })
-            .then(resp => {
-                this.authorization = resp.data;
-                this.username = username ;
-                return resp.data as LoginResponse;
+                return this._http.request({
+                    method: 'POST',
+                    url: '/sessions/login',
+                    data: {
+                        username: username.toLowerCase(),
+                        password: password,
+                        otp_password: otp_password,
+                    },
+                    headers: {
+                        "Cookie": this._cookies,
+                        "X-CSRF-Token": this._csrf
+                    }
+                })
+                    .then(resp => {
+                        this.authorization = resp.data;
+                        this.username = username;
+                        return resp.data as LoginResponse;
+                    });
             });
-        });
     }
 
     public ping(): Promise<boolean> {
@@ -500,7 +503,7 @@ export class DMService {
     }
 
     public change_password(old_password: string, new_password: string) {
-        return this.callAPI("POST", "/v1/change_password", {old_password: old_password, new_password: new_password})
+        return this.callAPI("POST", "/v1/change_password", { old_password: old_password, new_password: new_password })
     }
 
     public service_status(): Promise<ServiceStatus> {
@@ -546,7 +549,7 @@ export class DMService {
                     delete this._queries[message.task.id];
                 } else {
                     let do_next = false;
-                    if(promised.notify) {
+                    if (promised.notify) {
                         promised.notify(message, (flag: boolean) => {
                             do_next = flag
                         });
@@ -557,9 +560,9 @@ export class DMService {
                         delete this._queries[message.task.id];
                     } else {
                         if (do_next) {
-                            channel.push("next", {task_id: message.task.id});
+                            channel.push("next", { task_id: message.task.id });
                         } else {
-                            channel.push("cancel", {task_id: message.task.id});
+                            channel.push("cancel", { task_id: message.task.id });
                             // remove the query from the list as it is cancelled
                             delete this._queries[message.task.id];
                             promised.resolve();
@@ -593,16 +596,16 @@ export class DMService {
         this.ping(); // keep the session alive
 
         let deferred = new PromiseWithProgress((resolve, reject) => {
-            let msg = Object.assign({query: sql}, options);
+            let msg = Object.assign({ query: sql }, options);
 
             this.new_query_job()
                 .then((channel: Channel) => {
                     channel.push("query", msg)
                         .receive("ok", (resp) => {
-                            this._queries[resp.id] = {resolve: resolve, reject: reject, notify: deferred._progress};
+                            this._queries[resp.id] = { resolve: resolve, reject: reject, notify: deferred._progress };
 
-                            if(deferred._progress) {
-                                deferred._progress({id: resp.id}, (_) => {});
+                            if (deferred._progress) {
+                                deferred._progress({ id: resp.id }, (_) => { });
                             }
                         })
                         .receive("error", (resp) => reject(resp));
@@ -619,14 +622,14 @@ export class DMService {
             let q = this._queries[task_id];
             if (q) {
                 this.new_query_job().then((channel: Channel) => {
-                    channel.push("cancel", {task_id: task_id})
+                    channel.push("cancel", { task_id: task_id })
                         .receive("ok", (resp) => {
                             delete this._queries[task_id];
-                            q.reject({message: "Cancelled"});
+                            q.reject({ message: "Cancelled" });
 
-                        resolve();
-                    })
-                    .receive("error", (resp) => reject(resp));
+                            resolve();
+                        })
+                        .receive("error", (resp) => reject(resp));
 
                 }).catch((e) => reject(e));
             } else {
@@ -639,7 +642,7 @@ export class DMService {
         return new Promise((resolve, reject) => {
             this.new_query_job()
                 .then((channel: Channel) => {
-                    channel.push("close", {name: name})
+                    channel.push("close", { name: name })
                         .receive("ok", (resp) => {
                             resolve(resp);
                         })
@@ -668,10 +671,10 @@ export class DMService {
             let acc: any[] = [];
 
             this.query(sql, options).progress(chunk => {
-                if(chunk.rows) {
-                    let cols = chunk.meta.map((c:any) => c.name);
+                if (chunk.rows) {
+                    let cols = chunk.meta.map((c: any) => c.name);
 
-                    for(let row of chunk.rows) {
+                    for (let row of chunk.rows) {
                         let o: any = {};
                         cols.map((col: string, idx: number) => o[col] = row[idx]);
 
@@ -695,15 +698,15 @@ export class DMService {
     }
 
     public get_system_properties(query: string) {
-        return this.callAPI("GET", "/v1/server_properties"+query);
+        return this.callAPI("GET", "/v1/server_properties" + query);
     }
 
     public set_system_properties(jsonProperties: any) {
-           return this.callAPI("PUT", "/v1/server_properties", {properties: jsonProperties});
+        return this.callAPI("PUT", "/v1/server_properties", { properties: jsonProperties });
     }
 
     public set_system_property(name: string, value: any) {
-        return this.callAPI("PUT", "/v1/server_properties/" + name, {value: value});
+        return this.callAPI("PUT", "/v1/server_properties/" + name, { value: value });
     }
 
     //
@@ -726,7 +729,7 @@ export class DMService {
         return new Promise((resolve, reject) => {
             this.new_query_job()
                 .then((channel: Channel) => {
-                    channel.push("sessions", {show_root: show_root})
+                    channel.push("sessions", { show_root: show_root })
                         .receive("ok", (resp) => {
                             let rows = resp.rows.map((row: any[]) => {
                                 return {
@@ -810,7 +813,7 @@ export class DMService {
     }
 
     public update_access_rule_position(id: number, position: number) {
-        let rec = {position: position};
+        let rec = { position: position };
         return this.callAPI("PUT", "/v1/access_rules/" + id, rec);
     }
 
@@ -829,7 +832,7 @@ export class DMService {
     }
 
     public create_access_rule(type: string, clause: string, position: number, alert: string, description: string, enabled: boolean) {
-       let rec = {
+        let rec = {
             type: type,
             clause: clause,
             description: description,
@@ -870,11 +873,11 @@ export class DMService {
     }
 
     public get_masking_procedures(options: any) {
-         return this.callAPI("GET", "/v1/maskingprocedures", options);
+        return this.callAPI("GET", "/v1/maskingprocedures", options);
     }
 
     public delete_masking_procedure(rmsid: number, name: string) {
-        return this.callAPI("DELETE", "/v1/maskingprocedures/1",{name:name, rmsid: rmsid});
+        return this.callAPI("DELETE", "/v1/maskingprocedures/1", { name: name, rmsid: rmsid });
     }
 
     public get_restricted_columns() {
@@ -882,11 +885,11 @@ export class DMService {
     }
 
     public add_restricted_column(rms: string, column: string) {
-        return this.callAPI("POST", "/v1/restricted_columns", {rms_name: rms, column_name: column});
+        return this.callAPI("POST", "/v1/restricted_columns", { rms_name: rms, column_name: column });
     }
 
     public drop_restricted_column(rms: string, column: string) {
-        return this.callAPI("DELETE", "/v1/restricted_columns/1", {rms_name: rms, column_name: column});
+        return this.callAPI("DELETE", "/v1/restricted_columns/1", { rms_name: rms, column_name: column });
     }
 
     //
@@ -946,15 +949,15 @@ export class DMService {
     }
 
     public users_roles_recursive(userlist: string[]) {
-        return this.callAPI("GET", "/v1/roles?recursive=Y",{grantee: userlist});
+        return this.callAPI("GET", "/v1/roles?recursive=Y", { grantee: userlist });
     }
 
     public grant_roles_to_user(username: string, roles: string[]) {
-        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
+        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", { selected_roles: roles });
     }
 
     public revoke_roles_from_user(username: string, roles: string[]) {
-        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", {selected_roles: roles});
+        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/roles", { selected_roles: roles });
     }
 
     public update_user_roles(username: string, deleted: string[], added: string[]) {
@@ -966,10 +969,10 @@ export class DMService {
         }
         else if (deleted.length > 0) {
             return this.revoke_roles_from_user(username, deleted);
-        } 
+        }
         else if (added.length > 0) {
             return this.grant_roles_to_user(username, added);
-        } 
+        }
         else {
             return
         }
@@ -1007,11 +1010,11 @@ export class DMService {
     }
 
     public drop_role_credentials(role: string, credentials: string[]) {
-        return this.callAPI("DELETE", "/v1/roles/" + role + "/credentials", {db_credentials: credentials});
+        return this.callAPI("DELETE", "/v1/roles/" + role + "/credentials", { db_credentials: credentials });
     }
 
     public add_role_credentials(role: string, credentials: string[]) {
-        return this.callAPI("POST", "/v1/roles/" + role + "/credentials", {db_credentials: credentials});
+        return this.callAPI("POST", "/v1/roles/" + role + "/credentials", { db_credentials: credentials });
     }
 
     // public add_datasource_authorization_to(grantee: string, datasource: string, username: string, password: string) {
@@ -1055,11 +1058,11 @@ export class DMService {
             });
         }
         else if (deleted.length > 0) {
-            return this.revoke_global_permission(rolename, {deleted_permission: deleted});
-        } 
+            return this.revoke_global_permission(rolename, { deleted_permission: deleted });
+        }
         else if (added.length > 0) {
-            return this.grant_global_permission(rolename, {selected_permissions_cirro: added});
-        } 
+            return this.grant_global_permission(rolename, { selected_permissions_cirro: added });
+        }
         else {
             return
         }
@@ -1073,15 +1076,15 @@ export class DMService {
             });
         }
         else if (deleted.length > 0) {
-            return this.revoke_object_permission(rolename, {deleted_permission_object: deleted});
-        } 
+            return this.revoke_object_permission(rolename, { deleted_permission_object: deleted });
+        }
         else if (added.length > 0) {
-            return this.grant_object_permission(rolename, {selected_permissions_object: added});
+            return this.grant_object_permission(rolename, { selected_permissions_object: added });
         }
     }
 
-    public grantee_object_grants(grantee:string, permissionType: string, objectName: string) {
-        return this.callAPI("GET", "/v1/grantee/" + grantee + "/grants", {permission: permissionType, object_name: objectName});
+    public grantee_object_grants(grantee: string, permissionType: string, objectName: string) {
+        return this.callAPI("GET", "/v1/grantee/" + grantee + "/grants", { permission: permissionType, object_name: objectName });
     }
 
     public grant_global_permission(role: string, permissions: any) {
@@ -1101,15 +1104,15 @@ export class DMService {
     }
 
     public permissions_by_role(roleid: string, scopes: string[]) {
-        return this.callAPI("GET", "/v1/roles/" + roleid + "/permissions", scopes ? {scope: scopes} : null);
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/permissions", scopes ? { scope: scopes } : null);
     }
 
     public privileges(query: string) {
-        return this.callAPI("GET", "/v1/privileges"+query);
+        return this.callAPI("GET", "/v1/privileges" + query);
     }
 
     public grantee_privileges_recursive(grantees: string[]) {
-        return this.callAPI("GET", "/v1/privileges?recursive=Y", {"grantee":grantees});
+        return this.callAPI("GET", "/v1/privileges?recursive=Y", { "grantee": grantees });
     }
 
     public grantees() {
@@ -1117,7 +1120,7 @@ export class DMService {
     }
 
     public permissions(scopes?: string[]) {
-        return this.callAPI("GET", '/v1/permissions', scopes ? {scope: scopes} : null);
+        return this.callAPI("GET", '/v1/permissions', scopes ? { scope: scopes } : null);
     }
 
     public permissionsFiltered(scopes?: string[], permissionType?: string) {
@@ -1160,7 +1163,7 @@ export class DMService {
     }
 
     public validate_provider(provider: string, username: string, password: string) {
-        return this.callAPI("POST", "/v1/provider/validate", {provider: provider, username: username, password: password});
+        return this.callAPI("POST", "/v1/provider/validate", { provider: provider, username: username, password: password });
     }
 
     public set_default_provider_chain(options: any) {
@@ -1172,14 +1175,14 @@ export class DMService {
     }
 
     public set_totp_properties(seconds: number, url: string) {
-        return this.callAPI("PUT", "/v1/defaults/totpproperties",{seconds: seconds, url: url});
+        return this.callAPI("PUT", "/v1/defaults/totpproperties", { seconds: seconds, url: url });
     }
 
     public ldap_search(options: any) {
         return this.callAPI("POST", "/v1/ldap/search/", options);
     }
 
-    public enable_provider(name : string, type: string) {
+    public enable_provider(name: string, type: string) {
         return this.callAPI("PUT", "/v1/providers/" + name, {
             name: name,
             type: type,
@@ -1187,7 +1190,7 @@ export class DMService {
         });
     }
 
-    public disable_provider(name : string, type: string) {
+    public disable_provider(name: string, type: string) {
         return this.callAPI("PUT", "/v1/providers/" + name, {
             name: name,
             type: type,
@@ -1251,7 +1254,7 @@ export class DMService {
     }
 
     public objects(system_name: string, database_name: string, schema_name: string, name: string) {
-        let params: any = {"system_name": system_name, "database_name": database_name, "schema_name": schema_name};
+        let params: any = { "system_name": system_name, "database_name": database_name, "schema_name": schema_name };
         if (name) {
             params["object_name"] = name;
         }
@@ -1283,7 +1286,7 @@ export class DMService {
     }
 
     public system_group_add_system(group: string, system: string) {
-        return this.callAPI("POST", "/v1/systemgroups/" + group + "/systems", {system: system});
+        return this.callAPI("POST", "/v1/systemgroups/" + group + "/systems", { system: system });
     }
 
     public system_group_remove_system(group: string, system: string) {
@@ -1348,7 +1351,7 @@ export class DMService {
     //
 
     public users(query: string = "") {
-        return this.callAPI("GET", "/v1/users"+query);
+        return this.callAPI("GET", "/v1/users" + query);
     }
 
     // public user_has_pending_validation(username: string) {
@@ -1441,19 +1444,19 @@ export class DMService {
     }
 
     public revoke_role_from_users(roleid: string, users: string[]) {
-        return this.callAPI("DELETE", "/v1/roles/" + roleid + "/users", {selected_users: users});
+        return this.callAPI("DELETE", "/v1/roles/" + roleid + "/users", { selected_users: users });
     }
 
     public revoke_role_from_grantee(roleid: string, grantee: string) {
-        return this.callAPI("DELETE", "/v1/roles/" + roleid + "/user", {selected_user: grantee});
+        return this.callAPI("DELETE", "/v1/roles/" + roleid + "/user", { selected_user: grantee });
     }
 
     public grant_role_to_users(roleid: string, users: string[]) {
-        return this.callAPI("POST", "/v1/roles/" + roleid + "/users", {selected_users: users});
+        return this.callAPI("POST", "/v1/roles/" + roleid + "/users", { selected_users: users });
     }
 
     public grant_role_to_grantee(roleid: string, grantee: string) {
-        return this.callAPI("POST", "/v1/roles/" + roleid + "/user", {selected_user: grantee});
+        return this.callAPI("POST", "/v1/roles/" + roleid + "/user", { selected_user: grantee });
     }
 
     public get_grantee_policies(grantee: string) {
@@ -1503,11 +1506,11 @@ export class DMService {
     }
 
     public drop_user_db_creds(username: string, credentials: any) {
-        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {db_credentials: credentials});
+        return this.callAPI("DELETE", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", { db_credentials: credentials });
     }
 
     public add_user_db_creds(username: string, credentials: any) {
-        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", {db_credentials: credentials});
+        return this.callAPI("POST", "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/credentials", { db_credentials: credentials });
     }
 
     public search_permission_log(options: any) {
@@ -1523,7 +1526,7 @@ export class DMService {
     }
 
     public install_certs(name: string, ca_crt: string, key: string, crt: string) {
-        return this.callAPI("POST", "/v1/certs", {name: name, certs: {key: key, crt: crt, ca_crt: ca_crt}});
+        return this.callAPI("POST", "/v1/certs", { name: name, certs: { key: key, crt: crt, ca_crt: ca_crt } });
     }
 
     public get_log_entries(logname: string) {
@@ -1543,11 +1546,11 @@ export class DMService {
     }
 
     public create_alert(alert: any) {
-        return this.callAPI("POST", "/v1/alerts", {alert: alert});
+        return this.callAPI("POST", "/v1/alerts", { alert: alert });
     }
 
     public update_alert(id: number, alert: any) {
-        return this.callAPI("PUT", "/v1/alerts/" + id, {alert: alert});
+        return this.callAPI("PUT", "/v1/alerts/" + id, { alert: alert });
     }
 
     public delete_alert(id: number) {
@@ -1559,15 +1562,15 @@ export class DMService {
     }
 
     public get_detailed_logging_for_listener(listener: string) {
-        return this.callAPI("GET", "/v1/listeners/"+listener+"/logging");
+        return this.callAPI("GET", "/v1/listeners/" + listener + "/logging");
     }
 
     public update_listener(id: string, port: number) {
-        return this.callAPI("PUT", "/v1/listeners/" + id, {port: port});
+        return this.callAPI("PUT", "/v1/listeners/" + id, { port: port });
     }
 
     public update_listener_logging(id: string, flag: boolean) {
-        return this.callAPI("PUT", "/v1/listeners/" + id+"/logging", {detailed_logging: flag});
+        return this.callAPI("PUT", "/v1/listeners/" + id + "/logging", { detailed_logging: flag });
     }
 
     //
@@ -1607,11 +1610,11 @@ export class DMService {
     }
 
     public policies_request_execute(procedure_name: string, parameters: any, message: string) {
-        return this.callAPI("POST", "/v1/policies/request_execute", {procedure_name: procedure_name, parameters: parameters, message: message});
+        return this.callAPI("POST", "/v1/policies/request_execute", { procedure_name: procedure_name, parameters: parameters, message: message });
     }
 
     public policies_request_action(action: string, request_key: string, message: string) {
-        return this.callAPI("POST", "/v1/policies/request_action", {action: action, request_key: request_key, message: message});
+        return this.callAPI("POST", "/v1/policies/request_action", { action: action, request_key: request_key, message: message });
     }
 
     public policies_drop_procedure(procedure_name: string) {
@@ -1619,20 +1622,20 @@ export class DMService {
     }
 
     public policies_create_procedure(procedure_name: string,
-                                     parameters: any,
-                                     requires: string,
-                                     type: string,
-                                     description: string,
-                                     request_role: string,
-                                     request_alert: string,
-                                     request_default_message: string,
-                                     endorse_alert: string,
-                                     endorse_default_message: string,
-                                     endorse_agent_count: any,
-                                     deny_alert: string,
-                                     execute_on_endorse: string,
-                                     execute_alert: string,
-                                     sql: string) {
+        parameters: any,
+        requires: string,
+        type: string,
+        description: string,
+        request_role: string,
+        request_alert: string,
+        request_default_message: string,
+        endorse_alert: string,
+        endorse_default_message: string,
+        endorse_agent_count: any,
+        deny_alert: string,
+        execute_on_endorse: string,
+        execute_alert: string,
+        sql: string) {
         return this.callAPI("POST", "/v1/policies/create_procedure", {
             procedure_name: procedure_name,
             parameters: parameters,
@@ -1646,7 +1649,7 @@ export class DMService {
             endorse_default_message: endorse_default_message ? endorse_default_message : "",
             endorse_agent_count: endorse_agent_count,
             deny_alert: deny_alert ? deny_alert : "",
-            execute_on_endorse: execute_on_endorse ? execute_on_endorse:"false",
+            execute_on_endorse: execute_on_endorse ? execute_on_endorse : "false",
             execute_alert: execute_alert ? execute_alert : "",
             sql: sql,
         });
@@ -1685,11 +1688,11 @@ export class DMService {
 
 
     public add_http_apifilter(filter: any) {
-        return this.callAPI("POST", "/v1/policies/create_http_apifilter", {filter: filter});
+        return this.callAPI("POST", "/v1/policies/create_http_apifilter", { filter: filter });
     }
 
     public set_http_apifilter(filter: any) {
-        return this.callAPI("PUT", "/v1/policies/set_http_apifilter/" + filter.id, {filter: filter});
+        return this.callAPI("PUT", "/v1/policies/set_http_apifilter/" + filter.id, { filter: filter });
     }
 
     public delete_http_apifilter(filter_id: Number) {
@@ -1713,7 +1716,7 @@ export class DMService {
     }
 
     public create_wireguard_peer(peer: WireguardPeer): Promise<AddWireguardPeerResponse> {
-        return this.callAPI("POST", "/v1/wireguard", {peer: peer});
+        return this.callAPI("POST", "/v1/wireguard", { peer: peer });
     }
 
     public delete_wireguard_peer(id: string) {
