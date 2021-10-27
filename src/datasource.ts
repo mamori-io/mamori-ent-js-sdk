@@ -43,7 +43,7 @@ export class Datasource {
      * @returns All the datasources the logged-in user has access to.
      */
     public static getAll(api: DMService): Promise<any> {
-        return api.callAPI("GET", '/v1/user_systems');
+        return api.callAPI("GET", '/v1/objects/databases?usersystems=true');
     }
 
     /**
