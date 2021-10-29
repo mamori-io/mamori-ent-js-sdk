@@ -27,7 +27,6 @@ class DatasourceExample extends Runnable {
     egSystem.ofType("POSTGRESQL", 'postgres')
             .at("10.1.1.209", 5432)
             .withCredentials('postgres', 'postgres')
-            .withTempDatabase('mamori')
             .withDatabase('mamori')
             .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
     await egSystem.create(api) ;
@@ -52,7 +51,6 @@ class DatasourceExample extends Runnable {
         port: 5432,
         user: "postgres",
         password: "postgres",
-        tempDatabase: "mamori",
         database: "mamori",
         urlProperties: 'allowEncodingChanges=true;defaultNchar=true'
     }).create(api) ;
