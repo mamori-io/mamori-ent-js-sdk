@@ -3,7 +3,7 @@
 ## Usage
 Basic arguments for all scripts:
 ```sh
-   yarn ts-node --transpile-only <script file> [--help] [--url url] user password
+   yarn ts-node <script file> [--help] [--url url] user password
 ```
 where:
 - `user` is the mamori server user

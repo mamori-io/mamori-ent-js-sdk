@@ -13,7 +13,7 @@ yarn add @types/minimist
 ## Usage
 To run a script:
 ```sh
-yarn ts-node --transpile-only <your script>
+yarn ts-node <your script>
 ```
 
 Example script: login and list available datasources

@@ -26,7 +26,7 @@ export abstract class Runnable {
         if (usage == void 0) {
             this.usage =
                 "Usage:\n" +
-                "   yarn ts-node --transpile-only " + this.constructor.name + " [--help] [--url url] user password\n" +
+                "   yarn ts-node " + this.constructor.name + " [--help] [--url url] user password\n" +
                 "where:\n" +
                 "   user\t\tmamori server user\n" +
                 "   password\tuser password\n" +
