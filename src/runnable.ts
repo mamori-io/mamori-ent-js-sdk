@@ -12,7 +12,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 import minimist = require('minimist');
 import { ParsedArgs } from 'minimist';
 
-import { DMService } from './api';
+import { MamoriService } from './api';
 
 /**
  * Base class for runnable script snippets. Sublass and implement the run method.
@@ -59,7 +59,7 @@ export abstract class Runnable {
         }
 
         let host = "https://" + this.args.url + "/";
-        let api = new DMService(host);
+        let api = new MamoriService(host);
         try {
             console.info("\nConnecting to %s...", host);
             let uname = this.args._[0];
@@ -87,5 +87,5 @@ export abstract class Runnable {
      * @param dm   API client
      * @param args Command line arguments
      */
-    abstract run(dm: DMService, args: ParsedArgs): Promise<void>;
+    abstract run(dm: MamoriService, args: ParsedArgs): Promise<void>;
 }

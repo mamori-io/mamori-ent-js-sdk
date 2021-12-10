@@ -8,13 +8,13 @@
  */
 import { ParsedArgs } from 'minimist';
 
-import { DMService } from '../dist/api';
+import { MamoriService } from '../dist/api';
 import { Role } from '../dist/role';
 import { Runnable } from '../dist/runnable';
 
 class RoleExample extends Runnable {
 
-  async run(api: DMService, args: ParsedArgs): Promise<void> {
+  async run(api: MamoriService, args: ParsedArgs): Promise<void> {
     let mamoriUser = args._[0];
 
     let role = new Role("test_role", "Test role");
@@ -48,4 +48,4 @@ class RoleExample extends Runnable {
   }
 }
 
-new RoleExample().execute() ;
+new RoleExample().execute();

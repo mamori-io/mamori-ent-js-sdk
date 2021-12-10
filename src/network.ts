@@ -6,11 +6,11 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { DMService } from './api';
+import { MamoriService } from './api';
 
 export class Network {
 
-    public static getAll(api: DMService): Promise<any> {
+    public static getAll(api: MamoriService): Promise<any> {
         return api.callAPI("GET", "/v1/vpns");
     }
 
@@ -25,7 +25,7 @@ export class Network {
         this.type = type;
     }
 
-    public create(api: DMService): Promise<any> {
+    public create(api: MamoriService): Promise<any> {
         return api.callAPI("POST", "/v1/vpns", {
             vpn: {
                 name: this.name,
@@ -36,23 +36,23 @@ export class Network {
         });
     }
 
-    public delete(api: DMService): Promise<any> {
+    public delete(api: MamoriService): Promise<any> {
         return api.callAPI("DELETE", "/v1/vpns/" + this.name);
     }
 
-    public start(api: DMService): Promise<any> {
+    public start(api: MamoriService): Promise<any> {
         return api.callAPI("PUT", "/v1/vpns/" + this.name + "/start");
     }
 
-    public status(api: DMService): Promise<any> {
+    public status(api: MamoriService): Promise<any> {
         return api.callAPI("GET", "/v1/vpns/" + this.name + "/status");
     }
 
-    public stop(api: DMService): Promise<any> {
+    public stop(api: MamoriService): Promise<any> {
         return api.callAPI("PUT", "/v1/vpns/" + this.name + "/stop");
     }
 
-    public getConnectionLog(api: DMService): Promise<any> {
+    public getConnectionLog(api: MamoriService): Promise<any> {
         return api.callAPI("GET", "/v1/vpns/" + this.name + "/logs");
     }
 

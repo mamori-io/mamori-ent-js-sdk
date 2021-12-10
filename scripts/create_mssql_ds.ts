@@ -6,9 +6,9 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import {DMService} from '../dist/api';
-import {ParsedArgs} from "minimist";
-import {Runnable} from "../dist/runnable";
+import { MamoriService } from '../dist/api';
+import { ParsedArgs } from "minimist";
+import { Runnable } from "../dist/runnable";
 
 let usage: string =
     "Usage:\n" +
@@ -29,7 +29,7 @@ class CreateMSSQLDatasource extends Runnable {
         super(usage);
     }
 
-    async run(dm: DMService, args: ParsedArgs): Promise<void> {
+    async run(dm: MamoriService, args: ParsedArgs): Promise<void> {
         let ds_name = args._[2];
         let ds_host = args._[3];
         let ds_user = args._[4];
@@ -46,7 +46,7 @@ class CreateMSSQLDatasource extends Runnable {
         // assumes JDBC driver is installed as mssqlserver
         let options = `PORT '1433', DRIVER 'mssqlserver', USER '${ds_user}', PASSWORD '${ds_pwd}', DEFAULTDATABASE '${ds_db}', TEMPDATABASE '${ds_db}'`;
 
-        await dm.create_system_for_rec("N", rec,options,{});
+        await dm.create_system_for_rec("N", rec, options, {});
         console.info(`Created MSQL datasource ${ds_name}`);
 
         let dss = JSON.stringify(await dm.user_systems());
@@ -54,7 +54,7 @@ class CreateMSSQLDatasource extends Runnable {
         console.info(`Datasources ${dss}`);
 
         console.log(`Adding credential for datasource to current user...${args._[0]}`);
-        await dm.add_datasource_authorization_to(args._[0],ds_name,ds_user,ds_pwd)
+        await dm.add_datasource_authorization_to(args._[0], ds_name, ds_user, ds_pwd)
     }
 }
 

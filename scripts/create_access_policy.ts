@@ -8,9 +8,9 @@
  *
  */
 
-import {DMService} from '../../dist/api';
-import {Runnable} from "../runnable";
-import {ParsedArgs} from "minimist";
+import { MamoriService } from '../../dist/api';
+import { Runnable } from "../runnable";
+import { ParsedArgs } from "minimist";
 
 let usage: string =
     "Usage:\n" +
@@ -31,7 +31,7 @@ class CreateAccessPolicy extends Runnable {
         super(usage);
     }
 
-    async run(dm: DMService, args: ParsedArgs): Promise<void> {
+    async run(dm: MamoriService, args: ParsedArgs): Promise<void> {
 
         let policy_name = args._[2];
         let request_role = args._[3];

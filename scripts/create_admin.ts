@@ -8,9 +8,9 @@
  *
   *  */
 
-import {DMService} from '../dist/api';
-import {Runnable} from "../dist/runnable";
-import {ParsedArgs} from "minimist";
+import { MamoriService } from '../dist/api';
+import { Runnable } from "../dist/runnable";
+import { ParsedArgs } from "minimist";
 
 let grantRole = "mamori_admin";
 
@@ -30,7 +30,7 @@ class CreateAdmin extends Runnable {
         super(usage);
     }
 
-    async run(dm: DMService, args: ParsedArgs): Promise<void> {
+    async run(dm: MamoriService, args: ParsedArgs): Promise<void> {
 
         let admin_user = args._[2];
         let admin_password = args._[3];

@@ -11,14 +11,14 @@
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 import { Datasource } from '../dist/datasource';
-import { DMService } from '../dist/api';
+import { MamoriService } from '../dist/api';
 
-let mamoriUrl  = "https://localhost:443/" ;
-let mamoriUser = "alice" ;
-let mamoriPwd  = "mirror" ;
+let mamoriUrl = "https://localhost:443/";
+let mamoriUser = "alice";
+let mamoriPwd = "mirror";
 
 async function display_systems() {
-  let dm = new DMService(mamoriUrl);
+  let dm = new MamoriService(mamoriUrl);
 
   console.info("Connecting...");
   let login = await dm.login(mamoriUser, mamoriPwd);

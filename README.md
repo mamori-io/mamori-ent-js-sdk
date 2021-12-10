@@ -21,17 +21,17 @@ Example script: login and list available datasources
 // allow for self-signed certificates
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import { DMService } from 'mamori-ent-js-sdk';
+import { MamoriService } from 'mamori-ent-js-sdk';
 import { Datasource } from 'mamori-ent-js-sdk';
 
 let mamoriUrl  = "https://localhost/" ;
 let mamoriUser = "alice" ;
 let mamoriPwd  = "mirror" ;
 
-let dm = new DMService(mamoriUrl);
+let dm = new MamoriService(mamoriUrl);
 
 async function display_datasources() {
-  let api = new DMService(mamoriUrl);
+  let api = new MamoriService(mamoriUrl);
 
   console.info("Connecting...");
   let login = await api.login(mamoriUser, mamoriPwd);

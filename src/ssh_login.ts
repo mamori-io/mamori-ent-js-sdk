@@ -6,35 +6,35 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { DMService } from './api';
+import { MamoriService } from './api';
 import { SshLoginDesc } from './api';
 import { sqlEscape } from './utils';
 
- /**
-  * An SshLogin represents a target machine.
-  * 
-  * Example use:
-  * ```javascript
-  * await new SshLogin("test")
-  *     .at("10.0.2.2", 1122)
-  *     .withCredentials('postgres', 'my_key', 'postgres')
-  *     .create(api) ;
-  * ```
-  * or
-  * ```javascript
-  * await SshLogin.build({
-  *     name: "test", 
-  *     host: "10.0.2.2", 
-  *     port: 1122
-  *     user: "postgres",
-  *     privateKey: "my_key",
-  *     password: "postgres"
-  * }).create(api)
-  * ```
-  */
- export class SshLogin {
+/**
+ * An SshLogin represents a target machine.
+ * 
+ * Example use:
+ * ```javascript
+ * await new SshLogin("test")
+ *     .at("10.0.2.2", 1122)
+ *     .withCredentials('postgres', 'my_key', 'postgres')
+ *     .create(api) ;
+ * ```
+ * or
+ * ```javascript
+ * await SshLogin.build({
+ *     name: "test", 
+ *     host: "10.0.2.2", 
+ *     port: 1122
+ *     user: "postgres",
+ *     privateKey: "my_key",
+ *     password: "postgres"
+ * }).create(api)
+ * ```
+ */
+export class SshLogin {
 
-    public static getAll(api: DMService): Promise<SshLoginDesc[]> {
+    public static getAll(api: MamoriService): Promise<SshLoginDesc[]> {
         return api.simple_query("call ssh_logins()");
     }
 
@@ -43,22 +43,22 @@ import { sqlEscape } from './utils';
      * @returns 
      */
     public static build(ds: any): SshLogin {
-        let result = new SshLogin(ds.name) ;
-        result.host = ds.host ;
-        result.port = ds.port ;
-        result.user = ds.user ;
-        result.password = ds.password ;
-        result.privateKey = ds.privateKey ;
+        let result = new SshLogin(ds.name);
+        result.host = ds.host;
+        result.port = ds.port;
+        result.user = ds.user;
+        result.password = ds.password;
+        result.privateKey = ds.privateKey;
 
-        return result ;
+        return result;
     }
 
-    name: string ;
-    host?: string ;
-    port?: number ;
-    user?: string ;
-    password?: string ;
-    privateKey?: string ;
+    name: string;
+    host?: string;
+    port?: number;
+    user?: string;
+    password?: string;
+    privateKey?: string;
 
     /**
      * @param name  Unique SshLogin name
@@ -69,29 +69,29 @@ import { sqlEscape } from './utils';
 
     /**
      * Create a new SshLogin with the current properties.
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns 
      */
-    public create(api: DMService) : Promise<any> {
-        let uri =  "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port);
-        let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" + sqlEscape(uri) + "', '" + this.privateKey +  "', '" +  sqlEscape(this.password || "") + "')" ;
-        return api.query(query) ;       
+    public create(api: MamoriService): Promise<any> {
+        let uri = "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port);
+        let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" + sqlEscape(uri) + "', '" + this.privateKey + "', '" + sqlEscape(this.password || "") + "')";
+        return api.query(query);
     }
 
     /**
      * Delete this SshLogin.
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns 
      */
-     public delete(api: DMService) : Promise<any> {
-        return api.query("CALL DELETE_SSH_LOGIN('" + sqlEscape(this.name) + "')") ;
+    public delete(api: MamoriService): Promise<any> {
+        return api.query("CALL DELETE_SSH_LOGIN('" + sqlEscape(this.name) + "')");
     }
 
-    public grantTo(api: DMService, grantee: string) : Promise<any> {
+    public grantTo(api: MamoriService, grantee: string): Promise<any> {
         return api.grant_to(grantee, ['SSH'], this.name);
     }
 
-    public revokeFrom(api: DMService, grantee: string) : Promise<any> {
+    public revokeFrom(api: MamoriService, grantee: string): Promise<any> {
         return api.revoke_from(grantee, ['SSH'], this.name);
     }
 
@@ -101,10 +101,10 @@ import { sqlEscape } from './utils';
      * @param port  Required listening port of the target resource
      * @returns 
      */
-    public at(host: string, port: any) : SshLogin {
+    public at(host: string, port: any): SshLogin {
         this.host = host;
         this.port = port;
-        return this ;
+        return this;
     }
 
     /**
@@ -114,10 +114,10 @@ import { sqlEscape } from './utils';
      * @param password    Optional password
      * @returns 
      */
-   public withCredentials(user: string, privateKey: string, password: string) : SshLogin {
+    public withCredentials(user: string, privateKey: string, password: string): SshLogin {
         this.user = user;
         this.password = password;
-        this.privateKey = privateKey ;
-        return this ;
+        this.privateKey = privateKey;
+        return this;
     }
 }

@@ -6,9 +6,9 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import {DMService} from '../dist/api';
-import {ParsedArgs} from "minimist";
-import {Runnable} from "../dist/runnable";
+import { MamoriService } from '../dist/api';
+import { ParsedArgs } from "minimist";
+import { Runnable } from "../dist/runnable";
 
 let usage: string =
     "Usage:\n" +
@@ -27,7 +27,7 @@ class GrantRole extends Runnable {
         super(usage);
     }
 
-    async run(dm: DMService, args: ParsedArgs): Promise<void> {
+    async run(dm: MamoriService, args: ParsedArgs): Promise<void> {
         let user_or_role = args._[2];
         let role = args._[3];
 

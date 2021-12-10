@@ -6,10 +6,10 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import {DMService} from '../dist/api';
-import {IpSecVpn} from '../dist/network';
-import {ParsedArgs} from "minimist";
-import {Runnable} from "../dist/runnable";
+import { MamoriService } from '../dist/api';
+import { IpSecVpn } from '../dist/network';
+import { ParsedArgs } from "minimist";
+import { Runnable } from "../dist/runnable";
 
 let usage: string =
     "Usage:\n" +
@@ -30,17 +30,17 @@ class CreateIpsec extends Runnable {
     constructor() {
         super(usage, {
             string: ['url', '-f'],
-            alias: {h: 'help', f: 'force'},
-            default: {url: 'localhost:443'},
+            alias: { h: 'help', f: 'force' },
+            default: { url: 'localhost:443' },
             '--': true,
         });
     }
 
-    async run(dm: DMService, args: ParsedArgs): Promise<void> {
-        let vpn = new IpSecVpn(args._[2]) ;
+    async run(dm: MamoriService, args: ParsedArgs): Promise<void> {
+        let vpn = new IpSecVpn(args._[2]);
         if (args.f) {
             try {
-                await vpn.delete(dm) ;
+                await vpn.delete(dm);
                 console.info("Deleted VPN: ", vpn.name);
             }
             catch (e) {
@@ -50,9 +50,9 @@ class CreateIpsec extends Runnable {
 
         console.info(`Creating IPSEC network connection: ${vpn.name} ...`);
         await vpn.at(args._[3])
-           .withCredentials('mamori', args._[4])
-           .withPreSharedKey(args._[5])
-           .create(dm) ;
+            .withCredentials('mamori', args._[4])
+            .withPreSharedKey(args._[5])
+            .create(dm);
         console.info(`Created IPSEC network connection: ${vpn.name}`);
 
         let vpns = JSON.stringify(await IpSecVpn.getAll(dm));

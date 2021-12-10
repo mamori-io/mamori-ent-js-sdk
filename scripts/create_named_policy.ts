@@ -6,9 +6,9 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import {DMService} from '../dist/api';
-import {Runnable} from "../dist/runnable";
-import {ParsedArgs} from "minimist";
+import { MamoriService } from '../dist/api';
+import { Runnable } from "../dist/runnable";
+import { ParsedArgs } from "minimist";
 
 let usage: string =
     "Usage:\n" +
@@ -30,7 +30,7 @@ class CreateNamedPolicy extends Runnable {
         super(usage);
     }
 
-    async run(dm: DMService, args: ParsedArgs): Promise<void> {
+    async run(dm: MamoriService, args: ParsedArgs): Promise<void> {
         let policy_name = args._[2];
         let ds = args._[3];
         let db = args._[4];

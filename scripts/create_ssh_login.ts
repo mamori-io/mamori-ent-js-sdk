@@ -6,19 +6,19 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import {ParsedArgs} from "minimist";
-import {DMService} from '../dist/api';
-import {Runnable} from "../dist/runnable";
-import {SshLogin} from '../dist/ssh_login';
+import { ParsedArgs } from "minimist";
+import { MamoriService } from '../dist/api';
+import { Runnable } from "../dist/runnable";
+import { SshLogin } from '../dist/ssh_login';
 
 let usage: string =
     "Usage:\n" +
     "   yarn ts-node --transpile-only script/create_ssh_login.ts [--help] [--url url] user password name host[:port] user key_name [ssh_password] [--force] \n" +
-    "where:\n" + 
+    "where:\n" +
     "   user\t\tmamori server user\n" +
     "   password\n" +
-    "   url\t\tDefault: localhost:443\n" + 
-    "\n" + 
+    "   url\t\tDefault: localhost:443\n" +
+    "\n" +
     "   name\t\tSSH Login name\n" +
     "   host\t\tTarget hostname or IP address\n" +
     "   port\t\tTarget port\n" +
@@ -32,17 +32,17 @@ class CreateSshLogin extends Runnable {
     constructor() {
         super(usage, {
             string: ['url', '-f'],
-            alias: {h: 'help', f: 'force'},
-            default: {url: 'localhost:443'},
+            alias: { h: 'help', f: 'force' },
+            default: { url: 'localhost:443' },
             '--': true,
         });
     }
 
-    async run(dm: DMService, args: ParsedArgs): Promise<void> {
-        let sshLogin = new SshLogin(args._[2]) ;
+    async run(dm: MamoriService, args: ParsedArgs): Promise<void> {
+        let sshLogin = new SshLogin(args._[2]);
         if (args.f) {
             try {
-                await sshLogin.delete(dm) ;
+                await sshLogin.delete(dm);
                 console.info("Deleted SSH Login: ", sshLogin.name);
             }
             catch (e) {
@@ -50,21 +50,21 @@ class CreateSshLogin extends Runnable {
             }
         }
 
-        let hostArgs: string[] = args._[3].split(':') ;
+        let hostArgs: string[] = args._[3].split(':');
         let host = hostArgs[0];
-        let port = 22 ;
+        let port = 22;
         if (hostArgs.length > 1) {
-            port = hostArgs[1] as unknown as number ;
+            port = hostArgs[1] as unknown as number;
         }
 
         console.info(`Creating SSH Login: ${sshLogin.name} to ${host}:${port} ...`);
 
         await sshLogin.at(host, port)
-                      .withCredentials(args._[4], args._[5], (args.length > 6 ? args._[6] : null)) 
-                      .create(dm);
+            .withCredentials(args._[4], args._[5], (args.length > 6 ? args._[6] : null))
+            .create(dm);
         console.info(`Created SSH Login: ${sshLogin.name}`);
 
-        return null ;
+        return null;
     }
 }
 

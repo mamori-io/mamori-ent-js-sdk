@@ -8,18 +8,18 @@
  */
 import { ParsedArgs } from 'minimist';
 
-import { DMService } from '../dist/api';
-import { Runnable } from '../dist/runnable' ;
+import { MamoriService } from '../dist/api';
+import { Runnable } from '../dist/runnable';
 
 class LoginExample extends Runnable {
-  
-    async run(dm: DMService, _args: ParsedArgs): Promise<void> {
-        console.info("ping", await dm.ping());
-        console.info("Version: ", await dm.server_version());
-    }
+
+  async run(dm: MamoriService, _args: ParsedArgs): Promise<void> {
+    console.info("ping", await dm.ping());
+    console.info("Version: ", await dm.server_version());
   }
-  
-  new LoginExample()
-    .execute()
-    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-    .finally(() => process.exit(0));
+}
+
+new LoginExample()
+  .execute()
+  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+  .finally(() => process.exit(0));

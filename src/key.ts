@@ -6,49 +6,49 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { DMService } from './api';
+import { MamoriService } from './api';
 
- /**
-  * A Key is a named cryptographic key.
-  * 
-  * Example use:
-  * ```javascript
-  * Key key = new Key('test_rasa').ofType('RSA') ;
-  * await key.create(api);
-  * ```
-  * or
-  * ```javascript
-  * await Key.build({
-  *     name: 'test_rasa',
-  *     type: 'RSA'
-  * }).create(api);
-  * ```
-  */
- export class Key {
+/**
+ * A Key is a named cryptographic key.
+ * 
+ * Example use:
+ * ```javascript
+ * Key key = new Key('test_rasa').ofType('RSA') ;
+ * await key.create(api);
+ * ```
+ * or
+ * ```javascript
+ * await Key.build({
+ *     name: 'test_rasa',
+ *     type: 'RSA'
+ * }).create(api);
+ * ```
+ */
+export class Key {
 
     /**
      * @param ds 
      * @returns 
      */
     public static build(ds: any): Key {
-        let result = new Key(ds.name) ;
+        let result = new Key(ds.name);
         result.ofType(ds.type)
-              .withKey(ds.key)
-              .withPassword(ds.password)
-              .ofSize(ds.size) ;
+            .withKey(ds.key)
+            .withPassword(ds.password)
+            .ofSize(ds.size);
 
-        return result ;
+        return result;
     }
 
-    public static getAll(api: DMService) : Promise<any> {
+    public static getAll(api: MamoriService): Promise<any> {
         return api.callAPI("GET", "/v1/encryption_keys");
     }
-    
-    name: string ;
-    type?: string ;
-    key?: string ;
+
+    name: string;
+    type?: string;
+    key?: string;
     password?: string;
-    size: number = 1024 ;
+    size: number = 1024;
 
     /**
      * @param name  Unique Key name
@@ -68,7 +68,7 @@ import { DMService } from './api';
      * @param api 
      * @returns 
      */
-    public create(api: DMService) : Promise<any> {
+    public create(api: MamoriService): Promise<any> {
         if (this.type == 'RSA' && this.key == null) {
             return api.callAPI("POST", "/v1/encryption_keys/create/rsapair", {
                 name: this.name,
@@ -85,12 +85,12 @@ import { DMService } from './api';
         }
     }
 
-    public delete(api: DMService) : Promise<any> {
-        return api.callAPI("DELETE", "/v1/encryption_keys/" + this.name) ;
+    public delete(api: MamoriService): Promise<any> {
+        return api.callAPI("DELETE", "/v1/encryption_keys/" + this.name);
     }
 
-    public rename(api: DMService, name: string) : Promise<any> {
-        return api.callAPI("PUT", "/v1/encryption_keys/" + this.name, {name: name});
+    public rename(api: MamoriService, name: string): Promise<any> {
+        return api.callAPI("PUT", "/v1/encryption_keys/" + this.name, { name: name });
     }
 
     /**
@@ -98,51 +98,51 @@ import { DMService } from './api';
      * @param api 
      * @returns 
      */
-    public update(api: DMService) : Promise<any> {
+    public update(api: MamoriService): Promise<any> {
         return api.callAPI("PUT", "/v1/encryption_keys/" + this.name, this.key);
     }
 
-    public grantTo(api: DMService, grantee: string) : Promise<any> {
-        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: [this.name]});
+    public grantTo(api: MamoriService, grantee: string): Promise<any> {
+        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", { encryption_keys: [this.name] });
     }
 
-    public revokeFrom(api: DMService, grantee: string) : Promise<any> {
-        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", {encryption_keys: [this.name]});
+    public revokeFrom(api: MamoriService, grantee: string): Promise<any> {
+        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/encryption_keys", { encryption_keys: [this.name] });
     }
 
     /**
      * @param type   Required Key type, e.g. AES, RSA, SSH
      * @returns 
      */
-    public ofType(type: string) : Key {
+    public ofType(type: string): Key {
         this.type = type;
-        return this ;
+        return this;
     }
 
     /**
      * @param key  The key text, e.g. '-----BEGIN RSA PRIVATE KEY----- ...-----BEGIN RSA PRIVATE KEY------'
      * @returns 
      */
-     public withKey(key: string) : Key {
-        this.key = key ;
-        return this ;
+    public withKey(key: string): Key {
+        this.key = key;
+        return this;
     }
 
     /**
      * @param password   Optional password for the key
      * @returns 
      */
-    public withPassword(password: string) : Key {
-        this.password = password ;
-        return this ;
+    public withPassword(password: string): Key {
+        this.password = password;
+        return this;
     }
 
     /**
      * @param size   Optional RSA key size on creation. Default: 1024
      * @returns 
      */
-     public ofSize(size: number) : Key {
+    public ofSize(size: number): Key {
         this.size = size;
-        return this ;
-   }
+        return this;
+    }
 }

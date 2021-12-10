@@ -6,7 +6,7 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { DMService } from './api';
+import { MamoriService } from './api';
 
 export interface RoleGrant {
     roleid: string;
@@ -33,7 +33,7 @@ export class Role {
      * @param api 
      * @returns All roles
      */
-    public static getAll(api: DMService): Promise<any> {
+    public static getAll(api: MamoriService): Promise<any> {
         return api.callAPI("GET", "/v1/roles");
     }
 
@@ -43,10 +43,10 @@ export class Role {
      * @param user_or_role  Optional user or role name. If null, use the logged-in user.
      * @returns Array of arrays of columns 'uuid', 'roleid', 'grantee', 'valid_from', 'valid_until'
      */
-    public static async getAllGrantedRoles(api: DMService, user_or_role?: string): Promise<any> {
+    public static async getAllGrantedRoles(api: MamoriService, user_or_role?: string): Promise<any> {
         let name = user_or_role || api.username || "";
         let result = await api.callAPI("GET", "/v1/roles?recursive=Y&grantee=" + encodeURIComponent(name.toLowerCase()));
-        return result.rows ;
+        return result.rows;
     }
 
     /**
@@ -55,9 +55,9 @@ export class Role {
      * @param user_or_role  Optional user or role name. If null, use the logged-in user.
      * @returns Array of Role objects
      */
-    public static getGrantedRoles(api: DMService, user_or_role?: string): Promise<any> {
+    public static getGrantedRoles(api: MamoriService, user_or_role?: string): Promise<any> {
         let name = user_or_role || api.username || "";
-        return api.callAPI("GET", "/v1/roles?isdef=N&grantee=" + encodeURIComponent(name.toLowerCase())) ;
+        return api.callAPI("GET", "/v1/roles?isdef=N&grantee=" + encodeURIComponent(name.toLowerCase()));
     }
 
     /**
@@ -88,10 +88,10 @@ export class Role {
 
     /**
      * Create a new Role with the current properties.
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns 
      */
-    public create(api: DMService): Promise<any> {
+    public create(api: MamoriService): Promise<any> {
         let options = {
             roleid: this.roleid,
             externalname: this.externalname,
@@ -102,27 +102,27 @@ export class Role {
 
     /**
      * Delete this Role.
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns 
      */
-    public delete(api: DMService): Promise<any> {
+    public delete(api: MamoriService): Promise<any> {
         return api.callAPI("DELETE", "/v1/roles/" + this.roleid);
     }
 
     /**
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns This Role's configuration
      */
-    public get(api: DMService): Promise<RoleGrant> {
+    public get(api: MamoriService): Promise<RoleGrant> {
         return api.callAPI("GET", "/v1/roles/" + this.roleid);
     }
 
     /**
      * Update this Role with the current properties.
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns 
      */
-    public update(api: DMService): Promise<any> {
+    public update(api: MamoriService): Promise<any> {
         return api.callAPI("PUT", "/v1/roles/" + this.roleid, {
             roleid: this.roleid,
             externalname: this.externalname,
@@ -138,7 +138,7 @@ export class Role {
      * @param withGrantOption  Optional.
      * @returns 
      */
-    public grant(api: DMService, grantables: string[], object_name?: string, withGrantOption?: boolean): Promise<any> {
+    public grant(api: MamoriService, grantables: string[], object_name?: string, withGrantOption?: boolean): Promise<any> {
         return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(this.roleid.toLowerCase()), {
             grantables: grantables,
             object_name: object_name,
@@ -152,7 +152,7 @@ export class Role {
      * @param user_or_role 
      * @returns 
      */
-    public grantTo(api: DMService, user_or_role: string): Promise<any> {
+    public grantTo(api: MamoriService, user_or_role: string): Promise<any> {
         return api.callAPI("POST", "/v1/roles/" + this.roleid + "/user", { selected_user: user_or_role });
     }
 
@@ -163,7 +163,7 @@ export class Role {
      * @param object_name      Optional object, e.g. a table <datasource>.<database>.<schema>.<table>
      * @returns 
      */
-    public revoke(api: DMService, grantables: string[], object_name?: string): Promise<any> {
+    public revoke(api: MamoriService, grantables: string[], object_name?: string): Promise<any> {
         return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(this.roleid.toLowerCase()), {
             grantables: grantables,
             object_name: object_name
@@ -176,22 +176,22 @@ export class Role {
      * @param user_or_role
      * @returns 
      */
-    public revokeFrom(api: DMService, user_or_role: string): Promise<any> {
+    public revokeFrom(api: MamoriService, user_or_role: string): Promise<any> {
         return api.callAPI("DELETE", "/v1/roles/" + this.roleid + "/user", { selected_user: user_or_role });
     }
 
     /**
      * All users or roles this Role has been directly granted to.
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns Array of RoleGrant objects with an extra type attribute with values: role or user.
      */
-    public getGrantees(api: DMService): Promise<any> {
+    public getGrantees(api: MamoriService): Promise<any> {
         let sql =
             "SELECT g.*, CASE WHEN EXISTS(SELECT 1 FROM SYS.SYSROLES r WHERE r.isDef = 'Y' AND r.roleid = g.grantee) THEN 'role' ELSE 'user' END AS type" +
             "  FROM SYS.SYSROLES g" +
             " WHERE g.isDef = 'N'" +
-            "   AND g.roleId = '" + this.roleid + "'" ;
-        return api.select(sql) ;
+            "   AND g.roleId = '" + this.roleid + "'";
+        return api.select(sql);
     }
 
     /**

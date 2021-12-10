@@ -11,6 +11,9 @@
         "Daniel Parnell <dparnell@mamori.io>",
         "Omar Masri <omasri@mamori.io>"
     ],
+    "bin": {
+        "mamori": "./bin/mamori"
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/mamori-io/mamori-ent-js-sdk.git"
@@ -37,6 +40,7 @@
         "websocket": "^1.0.34"
     },
     "jest": {
+        "testEnvironment": "node",
         "transform": {
             ".(ts|tsx)": "ts-jest"
         },

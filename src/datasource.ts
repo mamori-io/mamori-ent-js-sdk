@@ -6,7 +6,7 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { DMService, LoginResponse } from './api';
+import { MamoriService, LoginResponse } from './api';
 
 /**
  * A datasource represents a target database.
@@ -42,7 +42,7 @@ export class Datasource {
      * @param api 
      * @returns All the datasources the logged-in user has access to.
      */
-    public static getAll(api: DMService): Promise<any> {
+    public static getAll(api: MamoriService): Promise<any> {
         return api.callAPI("GET", '/v1/objects/databases?usersystems=true');
     }
 
@@ -50,7 +50,7 @@ export class Datasource {
      * @param api 
      * @returns The database drivers configured.
      */
-    public static getDrivers(api: DMService): Promise<any> {
+    public static getDrivers(api: MamoriService): Promise<any> {
         return api.callAPI("GET", '/v1/drivers');
     }
 
@@ -58,7 +58,7 @@ export class Datasource {
      * @param api 
      * @returns The datasource types supported.
      */
-    public static getTypes(api: DMService): Promise<any> {
+    public static getTypes(api: MamoriService): Promise<any> {
         return api.callAPI("GET", '/v1/driver_types');
     }
 
@@ -109,10 +109,10 @@ export class Datasource {
 
     /**
      * Create a new datasource with the current properties.
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns 
      */
-    public create(api: DMService): Promise<any> {
+    public create(api: MamoriService): Promise<any> {
         var options = this.makeOptionsSql();
         let loggedInUser = (api.authorization as unknown as LoginResponse).username;
         let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password } };
@@ -127,36 +127,36 @@ export class Datasource {
 
     /**
      * Delete this datasource.
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns 
      */
-    public delete(api: DMService): Promise<any> {
+    public delete(api: MamoriService): Promise<any> {
         return api.callAPI("DELETE", "/v1/systems/" + this.name);
     }
 
     /**
      * Update this datasource with the current properties.
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns 
      */
-    public update(api: DMService): Promise<any> {
+    public update(api: MamoriService): Promise<any> {
         var options = this.makeOptionsSql();
         let loggedInUser = (api.authorization as unknown as LoginResponse).username;
         let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password } };
 
         return api.callAPI("PUT", "/v1/systems/" + this.name, {
-                preview: "N",
-                system: { type: this.type, host: this.host },
-                options: options,
-                authorizations: auth
-            });
+            preview: "N",
+            system: { type: this.type, host: this.host },
+            options: options,
+            authorizations: auth
+        });
     }
 
     /**
-     * @param api  A logged-in DMService instance
+     * @param api  A logged-in MamoriService instance
      * @returns This datasource's configuration
      */
-    public get(api: DMService): Promise<Datasource> {
+    public get(api: MamoriService): Promise<Datasource> {
         return api.callAPI("GET", "/v1/systems/" + this.name);
     }
 
@@ -168,7 +168,7 @@ export class Datasource {
      * @param dbPassword Database user's password
      * @returns 
      */
-    public addCredential(api: DMService, grantee: string, dbUser: string, dbPassword: string) {
+    public addCredential(api: MamoriService, grantee: string, dbUser: string, dbPassword: string) {
         return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {
             datasource: this.name,
             username: dbUser,
@@ -181,7 +181,7 @@ export class Datasource {
      * @param grantee    A user or role with a credential to access this datasource.
      * @returns 
      */
-    public removeCredential(api: DMService, grantee: string) {
+    public removeCredential(api: MamoriService, grantee: string) {
         return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", { datasource: this.name });
     }
 
@@ -193,7 +193,7 @@ export class Datasource {
      * @param dbPassword Database user's password
      * @returns 
      */
-    public validateCredential(api: DMService, grantee: string, dbUser: string, dbPassword: string) {
+    public validateCredential(api: MamoriService, grantee: string, dbUser: string, dbPassword: string) {
         return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate", {
             datasource: this.name,
             username: dbUser,

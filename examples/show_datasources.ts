@@ -9,21 +9,21 @@
 import { ParsedArgs } from 'minimist';
 
 import { Datasource } from '../dist/datasource';
-import { DMService } from '../dist/api';
-import { Runnable } from '../dist/runnable' ;
+import { MamoriService } from '../dist/api';
+import { Runnable } from '../dist/runnable';
 
 class ShowDatasourcesExample extends Runnable {
-  
-    async run(dm: DMService, _args: ParsedArgs): Promise<void> {
-      console.info("Supported datasource types: ", await Datasource.getTypes(dm));
-      console.info("");
-      console.info("Configured database drivers: ", await Datasource.getDrivers(dm));
-      console.info("");
-      console.info("All datasources: ", await Datasource.getAll(dm));
-    }
+
+  async run(dm: MamoriService, _args: ParsedArgs): Promise<void> {
+    console.info("Supported datasource types: ", await Datasource.getTypes(dm));
+    console.info("");
+    console.info("Configured database drivers: ", await Datasource.getDrivers(dm));
+    console.info("");
+    console.info("All datasources: ", await Datasource.getAll(dm));
   }
-  
-  new ShowDatasourcesExample()
-    .execute()
-    .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
-    .finally(() => process.exit(0));
+}
+
+new ShowDatasourcesExample()
+  .execute()
+  .catch((e: any) => console.error("ERROR: ", e.response == undefined ? e : e.response.data))
+  .finally(() => process.exit(0));

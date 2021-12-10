@@ -8,14 +8,14 @@
  */
 import { ParsedArgs } from 'minimist';
 
-import { Runnable } from '../dist/runnable' ;
-import { DMService } from '../dist/api';
+import { Runnable } from '../dist/runnable';
+import { MamoriService } from '../dist/api';
 
-let testUser  = "test_user" ;
+let testUser = "test_user";
 
 class UserExample extends Runnable {
-  
-  async run(dm: DMService, _args: ParsedArgs): Promise<void> {
+
+  async run(dm: MamoriService, _args: ParsedArgs): Promise<void> {
     try {
       await dm.delete_user(testUser);
       console.info("Delete user: ", testUser);
@@ -30,7 +30,7 @@ class UserExample extends Runnable {
       password: "test",
       fullname: "Test User",
       identified_by: "password",
-      authenticated_by_primary: {provider: "totp"},
+      authenticated_by_primary: { provider: "totp" },
       email: "test@test.test",
       valid_from: "2021-06-10 09:00:00",
       valid_until: "2022-06-31 17:00:00",

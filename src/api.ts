@@ -118,7 +118,7 @@ export interface QueryResponse {
     columns: QueryRow;
 }
 
-export class DMService {
+export class MamoriService {
 
     private _base: string;
     private _http: AxiosInstance;

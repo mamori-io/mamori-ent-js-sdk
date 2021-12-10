@@ -8,9 +8,9 @@
  */
 import { ParsedArgs } from 'minimist';
 
-import { DMService } from '../dist/api';
+import { MamoriService } from '../dist/api';
 import { Role } from '../dist/role';
-import { Runnable } from '../dist/runnable' ;
+import { Runnable } from '../dist/runnable';
 
 let mgrRoleName = "data_manager";
 let userRoleName = "data_user";
@@ -19,39 +19,39 @@ let revealRoleName = "data_reveal";
 let filterName = "openfoodfacts";
 
 class HttpApiFilterExample extends Runnable {
-  
-  async run(dm: DMService, args: ParsedArgs): Promise<void> {
-    let mamoriUser = args._[0] ;
+
+  async run(dm: MamoriService, args: ParsedArgs): Promise<void> {
+    let mamoriUser = args._[0];
 
     // Roles
     //
-    let mgrRole = await new Role(mgrRoleName) ;
+    let mgrRole = await new Role(mgrRoleName);
     if (await mgrRole.get(dm)) {
       console.info("Endorser role: ", mgrRole.roleid);
     }
     else {
-      await mgrRole.create(dm) ;
+      await mgrRole.create(dm);
       console.info("Created role: ", mgrRole.roleid);
-      await mgrRole.grant(dm, ['REQUEST'], "*", false) ;
+      await mgrRole.grant(dm, ['REQUEST'], "*", false);
     }
 
-    let userRole = await new Role(userRoleName) ;
+    let userRole = await new Role(userRoleName);
     if (await userRole.get(dm)) {
       console.info("User role: ", userRole.roleid);
     }
     else {
-      await userRole.create(dm) ;
+      await userRole.create(dm);
       console.info("Created role: ", userRole.roleid);
     }
 
-    let revealRole = await new Role(revealRoleName) ;
+    let revealRole = await new Role(revealRoleName);
     if (await revealRole.get(dm)) {
       console.info("Endorser role: ", revealRole.roleid);
     }
     else {
-      await revealRole.create(dm) ;
+      await revealRole.create(dm);
       console.info("Created role: ", revealRole.roleid);
-      await revealRole.grant(dm, ['REQUEST'], "*", false) ;
+      await revealRole.grant(dm, ['REQUEST'], "*", false);
     }
 
     console.info("");
@@ -60,7 +60,7 @@ class HttpApiFilterExample extends Runnable {
     //
     var offResult = await dm.get_http_apifilters([["name", "=", filterName]]);
     if (offResult.data) {
-      for(var i in offResult.data) {
+      for (var i in offResult.data) {
         if (filterName == offResult.data[i].name) {
           await dm.delete_http_apifilter(offResult.data[i].id);
           console.info("Deleted filter: ", filterName);
@@ -84,7 +84,7 @@ class HttpApiFilterExample extends Runnable {
 
     var offResult = await dm.get_http_apifilters({ filter: ["name", "=", filterName] });
     if (offResult.data) {
-      for(var i in offResult.data) {
+      for (var i in offResult.data) {
         if (filterName == offResult.data[i].name) {
           console.info(filterName, " filter: ", offResult.data[i]);
           await dm.activate_http_apifilter(offResult.data[i].id);
