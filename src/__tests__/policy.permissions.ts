@@ -33,11 +33,9 @@ describe("policy permission tests", () => {
             //make sure no exist
             await obj.revoke(api);
 
-            let filter = {
-                "0": ["permissiontype", "equals", "POLICY"],
-                "1": ["grantee", "equals", grantee],
-                "3": ["policy", "equals", policy]
-            };
+            let filter = [["permissiontype", "equals", "SSH"],
+            ["grantee", "equals", grantee],
+            ["policy", "equals", policy]];
             let res = await new PolicyPermission().grantee(grantee).list(api, filter);
             console.log("**** %o", res);
             expect(res.totalCount).toBe(0);

@@ -505,18 +505,6 @@ export class PolicyPermission extends PermissionBase {
         return this;
     }
 
-    /**
-    * Set the a list of policies to grant
-    * @param name A array of policy names
-    * @returns  
-    */
-    public policies(names: string[]): PolicyPermission {
-        this.items = names.map(name => {
-            return " POLICY \"" + name + "\"";
-        });
-        return this;
-    }
-
     public prepare(): any {
         let res = super.prepare();
         this.options.grantables = this.items;
