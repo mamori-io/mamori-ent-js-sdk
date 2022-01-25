@@ -701,6 +701,88 @@ export class SSHLoginPermission extends PermissionBase {
 
 
 
+//GRANT IP USAGE ON {resource} TO {grantee}
+//GRANT UNAUTHENTICATED IP USAGE ON {resource} TO {grantee}
+
+export class IPResourcePermission extends PermissionBase {
+    private items?: string[];
+    private resourceName?: string;
+
+    public constructor() {
+        super();
+        this.resourceName = "";
+        this.items = ["IP USAGE"];
+    }
+
+    /**
+    * Set the name to grant
+    * @param name The name of the resource
+    * @returns  
+    */
+    public resource(name: string): IPResourcePermission {
+        this.resourceName = name;
+        return this;
+    }
+
+    public always2FA(value: boolean) {
+        if (value) {
+            this.items = ["IP USAGE"];
+        } else {
+            this.items = ["UNAUTHENTICATED IP USAGE"];
+        }
+    }
+
+    public prepare(): any {
+        let res = super.prepare();
+        this.options.grantables = this.items;
+        this.options.object_name = this.resourceName;
+        return res;
+    }
+
+    /**
+     * Initialize the object from JSON.
+     * Call toJSON to see the expected record.
+     * @param record JSON record
+     * @returns
+     */
+    fromJSON(record: any) {
+        for (let prop in this) {
+            if (prop == "items") {
+                this.items = record["permissions"].split(",");
+            } else if (prop === "always2fa") {
+                this.always2FA(record[prop] === "true");
+            }
+            else if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+    /**
+    * Serialize the object to JSON
+    * @param
+    * @returns JSON 
+    */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            if (prop != "options") {
+                if (prop == "items") {
+                    res["permissions"] = this.items?.join(",");
+                } else {
+                    res[prop] = this[prop];
+                }
+            }
+        }
+        return res;
+    }
+}
+
+
+
+
+
+
 
 
 
