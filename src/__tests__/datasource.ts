@@ -1,18 +1,15 @@
 import { MamoriService } from '../../dist/api';
 import * as https from 'https';
-import { IPResourcePermission } from '../../dist/permission';
+
 
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
-describe("ip resource permission tests", () => {
+describe("datasource tests", () => {
 
     let api: MamoriService;
-    let resource = "webaccess";
-    let grantee = "apiuser1";
-    let permType = "IP USAGE";
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
@@ -22,6 +19,10 @@ describe("ip resource permission tests", () => {
 
     afterAll(async () => {
         await api.logout();
+    });
+
+    test('ds 01', async done => {
+        done();
     });
 
 });

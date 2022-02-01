@@ -7,6 +7,7 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 import { MamoriService, LoginResponse } from './api';
+import { ISerializable } from "./i-serializable";
 
 /**
  * A datasource represents a target database.
@@ -36,7 +37,7 @@ import { MamoriService, LoginResponse } from './api';
  * }).create(api)
  * ```
  */
-export class Datasource {
+export class Datasource implements ISerializable {
 
     /**
      * @param api 
@@ -67,22 +68,7 @@ export class Datasource {
      * @returns 
      */
     public static build(ds: any): Datasource {
-        let result = new Datasource(ds.name);
-        result.type = ds.type;
-        result.driver = ds.driver;
-        result.host = ds.host;
-        result.port = ds.port;
-        result.group = ds.group;
-        result.user = ds.user;
-        result.password = ds.password;
-        result.tempDatabase = ds.tempDatabase;
-        result.database = ds.database;
-        result.caseSensitive = ds.caseSensitive;
-        result.enabled = ds.enabled;
-        result.urlProperties = ds.urlProperties;
-        result.extraOptions = ds.extraOptions;
-
-        return result;
+        return new Datasource(ds.name).fromJSON(ds);
     }
 
     name: string;
@@ -99,6 +85,37 @@ export class Datasource {
     enabled?: boolean;
     urlProperties?: string;
     extraOptions?: string;
+
+
+
+    /**
+         * Initialize the object from JSON.
+         * Call toJSON to see the expected record.
+         * @param record JSON record
+         * @returns
+         */
+    fromJSON(record: any) {
+        for (let prop in this) {
+            if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Serialize the object to JSON
+     * @param
+     * @returns JSON 
+     */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            res[prop] = this[prop];
+        }
+        return res;
+    }
+
 
     /**
      * @param name  Unique datasource name

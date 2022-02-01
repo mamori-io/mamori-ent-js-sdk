@@ -1,6 +1,8 @@
-import { MamoriService } from '../../dist/api';
+import { MamoriService } from '../../../dist/api';
 import * as https from 'https';
-import { KeyPermission, TIME_UNIT } from '../../dist/permission';
+import { KeyPermission, TIME_UNIT } from '../../../dist/permission';
+import { Key } from '../../../dist/key';
+
 
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
@@ -10,17 +12,32 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("key permission tests", () => {
 
     let api: MamoriService;
-    let key = "test_ipsec";
-    let grantee = "apiuser1";
+    let key = "test_aes_key";
+    let grantee = "test_apiuser_key";
     let permType = "KEY USAGE";
+    let granteepw = "J{J'vpKsnsNm3W6(6A,4_vdQ'}D"
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
+        //
+        await new Key(key).ofType("AES").create(api);
+        //
+        await api.create_user({
+            username: grantee,
+            password: granteepw,
+            fullname: grantee,
+            identified_by: "password",
+            email: "test@test.test"
+        }).catch(e => {
+            console.log(e.response.data);
+        });
     });
 
     afterAll(async () => {
+        await new Key(key).delete(api);
+        await api.delete_user(grantee);
         await api.logout();
     });
 
@@ -44,7 +61,7 @@ describe("key permission tests", () => {
         }
     });
 
-    test.skip('grant 01', async done => {
+    test('grant 01', async done => {
         try {
 
             let obj = new KeyPermission()
@@ -58,7 +75,6 @@ describe("key permission tests", () => {
             ["grantee", "equals", grantee],
             ["key_name", "equals", key]];
             let res = await new KeyPermission().grantee(grantee).list(api, filter);
-            console.log("**** %o", res);
             expect(res.totalCount).toBe(0);
 
             let resp = await obj.grant(api);
@@ -115,7 +131,7 @@ describe("key permission tests", () => {
         }
     });
 
-    test('grant 03', async done => {
+    test.skip('grant 03', async done => {
         try {
             let obj = await new KeyPermission()
                 .key(key)

@@ -7,9 +7,7 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 
-import { stringify } from 'querystring';
-import { runInThisContext } from 'vm';
-import { MamoriService, LoginResponse } from './api';
+import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 
 
@@ -28,7 +26,7 @@ export enum VALID_RANGE_TYPE {
     FOR = "for"
 }
 
-export enum DB_PERMISSIONS {
+export enum DB_PERMISSION {
     SELECT = "SELECT",
     INSERT = "INSERT",
     UPDATE = "UPDATE",
@@ -44,6 +42,58 @@ export enum DB_PERMISSIONS {
     PASSTHROUGH = "PASSTHROUGH",
     MASKED = "MASKED PASSTHROUGH",
     PROTECTED = "PROTECTED PASSTHROUGH"
+}
+
+/*
+
+*/
+export enum MAMORI_PERMISSION {
+    ALERT = "ALERT",
+    ALL_PRIVILEGES = "ALL PRIVILEGES",
+    ALTER_DRIVER = "ALTER DRIVER",
+    ALTER_POLICY = "ALTER POLICY",
+    ALTER_USER = "ALTER USER",
+    CANCEL_SESSION = "CANCEL SESSION",
+    CHECK_PERMISSION = "CHECK PERMISSION",
+    CLEAR_CACHE = "CLEAR CACHE",
+    CONNECT = "CONNECT",
+    COPY_USER = "COPY USER",
+    CREATE_BACKUP = "CREATE BACKUP",
+    CREATE_DRIVER = "CREATE DRIVER",
+    CREATE_IP_RESOURCE = "CREATE IP RESOURCE",
+    CREATE_JOB_OWNER = "CREATE JOB OWNER",
+    CREATE_ROLE = "CREATE ROLE",
+    CREATE_SYSTEM = "CREATE SYSTEM",
+    CREATE_USER = "CREATE USER",
+    DISABLE_USER = "DISABLE USER",
+    DROP_DRIVER = "DROP DRIVER",
+    DROP_JOB = "DROP JOB",
+    DROP_ROLE = "DROP ROLE",
+    DROP_USER = "DROP USER",
+    EXECUTE_JOB = "EXECUTE JOB",
+    GRANT_ROLE = "GRANT ROLE",
+    IP_SCAN = "IP SCAN",
+    JMX_ACCESS = "JMX ACCESS",
+    LOG_ACCESS = "LOG ACCESS",
+    LOG_SESSION = "LOG_SESSION",
+    MASKING_RULE_ADMIN = "MASKING RULE ADMIN",
+    QUERY_CONSOLE_ACCESS = "QUERY CONSOLE ACCESS",
+    REQUEST = "REQUEST",
+    RESTART_SERVER = "RESTART SERVER",
+    RESTRICT_USER = "RESTRICT USER",
+    REVOKE_ROLE = "REVOKE ROLE",
+    RULE = "RULE",
+    SET_DEFAULT_AUTHENTICATION_PROVIDER = "SET DEFAULT AUTHENTICATION PROVIDER",
+    SET_DESCRIBE = "SET DESCRIBE",
+    SET_LOGGING_LEVEL = "SET LOGGING_LEVEL",
+    SET_PAUSECLEANUP = "SET PAUSECLEANUP",
+    SET_SERVER_NAME = "SET SERVER_NAME",
+    SET_SYSTEM_PROPERTY = "SET SYSTEM PROPERTY",
+    SYSTEM_MONITOR = "SYSTEM MONITOR",
+    VIEW_ALL_USER_LOGS = "VIEW ALL USER LOGS",
+    VIEW_CLEAR_SQL_LOG = "VIEW CLEAR SQL LOG",
+    WEB_EXPORT_DATA = "WEB EXPORT DATA",
+    WEB_SQL_EDITOR = "WEB SQL EDITOR"
 }
 
 
@@ -291,7 +341,7 @@ class PermissionBase implements ISerializable {
 
 
 export class DatasourcePermission extends PermissionBase {
-    private items?: DB_PERMISSIONS[];
+    private items?: DB_PERMISSION[];
     private datasource?: string;
     private database?: string;
     private schema?: string;
@@ -402,7 +452,7 @@ export class DatasourcePermission extends PermissionBase {
     * @param name The name of the SSH Login
     * @returns  
     */
-    public permission(name: DB_PERMISSIONS): DatasourcePermission {
+    public permission(name: DB_PERMISSION): DatasourcePermission {
         this.items = [name];
         return this;
     }
@@ -412,7 +462,7 @@ export class DatasourcePermission extends PermissionBase {
     * @param names an array of permission names
     * @returns  
     */
-    public permissions(names: DB_PERMISSIONS[]): DatasourcePermission {
+    public permissions(names: DB_PERMISSION[]): DatasourcePermission {
         this.items = names;
         return this;
     }
@@ -699,11 +749,8 @@ export class SSHLoginPermission extends PermissionBase {
     }
 }
 
-
-
 //GRANT IP USAGE ON {resource} TO {grantee}
 //GRANT UNAUTHENTICATED IP USAGE ON {resource} TO {grantee}
-
 export class IPResourcePermission extends PermissionBase {
     private items?: string[];
     private resourceName?: string;
@@ -774,6 +821,70 @@ export class IPResourcePermission extends PermissionBase {
                 }
             }
         }
+        return res;
+    }
+}
+
+
+/**
+     * Class to grant mamori server permissions
+     * GRANT {permission} TO {grantee}
+*/
+export class MamoriPermission extends PermissionBase {
+    private items?: MAMORI_PERMISSION[]
+
+    public constructor() {
+        super();
+        this.items = [];
+    }
+    /**
+     * Initialize the object from JSON.
+     * Call toJSON to see the expected record.
+     * @param record JSON record
+     * @returns
+     */
+    fromJSON(record: any) {
+        for (let prop in this) {
+            if (prop == "permission") {
+                this.permission(record[prop].split(",")[0]);
+            } else if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+    /**
+    * Serialize the object to JSON
+    * @param
+    * @returns JSON 
+    */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            if (prop != "options") {
+                if (prop === "items") {
+                    res["permission"] = (this[prop] as any).join(",");
+                } else {
+                    res[prop] = this[prop];
+                }
+            }
+        }
+        return res;
+    }
+
+    /**
+    * Set the permission to grant
+    * @param name The name of the permission
+    * @returns  
+    */
+    public permission(name: MAMORI_PERMISSION): MamoriPermission {
+        this.items = [name];
+        return this;
+    }
+
+    public prepare(): any {
+        let res = super.prepare();
+        this.options.grantables = this.items;
         return res;
     }
 }
