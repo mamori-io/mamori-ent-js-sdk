@@ -1,6 +1,6 @@
 {
     "private": false,
-    "version": "1.0.7",
+    "version": "1.0.8",
     "name": "mamori-ent-js-sdk",
     "displayName": "mamori.io SDK",
     "description": "API Bindings for a mamori server",
