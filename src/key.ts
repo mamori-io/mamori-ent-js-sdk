@@ -7,6 +7,21 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 import { MamoriService } from './api';
+import { ISerializable } from "./i-serializable";
+
+
+export enum KEY_TYPE {
+    AES = "AES",
+    RSA = "RSA",
+    SSH = "SSH"
+}
+
+export enum SSH_ALGORITHM {
+    RSA = "RSA",
+    DSA = "DSA",
+    ECDSA = "ECDSA",
+    ED25519 = "ED25519"
+}
 
 /**
  * A Key is a named cryptographic key.
@@ -24,7 +39,7 @@ import { MamoriService } from './api';
  * }).create(api);
  * ```
  */
-export class Key {
+export class Key implements ISerializable {
 
     /**
      * @param ds 
@@ -32,11 +47,7 @@ export class Key {
      */
     public static build(ds: any): Key {
         let result = new Key(ds.name);
-        result.ofType(ds.type)
-            .withKey(ds.key)
-            .withPassword(ds.password)
-            .ofSize(ds.size);
-
+        result.fromJSON(ds);
         return result;
     }
 
@@ -45,10 +56,40 @@ export class Key {
     }
 
     name: string;
-    type?: string;
+    type?: KEY_TYPE;
     key?: string;
     password?: string;
     size: number = 1024;
+    algorithm?: SSH_ALGORITHM;
+
+    /**
+         * Initialize the object from JSON.
+         * Call toJSON to see the expected record.
+         * @param record JSON record
+         * @returns
+         */
+    fromJSON(record: any) {
+        for (let prop in this) {
+            if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Serialize the object to JSON
+     * @param
+     * @returns JSON 
+     */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            res[prop] = this[prop];
+        }
+        return res;
+    }
+
 
     /**
      * @param name  Unique Key name
@@ -69,11 +110,15 @@ export class Key {
      * @returns 
      */
     public create(api: MamoriService): Promise<any> {
-        if (this.type == 'RSA' && this.key == null) {
+        if (this.type == KEY_TYPE.RSA && this.key == null) {
             return api.callAPI("POST", "/v1/encryption_keys/create/rsapair", {
                 name: this.name,
                 size: this.size
             });
+        } else if (this.type == KEY_TYPE.SSH && this.key == null) {
+            return api.callAPI("POST", "/v1/encryption_keys/create/sshkey",
+                { name: this.name, algorithm: this.algorithm, size: this.size }
+            );
         }
         else {
             return api.callAPI("POST", "/v1/encryption_keys", {
@@ -114,7 +159,7 @@ export class Key {
      * @param type   Required Key type, e.g. AES, RSA, SSH
      * @returns 
      */
-    public ofType(type: string): Key {
+    public ofType(type: KEY_TYPE): Key {
         this.type = type;
         return this;
     }
@@ -125,6 +170,15 @@ export class Key {
      */
     public withKey(key: string): Key {
         this.key = key;
+        return this;
+    }
+
+    /**
+     * @param key  The key text, e.g. '-----BEGIN RSA PRIVATE KEY----- ...-----BEGIN RSA PRIVATE KEY------'
+     * @returns 
+     */
+    public withAlgorithm(algorithm: SSH_ALGORITHM): Key {
+        this.algorithm = algorithm;
         return this;
     }
 
