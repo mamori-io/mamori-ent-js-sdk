@@ -13,7 +13,7 @@ import * as https from 'https';
 import { Datasource } from "./datasource";
 import { Key } from "./key";
 import { Network, IpSecVpn, OpenVPN, SshTunnel } from "./network";
-import { SshLogin } from "./ssh_login";
+import { SshLogin } from "./ssh-login";
 import { RoleGrant, Role } from "./role";
 import { Runnable } from './runnable';
 

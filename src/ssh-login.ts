@@ -9,6 +9,9 @@
 import { MamoriService } from './api';
 import { SshLoginDesc } from './api';
 import { sqlEscape } from './utils';
+import { ISerializable } from "./i-serializable";
+import { SSHLoginPermission } from './permission';
+
 
 /**
  * An SshLogin represents a target machine.
@@ -32,10 +35,10 @@ import { sqlEscape } from './utils';
  * }).create(api)
  * ```
  */
-export class SshLogin {
+export class SshLogin implements ISerializable {
 
-    public static getAll(api: MamoriService): Promise<SshLoginDesc[]> {
-        return api.simple_query("call ssh_logins()");
+    public static getAll(api: MamoriService): Promise<any> {
+        return api.select("call ssh_logins()");
     }
 
     /**
@@ -44,12 +47,7 @@ export class SshLogin {
      */
     public static build(ds: any): SshLogin {
         let result = new SshLogin(ds.name);
-        result.host = ds.host;
-        result.port = ds.port;
-        result.user = ds.user;
-        result.password = ds.password;
-        result.privateKey = ds.privateKey;
-
+        result.fromJSON(ds);
         return result;
     }
 
@@ -68,6 +66,35 @@ export class SshLogin {
     }
 
     /**
+         * Initialize the object from JSON.
+         * Call toJSON to see the expected record.
+         * @param record JSON record
+         * @returns
+         */
+    fromJSON(record: any) {
+        for (let prop in this) {
+            if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Serialize the object to JSON
+     * @param
+     * @returns JSON 
+     */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            res[prop] = this[prop];
+        }
+        return res;
+    }
+
+
+    /**
      * Create a new SshLogin with the current properties.
      * @param api  A logged-in MamoriService instance
      * @returns 
@@ -75,7 +102,9 @@ export class SshLogin {
     public create(api: MamoriService): Promise<any> {
         let uri = "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port);
         let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" + sqlEscape(uri) + "', '" + this.privateKey + "', '" + sqlEscape(this.password || "") + "')";
-        return api.query(query);
+        return api.select(query).then((res: any) => {
+            return res[0];
+        });
     }
 
     /**
@@ -84,15 +113,18 @@ export class SshLogin {
      * @returns 
      */
     public delete(api: MamoriService): Promise<any> {
-        return api.query("CALL DELETE_SSH_LOGIN('" + sqlEscape(this.name) + "')");
+        return api.select("CALL DELETE_SSH_LOGIN('" + sqlEscape(this.name) + "')").then((res: any) => {
+            return res[0];
+        });
     }
 
     public grantTo(api: MamoriService, grantee: string): Promise<any> {
-        return api.grant_to(grantee, ['SSH'], this.name);
+        return new SSHLoginPermission().sshLogin(this.name).grantee(grantee).grant(api);
     }
 
     public revokeFrom(api: MamoriService, grantee: string): Promise<any> {
-        return api.revoke_from(grantee, ['SSH'], this.name);
+        return new SSHLoginPermission().sshLogin(this.name).grantee(grantee).revoke(api);
+        //return api.revoke_from(grantee, ['SSH'], this.name);
     }
 
     /**
@@ -114,7 +146,7 @@ export class SshLogin {
      * @param password    Optional password
      * @returns 
      */
-    public withCredentials(user: string, privateKey: string, password: string): SshLogin {
+    public withCredentials(user: string, privateKey: string, password?: string): SshLogin {
         this.user = user;
         this.password = password;
         this.privateKey = privateKey;
