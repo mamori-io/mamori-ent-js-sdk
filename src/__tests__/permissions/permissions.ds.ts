@@ -1,6 +1,7 @@
-import { MamoriService } from '../../../dist/api';
+import { MamoriService } from '../../api';
 import * as https from 'https';
-import { DatasourcePermission, DB_PERMISSION, TIME_UNIT } from '../../../dist/permission';
+import { DatasourcePermission, DB_PERMISSION, TIME_UNIT } from '../../permission';
+import { handleAPIException, ignoreError, noThrow } from '../../utils';
 
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
@@ -17,14 +18,14 @@ describe("datasource permission tests", () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
-        let result = await api.create_user({
+        await api.create_user({
             username: grantee,
             password: granteepw,
             fullname: grantee,
             identified_by: "password",
             email: "test@test.test"
         }).catch(e => {
-            console.log(e.response.data);
+            fail(handleAPIException(e));
         })
     });
 
@@ -34,111 +35,98 @@ describe("datasource permission tests", () => {
     });
 
     test('grant 01', async done => {
-        try {
+        let obj = new DatasourcePermission()
+            .on("*", "*", "*", "*")
+            .permission(DB_PERMISSION.SELECT)
+            .grantee(grantee);
 
-            let obj = new DatasourcePermission()
-                .on("*", "*", "*", "*")
-                .permission(DB_PERMISSION.SELECT)
-                .grantee(grantee);
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
 
-            //make sure no exist
-            await obj.revoke(api);
+        let filter = [["permissiontype", "equals", "SELECT"],
+        ["grantee", "equals", grantee]];
+        let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(0);
 
-            let filter = [["permissiontype", "equals", "SELECT"],
-            ["grantee", "equals", grantee]];
-            let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
-            expect(res.totalCount).toBe(0);
+        let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
 
-            let resp = await obj.grant(api);
-            expect(resp.errors).toBe(false);
+        res = await new DatasourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(1);
 
-            res = await new DatasourcePermission().grantee(grantee).list(api, filter);
-            expect(res.totalCount).toBe(1);
+        let resp2 = await ignoreError(obj.grant(api));
+        expect(resp2.errors).toBe(true);
 
-            let resp2 = await obj.grant(api);
-            expect(resp2.errors).toBe(true);
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
 
-            resp = await obj.revoke(api);
-            expect(resp.errors).toBe(false);
+        resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
 
-            resp = await obj.grant(api);
-            expect(resp.errors).toBe(false);
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
 
-            resp = await obj.revoke(api);
-            expect(resp.errors).toBe(false);
-
-
-            done();
-        } catch (e) {
-            done(e);
-        }
+        done();
     });
 
     test('grant 02', async done => {
-        try {
-            let resp = await new DatasourcePermission()
-                .on("*", "*", "*", "*")
-                .permission(DB_PERMISSION.SELECT)
-                .grantee(grantee)
-                .withValidFor(60, TIME_UNIT.MINUTES)
-                .grant(api);
-            expect(resp.errors).toBe(false);
+        let resp = await noThrow(new DatasourcePermission()
+            .on("*", "*", "*", "*")
+            .permission(DB_PERMISSION.SELECT)
+            .grantee(grantee)
+            .withValidFor(60, TIME_UNIT.MINUTES)
+            .grant(api));
+        expect(resp.errors).toBe(false);
 
-            let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT],
-            ["grantee", "equals", grantee],
-            ["time_left", ">", 3500]
-            ];
-            let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
-            expect(res.totalCount).toBe(1);
-            let id = res.data[0].id;
-            let r2 = await new DatasourcePermission().revokeByID(api, id);
-            expect(r2.error).toBe(false);
+        let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT],
+        ["grantee", "equals", grantee],
+        ["time_left", ">", 3500]
+        ];
+        let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(1);
+        let id = res.data[0].id;
+        let r2 = await noThrow(new DatasourcePermission().revokeByID(api, id));
+        expect(r2.error).toBe(false);
 
-            res = await new DatasourcePermission().grantee(grantee).list(api, filter);
-            expect(res.totalCount).toBe(0);
+        res = await new DatasourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(0);
 
-            done();
-        } catch (e) {
-            done(e);
-        }
+        done();
+
     });
 
     test.skip('grant 03', async done => {
-        try {
-            let obj = await new DatasourcePermission()
-                .on("*", "*", "*", "*")
-                .permission(DB_PERMISSION.SELECT)
-                .grantee(grantee)
-                .withValidBetween("2022-01-01 00:00", "2022-01-15 00:00");
+        let obj = new DatasourcePermission()
+            .on("*", "*", "*", "*")
+            .permission(DB_PERMISSION.SELECT)
+            .grantee(grantee)
+            .withValidBetween("2022-01-01 00:00", "2022-01-15 00:00");
 
-            await obj.revoke(api);
+        await ignoreError(obj.revoke(api));
 
-            let resp = await obj.grant(api);
-            expect(resp.errors).toBe(false);
+        let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
 
-            let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT],
-            ["grantee", "equals", grantee],
-            ["valid_until", "=", '2022-01-14 13:00:00'],
-            ["valid_from", "=", '2021-12-31 13:00:00'],
-            ];
-            let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
-            expect(res.totalCount).toBe(1);
+        let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT],
+        ["grantee", "equals", grantee],
+        ["valid_until", "=", '2022-01-14 13:00:00'],
+        ["valid_from", "=", '2021-12-31 13:00:00'],
+        ];
+        let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(1);
 
-            let resp2 = await obj.grant(api);
-            expect(resp2.errors).toBe(true);
+        let resp2 = await ignoreError(obj.grant(api));
+        expect(resp2.errors).toBe(true);
 
-            resp = await obj.revoke(api);
-            expect(resp.errors).toBe(false);
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
 
-            resp = await obj.grant(api);
-            expect(resp.errors).toBe(false);
+        resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
 
-            resp = await obj.revoke(api);
-            expect(resp.errors).toBe(false);
-            done();
-        } catch (e) {
-            done(e);
-        }
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+        done();
     });
 
 });

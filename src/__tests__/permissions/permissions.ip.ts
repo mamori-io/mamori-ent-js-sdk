@@ -1,6 +1,8 @@
-import { MamoriService } from '../../../dist/api';
+import { MamoriService } from '../../api';
 import * as https from 'https';
-import { IPResourcePermission } from '../../../dist/permission';
+import { IPResourcePermission } from '../../permission';
+import { handleAPIException, ignoreError, noThrow } from '../../utils';
+
 
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
@@ -16,6 +18,7 @@ describe("ip resource permission tests", () => {
     let granteepw = "J{J'vpKsn3213W6(6A,4_vdQ'}D"
 
     beforeAll(async () => {
+
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
@@ -27,7 +30,7 @@ describe("ip resource permission tests", () => {
             identified_by: "password",
             email: "test@test.test"
         }).catch(e => {
-            console.log(e.response.data);
+            fail(handleAPIException(e));
         })
     });
 
@@ -38,44 +41,37 @@ describe("ip resource permission tests", () => {
     });
 
     test('grant 01', async done => {
-        try {
+        let obj = new IPResourcePermission()
+            .resource(resource)
+            .grantee(grantee);
 
-            let obj = new IPResourcePermission()
-                .resource(resource)
-                .grantee(grantee);
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
+        //check list
+        let filter = [["permissiontype", "equals", permType],
+        ["grantee", "equals", grantee]];
+        let res = await new IPResourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(0);
+        //grant
+        let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+        //check list
+        res = await new IPResourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(1);
+        //try re-grant
+        let resp2 = await ignoreError(obj.grant(api));
+        expect(resp2.errors).toBe(true);
+        //revoke
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+        //
+        resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
 
-            //make sure no exist
-            await obj.revoke(api);
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
 
-            let filter = [["permissiontype", "equals", permType],
-            ["grantee", "equals", grantee]];
-            let res = await new IPResourcePermission().grantee(grantee).list(api, filter);
-            expect(res.totalCount).toBe(0);
-
-            let resp = await obj.grant(api);
-            expect(resp.errors).toBe(false);
-
-            res = await new IPResourcePermission().grantee(grantee).list(api, filter);
-            res = await new IPResourcePermission().grantee(grantee).list(api, filter);
-            expect(res.totalCount).toBe(1);
-
-            let resp2 = await obj.grant(api);
-            expect(resp2.errors).toBe(true);
-
-            resp = await obj.revoke(api);
-            expect(resp.errors).toBe(false);
-
-            resp = await obj.grant(api);
-            expect(resp.errors).toBe(false);
-
-            resp = await obj.revoke(api);
-            expect(resp.errors).toBe(false);
-
-
-            done();
-        } catch (e) {
-            done(e);
-        }
+        done();
     });
 
 });

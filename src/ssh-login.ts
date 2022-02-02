@@ -124,7 +124,6 @@ export class SshLogin implements ISerializable {
 
     public revokeFrom(api: MamoriService, grantee: string): Promise<any> {
         return new SSHLoginPermission().sshLogin(this.name).grantee(grantee).revoke(api);
-        //return api.revoke_from(grantee, ['SSH'], this.name);
     }
 
     /**

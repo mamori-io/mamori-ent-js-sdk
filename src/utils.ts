@@ -12,10 +12,20 @@ export function sqlEscape(s: string): string {
 }
 
 export function handleAPIException(e: any): any {
-    let payload = {
-        baseURL: e.config.baseURL, url: e.config.url
-        , method: e.config.method, data: e.config.data
-        , response: { status: e.response.status, statusText: e.response.statusText, data: e.response.data }
+    let payload: any = {};
+    if (e.message) {
+        payload.errors = true;
+        payload.message = e.message;
+    }
+    if (e.config) {
+        payload.errors = true;
+        payload.baseURL = e.config.baseURL;
+        payload.url = e.config.url;
+        payload.method = e.config.method;
+        payload.data = e.config.data;
+    }
+    if (e.response) {
+        payload.response = { status: e.response.status, statusText: e.response.statusText, data: e.response.data }
     }
     return payload;
 }
