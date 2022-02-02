@@ -7,6 +7,8 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 import { MamoriService } from './api';
+import { ISerializable } from "./i-serializable";
+
 
 export interface RoleGrant {
     roleid: string;
@@ -27,14 +29,16 @@ export interface RoleGrant {
 /**
   * A role.
   */
-export class Role {
+export class Role implements ISerializable {
 
     /**
      * @param api 
      * @returns All roles
      */
     public static getAll(api: MamoriService): Promise<any> {
-        return api.callAPI("GET", "/v1/roles");
+        //return api.callAPI("GET", "/v1/roles?isdef=Y");
+        return api.select(
+            "SELECT roleid,position,lastupdate FROM (select * from SYS.SYSROLES WHERE lower(isDef) = 'y' AND roleid <> 'public') a ");
     }
 
     /**
@@ -85,6 +89,35 @@ export class Role {
 
         this.withadminoption = 'N';
     }
+
+    /**
+        * Initialize the object from JSON.
+        * Call toJSON to see the expected record.
+        * @param record JSON record
+        * @returns
+        */
+    fromJSON(record: any) {
+        for (let prop in this) {
+            if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Serialize the object to JSON
+     * @param
+     * @returns JSON 
+     */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            res[prop] = this[prop];
+        }
+        return res;
+    }
+
 
     /**
      * Create a new Role with the current properties.

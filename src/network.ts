@@ -7,8 +7,10 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 import { MamoriService } from './api';
+import { ISerializable } from "./i-serializable";
 
-export class Network {
+
+export class Network implements ISerializable {
 
     public static getAll(api: MamoriService): Promise<any> {
         return api.callAPI("GET", "/v1/vpns");
@@ -23,6 +25,34 @@ export class Network {
     constructor(name: string, type: string) {
         this.name = name.toLowerCase();
         this.type = type;
+    }
+
+    /**
+        * Initialize the object from JSON.
+        * Call toJSON to see the expected record.
+        * @param record JSON record
+        * @returns
+        */
+    fromJSON(record: any) {
+        for (let prop in this) {
+            if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Serialize the object to JSON
+     * @param
+     * @returns JSON 
+     */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            res[prop] = this[prop];
+        }
+        return res;
     }
 
     public create(api: MamoriService): Promise<any> {
