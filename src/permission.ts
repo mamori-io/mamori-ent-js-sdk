@@ -275,7 +275,6 @@ class PermissionBase implements ISerializable {
     private handleResult(result: any) {
         let errors = result.filter((value: any) => value.toLowerCase().includes("error"));
         if (errors.length > 0) {
-            //console.log("GRANT Errors results %o", result);
             throw new Error(result);
         }
         return { errors: false, result };

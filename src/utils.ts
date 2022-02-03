@@ -31,16 +31,28 @@ export function handleAPIException(e: any): any {
 }
 
 export function noThrow(call: Promise<any>): any {
-    return call.catch(e => {
+    try {
+        return call.catch(e => {
+            let x = handleAPIException(e);
+            console.log(x);
+            return x;
+        });
+    } catch (e) {
         let x = handleAPIException(e);
         console.log(x);
         return x;
-    });
+    }
 }
 
 export function ignoreError(call: Promise<any>): any {
-    return call.catch(e => {
-        return handleAPIException(e);
-    });
+    try {
+        return call.catch(e => {
+            let x = handleAPIException(e);
+            return x;
+        });
+    } catch (e) {
+        let x = handleAPIException(e);
+        return x;
+    }
 }
 

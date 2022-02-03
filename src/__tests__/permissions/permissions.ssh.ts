@@ -13,7 +13,7 @@ describe("ssh permission tests", () => {
 
     let api: MamoriService;
     let sshLogin = "test_fake_ssh_login";
-    let grantee = "test_apiuser_policy";
+    let grantee = "test_apiuser_ssh";
     let granteepw = "J{J'vMy72BnpKsn\/a@C+W6(6A,4_vdQ'}D";
 
     beforeAll(async () => {
