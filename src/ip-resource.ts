@@ -32,7 +32,6 @@ export class IpResource implements ISerializable {
             });
         }
         let payload = filter ? { skip: from, take: to, filter: filters } : { skip: from, take: to };
-        console.log("**** %o", payload);
         return api.callAPI("GET", "/v1/ip_resources", payload);
     }
 
@@ -78,6 +77,24 @@ export class IpResource implements ISerializable {
         return res;
     }
 
+    /**
+    * IP mask
+    * @param cidr 192.168.0.0/16
+    * @returns IpResource 
+    */
+    public withCIDR(cidr: string) {
+        this.cidr = cidr;
+        return this;
+    }
+
+    /**
+    * @param ports comma separated list of ports, * for all
+    * @returns IpResource 
+    */
+    public withPorts(ports: string) {
+        this.ports = ports;
+        return this;
+    }
 
     /**
      * Create a new IP Resource with the current properties.
@@ -95,10 +112,7 @@ export class IpResource implements ISerializable {
      */
     public delete(api: MamoriService): Promise<any> {
         //Get the resource by name
-        return IpResource.list(api, 0, 1).then(result => {
-            console.log("DELETE lookup %o", result);
-            return result;
-        });
+        return api.callAPI("DELETE", "/v1/ip_resources/" + this.name);
     }
 
 
