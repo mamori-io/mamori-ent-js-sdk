@@ -119,33 +119,33 @@ export interface QueryResponse {
 }
 
 
-function buildParams( prefix: string, obj: any, add: (k: string, v: any) => void) {
-	var name;
+function buildParams(prefix: string, obj: any, add: (k: string, v: any) => void) {
+    var name;
 
-	if ( Array.isArray( obj ) ) {
+    if (Array.isArray(obj)) {
 
-		// Serialize array item.
+        // Serialize array item.
         let L = obj.length;
-        for(let i=0; i<L; i++) {
+        for (let i = 0; i < L; i++) {
             let v = obj[i]
             // Item is non-scalar (array or object), encode its numeric index.
             buildParams(
-                prefix + "[" + ( typeof v === "object" && v != null ? i : "" ) + "]",
+                prefix + "[" + (typeof v === "object" && v != null ? i : "") + "]",
                 v,
                 add
             );
-		}
+        }
 
-	} else if ( typeof obj === "object" ) {
-		// Serialize object item.
-		for ( name in obj as object) {
-			buildParams( prefix + "[" + name + "]", obj[ name ], add );
-		}
+    } else if (typeof obj === "object") {
+        // Serialize object item.
+        for (name in obj as object) {
+            buildParams(prefix + "[" + name + "]", obj[name], add);
+        }
 
-	} else {
-		// Serialize scalar item.
-		add( prefix, obj );
-	}
+    } else {
+        // Serialize scalar item.
+        add(prefix, obj);
+    }
 }
 
 export class MamoriService {
@@ -440,12 +440,12 @@ export class MamoriService {
     /**
      * Given a JS object return a query parameter string in the same format that jQuery produces
      */
-    public static serialize(obj: object) : string {
+    public static serialize(obj: object): string {
         let parts: string[] = [];
 
-        for(let k in obj) {
+        for (let k in obj) {
             buildParams(k, (obj as any)[k], (key, value) => {
-                parts.push( encodeURIComponent( key ) + '=' +  encodeURIComponent( value ));
+                parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
             })
         }
 
@@ -487,8 +487,8 @@ export class MamoriService {
             }
 
             if (method == 'GET' || method == 'DELETE') {
-                payload.params.serializer = MamoriService.serialize;
                 payload.params = params;
+                payload.paramsSerializer = MamoriService.serialize;
             } else {
                 payload.data = params;
             }
