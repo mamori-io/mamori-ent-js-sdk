@@ -118,6 +118,36 @@ export interface QueryResponse {
     columns: QueryRow;
 }
 
+
+function buildParams( prefix: string, obj: any, add: (k: string, v: any) => void) {
+	var name;
+
+	if ( Array.isArray( obj ) ) {
+
+		// Serialize array item.
+        let L = obj.length;
+        for(let i=0; i<L; i++) {
+            let v = obj[i]
+            // Item is non-scalar (array or object), encode its numeric index.
+            buildParams(
+                prefix + "[" + ( typeof v === "object" && v != null ? i : "" ) + "]",
+                v,
+                add
+            );
+		}
+
+	} else if ( typeof obj === "object" ) {
+		// Serialize object item.
+		for ( name in obj as object) {
+			buildParams( prefix + "[" + name + "]", obj[ name ], add );
+		}
+
+	} else {
+		// Serialize scalar item.
+		add( prefix, obj );
+	}
+}
+
 export class MamoriService {
 
     private _base: string;
@@ -405,6 +435,21 @@ export class MamoriService {
     public deleteFromCache(url: string) {
         let key = this.calculate_cache_key(url);
         delete ___api_request_cache___[key];
+    }
+
+    /**
+     * Given a JS object return a query parameter string in the same format that jQuery produces
+     */
+    public static serialize(obj: object) : string {
+        let parts: string[] = [];
+
+        for(let k in obj) {
+            buildParams(k, (obj as any)[k], (key, value) => {
+                parts.push( encodeURIComponent( key ) + '=' +  encodeURIComponent( value ));
+            })
+        }
+
+        return parts.join('&');
     }
 
     public async callAPI(method: Method, url: string, params: any = null, callback: Nullable<ApiCallback> = null, cachable: boolean = false): Promise<any> {
