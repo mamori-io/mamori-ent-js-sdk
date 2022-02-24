@@ -487,8 +487,8 @@ export class MamoriService {
             }
 
             if (method == 'GET' || method == 'DELETE') {
-                payload.params.serializer =
-                    payload.params = params;
+                payload.params.serializer = MamoriService.serialize;
+                payload.params = params;
             } else {
                 payload.data = params;
             }
