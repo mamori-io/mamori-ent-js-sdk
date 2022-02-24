@@ -432,15 +432,23 @@ export class MamoriService {
                 };
             }
 
-            that._http.request({
+            let payload: any = {
                 method: method,
-                data: params,
                 url: "/api" + url,
                 headers: {
                     "Cookie": that._cookies,
                     "X-CSRF-Token": that._csrf
                 }
-            }).then(function (x: any) {
+            }
+
+            if (method == 'GET' || method == 'DELETE') {
+                payload.params.serializer =
+                    payload.params = params;
+            } else {
+                payload.data = params;
+            }
+
+            that._http.request(payload).then(function (x: any) {
                 if (callback) {
                     callback(x.data, resolve, reject);
                 } else {
@@ -449,6 +457,8 @@ export class MamoriService {
             }).catch(function (error: any) {
                 reject(error);
             });
+
+
         });
 
         if (cachable) {
