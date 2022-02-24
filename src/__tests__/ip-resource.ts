@@ -12,15 +12,12 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("IP resource CRUD tests", () => {
 
     let api: MamoriService;
-    let apiAsAPIUser: MamoriService;
     let resourceName: string = "testIPResource";
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
-
-
     });
 
     afterAll(async () => {
@@ -50,11 +47,6 @@ describe("IP resource CRUD tests", () => {
 
         let r4 = await noThrow(IpResource.list(api, 0, 100, [["name", "=", resourceName]]));
         expect(r4.data.length).toBe(0);
-
-
-
-
-
         done();
 
     });
