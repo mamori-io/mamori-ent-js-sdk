@@ -1,6 +1,6 @@
-import { MamoriService } from '../../dist/api';
+import { MamoriService } from '../../../dist/api';
 import * as https from 'https';
-import { ServerSettings } from '../../dist/server-settings';
+import { ServerSettings } from '../../../dist/server-settings';
 
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';

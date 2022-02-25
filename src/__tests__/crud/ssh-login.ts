@@ -1,8 +1,8 @@
-import { MamoriService } from '../api';
+import { MamoriService } from '../../api';
 import * as https from 'https';
-import { Key, KEY_TYPE, SSH_ALGORITHM } from '../key';
-import { SshTunnel } from '../network';
-import { handleAPIException, noThrow, ignoreError } from '../utils';
+import { Key, KEY_TYPE, SSH_ALGORITHM } from '../../key';
+import { SshLogin } from '../../ssh-login';
+import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
@@ -10,18 +10,20 @@ const password = process.env.MAMORI_PASSWORD || '';
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
-describe("network ssh tunnel tests", () => {
+describe("ssh login tests", () => {
 
     let api: MamoriService;
     let apiAsAPIUser: MamoriService;
-    let grantee = "test_apiuser_sshtunnel";
+    let grantee = "test_apiuser_sshlogin";
     let granteepw = "J{J'vpKs!$nW6(6A,4!@34#12_vdQ'}D";
-    let sshKeyName = "test_sshtunnel_ssh_key";
+    let sshKeyName = "test_sshlogin_ssh_key";
+
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
+
 
         await ignoreError(api.delete_user(grantee));
         await api.create_user({
@@ -50,9 +52,7 @@ describe("network ssh tunnel tests", () => {
         await api.logout();
     });
 
-    test.skip('ssh tunnel 01', async done => {
-        let k = new SshTunnel("test_ssh_tunnel_to_local");
-        /*
+    test('ssh login 01', async done => {
         let k = new SshLogin("test_ssh_login_to_local");
         await ignoreError(k.delete(api));
         //Create
@@ -89,9 +89,16 @@ describe("network ssh tunnel tests", () => {
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
         expect(resDel.status).toBe("ok");
-        */
+
         done();
     });
+
+
+
+
+
+
+
 
 
 });

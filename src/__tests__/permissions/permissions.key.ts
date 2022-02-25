@@ -15,7 +15,7 @@ describe("key permission tests", () => {
 
     let api: MamoriService;
     let key = "test_aes_key";
-    let grantee = "test_apiuser_key";
+    let grantee = "test_apiuser_permissions";
     let permType = "KEY USAGE";
     let granteepw = "J{J'vpKsnsNm3W6(6A,4_vdQ'}D"
 

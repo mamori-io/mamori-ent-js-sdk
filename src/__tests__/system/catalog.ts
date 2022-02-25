@@ -1,9 +1,9 @@
-import { MamoriService } from '../api';
+import { MamoriService } from '../../api';
 import * as https from 'https';
-import { handleAPIException, noThrow, ignoreError } from '../utils';
-import { MamoriPermission, MAMORI_PERMISSION, TIME_UNIT } from '../permission';
+import { handleAPIException, noThrow, ignoreError } from '../../utils';
+import { MamoriPermission, MAMORI_PERMISSION, TIME_UNIT } from '../../permission';
 
-
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -14,8 +14,11 @@ describe("mamori ccatalog tests", () => {
 
     let api: MamoriService;
     let apiAsAPIUser: MamoriService;
-    let grantee = "test_apiuser_catalog";
+    let grantee = "test_apiuser_catalog" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!@34#12_vdQ'}D";
+
+
+    jest.setTimeout(30000);
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
@@ -67,7 +70,7 @@ describe("mamori ccatalog tests", () => {
     //    "SYS".""
     //    "SYS"."TCP_CONNECTION_LOG"
 
-    test('catalog 02', async done => {
+    test.skip('catalog 02', async done => {
         //Select from the connection log
         let sql = "select * from SYS.QUERIES where userid !='" + grantee + "'";
         let r = await noThrow(apiAsAPIUser.select(sql));
@@ -86,7 +89,7 @@ describe("mamori ccatalog tests", () => {
         done();
     });
 
-    test('catalog 03', async done => {
+    test.skip('catalog 03', async done => {
         //Select from the connection log
         let sql = "select b.* from SYS.QUERIES a join sys.query_plans b on a.ssid = b.ssid and a.query_id = b.query_id and a.userid !='" + grantee + "'";
         let r = await noThrow(apiAsAPIUser.select(sql));
@@ -105,7 +108,7 @@ describe("mamori ccatalog tests", () => {
         done();
     });
 
-    test('catalog 04', async done => {
+    test.skip('catalog 04', async done => {
         let sql = "select a.*  from sys.TCP_CONNECTION_LOG a join sys.connections b on a.connection_id = b.id and b.login_username !='" + grantee + "'";
 
         //Select from the connection log

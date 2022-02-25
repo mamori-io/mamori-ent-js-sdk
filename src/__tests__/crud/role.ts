@@ -1,7 +1,7 @@
-import { MamoriService } from '../api';
+import { MamoriService } from '../../api';
 import * as https from 'https';
-import { Role } from '../role';
-import { handleAPIException, noThrow, ignoreError } from '../utils';
+import { Role } from '../../role';
+import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';

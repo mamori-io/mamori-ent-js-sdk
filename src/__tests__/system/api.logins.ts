@@ -1,5 +1,5 @@
 
-import { MamoriService, LoginResponse } from '../api';
+import { MamoriService, LoginResponse } from '../../api';
 import * as https from 'https';
 
 const host = process.env.MAMORI_SERVER || 'https://192.168.154.168';

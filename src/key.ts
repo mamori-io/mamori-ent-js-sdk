@@ -115,11 +115,18 @@ export class Key implements ISerializable {
                 name: this.name,
                 size: this.size
             });
-        } else if (this.type == KEY_TYPE.SSH && this.key == null) {
+        }
+        else if (this.type == KEY_TYPE.SSH && this.algorithm == SSH_ALGORITHM.ED25519 && this.key == null) {
+            return api.callAPI("POST", "/v1/encryption_keys/create/sshkey",
+                { name: this.name, algorithm: this.algorithm, size: 256 }
+            );
+        }
+        else if (this.type == KEY_TYPE.SSH && this.algorithm != SSH_ALGORITHM.ED25519 && this.key == null) {
             return api.callAPI("POST", "/v1/encryption_keys/create/sshkey",
                 { name: this.name, algorithm: this.algorithm, size: this.size }
             );
         }
+
         else {
             return api.callAPI("POST", "/v1/encryption_keys", {
                 name: this.name,
