@@ -10,15 +10,14 @@ const password = process.env.MAMORI_PASSWORD || '';
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
-describe("mamori ccatalog tests", () => {
+
+describe("mamori catalog tests", () => {
 
     let api: MamoriService;
     let apiAsAPIUser: MamoriService;
-    let grantee = "test_apiuser_catalog" + testbatch;
-    let granteepw = "J{J'vpKs!$nW6(6A,4!@34#12_vdQ'}D";
-
-
-    jest.setTimeout(30000);
+    let grantee = "t_user_catalog" + testbatch;
+    let granteepw = "J{J'vpKs!$nW6(6A,4!@34#12_vdQ'}D" + testbatch;
+    //jest.setTimeout(30000);
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
@@ -50,7 +49,48 @@ describe("mamori ccatalog tests", () => {
 
     test('catalog 01', async done => {
         //Select from the connection log
-        let sql = "select * from SYS.CONNECTIONS where login_username !='" + grantee + "'";
+        let sql = "select * from SYS.CONNECTIONS where login_username !='" + grantee + "' limit 10";
+        let r = await noThrow(apiAsAPIUser.select(sql));
+        expect(r.length).toBe(0);
+        //
+
+        let perm = new MamoriPermission()
+            .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
+            .grantee(grantee);
+
+        await noThrow(perm.grant(api));
+
+        let r2 = await noThrow(apiAsAPIUser.select(sql));
+        expect(r2.length).toBeGreaterThan(0);
+
+        await noThrow(perm.revoke(api));
+        done();
+    });
+
+    test('catalog 02', async done => {
+        //Select from the connection log
+        let sql = "select * from SYS.QUERIES where userid !='" + grantee + "' limit 10";
+        let r = await noThrow(apiAsAPIUser.select(sql));
+
+        expect(r.length).toBe(0);
+
+        let perm = new MamoriPermission()
+            .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
+            .grantee(grantee);
+
+        await noThrow(perm.grant(api));
+
+        let r2 = await noThrow(apiAsAPIUser.select(sql));
+        expect(r2.length).toBeGreaterThan(0);
+
+        await noThrow(perm.revoke(api));
+
+        done();
+    });
+
+    test('catalog 03', async done => {
+        //Select from the connection log
+        let sql = "select b.* from SYS.QUERIES a join SYS.QUERY_PLANS b on a.ssid = b.ssid and a.query_id = b.query_id and a.userid !='" + grantee + "' limit 10";
         let r = await noThrow(apiAsAPIUser.select(sql));
         expect(r.length).toBe(0);
 
@@ -67,12 +107,9 @@ describe("mamori ccatalog tests", () => {
         done();
     });
 
-    //    "SYS".""
-    //    "SYS"."TCP_CONNECTION_LOG"
-
-    test.skip('catalog 02', async done => {
-        //Select from the connection log
-        let sql = "select * from SYS.QUERIES where userid !='" + grantee + "'";
+    test('catalog 04', async done => {
+        let sql = "select a.*  from sys.TCP_CONNECTION_LOG a join SYS.CONNECTIONS b on a.connection_id = b.id" +
+            " and b.login_username !='" + grantee + "' limit 10";
         let r = await noThrow(apiAsAPIUser.select(sql));
         expect(r.length).toBe(0);
 
@@ -81,49 +118,11 @@ describe("mamori ccatalog tests", () => {
             .grantee(grantee);
 
         await noThrow(perm.grant(api));
-
+        //RUN AS ADMIN
+        let r1 = await noThrow(api.select(sql));
+        //RUN AS GRANTEE
         let r2 = await noThrow(apiAsAPIUser.select(sql));
-        expect(r2.length).toBeGreaterThan(0);
-
-        await noThrow(perm.revoke(api));
-        done();
-    });
-
-    test.skip('catalog 03', async done => {
-        //Select from the connection log
-        let sql = "select b.* from SYS.QUERIES a join sys.query_plans b on a.ssid = b.ssid and a.query_id = b.query_id and a.userid !='" + grantee + "'";
-        let r = await noThrow(apiAsAPIUser.select(sql));
-        expect(r.length).toBe(0);
-
-        let perm = new MamoriPermission()
-            .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
-            .grantee(grantee);
-
-        await noThrow(perm.grant(api));
-
-        let r2 = await noThrow(apiAsAPIUser.select(sql));
-        expect(r2.length).toBeGreaterThan(0);
-
-        await noThrow(perm.revoke(api));
-        done();
-    });
-
-    test.skip('catalog 04', async done => {
-        let sql = "select a.*  from sys.TCP_CONNECTION_LOG a join sys.connections b on a.connection_id = b.id and b.login_username !='" + grantee + "'";
-
-        //Select from the connection log
-        let r = await noThrow(apiAsAPIUser.select(sql));
-        expect(r.length).toBe(0);
-
-        let perm = new MamoriPermission()
-            .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
-            .grantee(grantee);
-
-        await noThrow(perm.grant(api));
-
-        let r2 = await noThrow(apiAsAPIUser.select(sql));
-        expect(r2.length).toBeGreaterThan(0);
-
+        expect(r2.length).toBe(r1.length);
         await noThrow(perm.revoke(api));
         done();
     });

@@ -4,6 +4,7 @@ import { PolicyPermission, TIME_UNIT } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
 
 
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -12,8 +13,8 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("policy permission tests", () => {
 
     let api: MamoriService;
-    let policy = "test_fake_policy";
-    let grantee = "test_apiuser_policy";
+    let policy = "test_fake_policy" + testbatch;
+    let grantee = "test_apiuser_policy" + testbatch;
     let granteepw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D"
 
     beforeAll(async () => {

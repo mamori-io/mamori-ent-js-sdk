@@ -4,6 +4,7 @@ import { Datasource } from '../../datasource';
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
 
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -15,7 +16,7 @@ if (dbPassword) {
     describe("datasource tests", () => {
 
         let api: MamoriService;
-        let grantee = "test_apiuser_datasource";
+        let grantee = "test_apiuser_datasource" + testbatch;
         let granteepw = "J{J'vpKs!$n3213W6(6A,4_vdQ'}D"
 
         beforeAll(async () => {
@@ -41,8 +42,8 @@ if (dbPassword) {
 
 
         test('local datasource 01', async done => {
-            let ds = new Datasource("test_local_pg");
-
+            let dsName = "test_local_pg" + testbatch;
+            let ds = new Datasource(dsName);
             await ignoreError(ds.delete(api));
 
             ds.ofType("POSTGRESQL", 'postgres')

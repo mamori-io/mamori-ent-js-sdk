@@ -3,6 +3,7 @@ import * as https from 'https';
 import { IpResource } from "../../ip-resource";
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -12,7 +13,7 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("IP resource CRUD tests", () => {
 
     let api: MamoriService;
-    let resourceName: string = "testIPResource";
+    let resourceName: string = "testIPResource" + testbatch;
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);

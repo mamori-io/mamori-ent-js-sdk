@@ -4,6 +4,7 @@ import { IPResourcePermission } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
 
 
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -12,9 +13,9 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("ip resource permission tests", () => {
 
     let api: MamoriService;
-    let resource = "webaccess";
+    let resource = "webaccess" + testbatch;
     let permType = "IP USAGE";
-    let grantee = "test_apiuser_ip";
+    let grantee = "test_apiuser_ip" + testbatch;
     let granteepw = "J{J'vpKsn3213W6(6A,4_vdQ'}D"
 
     beforeAll(async () => {

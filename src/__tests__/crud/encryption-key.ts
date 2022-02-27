@@ -3,7 +3,7 @@ import * as https from 'https';
 import { Key, KEY_TYPE, SSH_ALGORITHM } from '../../key';
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
-
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -15,7 +15,7 @@ describe("encryption key tests", () => {
 
     let api: MamoriService;
     let apiAsAPIUser: MamoriService;
-    let grantee = "test_apiuser_key";
+    let grantee = "test_apiuser_key" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!98712_vdQ'}D"
 
     beforeAll(async () => {
@@ -46,7 +46,7 @@ describe("encryption key tests", () => {
 
 
     test('aes 01', async done => {
-        let k = new Key("test_aes_key");
+        let k = new Key("test_aes_key" + testbatch);
 
         await ignoreError(k.delete(api));
 
@@ -90,12 +90,12 @@ describe("encryption key tests", () => {
         done();
     });
 
-    test('rsa pair 01', async done => {
-        let k = new Key("test_rsa_key");
+    test('rsa pair as admin', async done => {
+        let name = "test_rsa_key" + testbatch;
+        let k = new Key(name);
 
-
-        let kpub = new Key("test_rsa_key_public");
-        let kpriv = new Key("test_rsa_key_private");
+        let kpub = new Key(name + "_public");
+        let kpriv = new Key(name + "_private");
         await ignoreError(kpub.delete(api));
         await ignoreError(kpriv.delete(api));
 
@@ -150,7 +150,7 @@ describe("encryption key tests", () => {
 
     test('ssh rsa 01', async done => {
         let publicKeyTest = "ssh-rsa"
-        let name = "test_ssh_key";
+        let name = "test_ssh_key" + testbatch;
         let k = new Key(name);
         await ignoreError(k.delete(api));
         //Create
@@ -195,7 +195,7 @@ describe("encryption key tests", () => {
 
     test('ssh dsa 01', async done => {
         let publicKeyTest = "ssh-dss"
-        let name = "test_ssh_key";
+        let name = "test_ssh_key" + testbatch;
         let k = new Key(name);
         await ignoreError(k.delete(api));
         //Create
@@ -240,7 +240,7 @@ describe("encryption key tests", () => {
 
     test('ssh ecdsa 01', async done => {
         let publicKeyTest = "ecdsa-sha2-nistp384"
-        let name = "test_ssh_key";
+        let name = "test_ssh_key" + testbatch;
         let k = new Key(name);
         await ignoreError(k.delete(api));
         //Create
@@ -288,7 +288,7 @@ describe("encryption key tests", () => {
 
     test('ssh ed25519 01', async done => {
         let publicKeyTest = "ssh-ed25519"
-        let name = "test_ssh_key";
+        let name = "test_ssh_key" + testbatch;
         let k = new Key(name);
         await ignoreError(k.delete(api));
         //Create
@@ -333,8 +333,7 @@ describe("encryption key tests", () => {
 
 
     test('aes 01', async done => {
-        let k = new Key("test_aes_key");
-
+        let k = new Key("test_aes_key" + testbatch);
         await ignoreError(k.delete(api));
 
         //Create
@@ -377,22 +376,23 @@ describe("encryption key tests", () => {
         done();
     });
 
-    test('rsa pair 02', async done => {
-        let k = new Key("test_rsa_key");
+    test.skip('rsa pair as non-admin', async done => {
+        let name = "test_rsa_key2" + testbatch;
+        let k = new Key(name);
 
-        let kpub = new Key("test_rsa_key_public");
-        let kpriv = new Key("test_rsa_key_private");
+        let kpub = new Key(name + "_public");
+        let kpriv = new Key(name + "_private");
         await ignoreError(kpub.delete(apiAsAPIUser));
         await ignoreError(kpriv.delete(apiAsAPIUser));
 
         //Create
         k.ofType(KEY_TYPE.RSA);
         let res = await noThrow(k.create(apiAsAPIUser));
-        console.log("***** %o", res);
         expect(res).toContain("-----BEGIN PUBLIC KEY----");
 
         //Ensure key returned properly
         let x = (await noThrow(Key.getAll(apiAsAPIUser))).filter((key: any) => key.name.includes(k.name) && key.usage === 'PUBLIC')[0];
+        console.log("***** %o", x);
         expect(x.type).toBe(KEY_TYPE.RSA);
         expect(x.public_key).toContain("-----BEGIN PUBLIC KEY-----");
         expect(x.private_key).toBeUndefined();

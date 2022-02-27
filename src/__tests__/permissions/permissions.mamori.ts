@@ -4,6 +4,7 @@ import { MamoriPermission, MAMORI_PERMISSION, TIME_UNIT } from '../../permission
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
 
 
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -12,7 +13,7 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("mamori permission tests", () => {
 
     let api: MamoriService;
-    let grantee = "test_apiuser_mp";
+    let grantee = "test_apiuser_mp" + testbatch;
     let granteepw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D";
 
     beforeAll(async () => {

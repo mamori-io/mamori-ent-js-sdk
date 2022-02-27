@@ -5,7 +5,7 @@ import { Key, KEY_TYPE } from '../../key';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
 
 
-
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -14,8 +14,8 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("key permission tests", () => {
 
     let api: MamoriService;
-    let key = "test_aes_key";
-    let grantee = "test_apiuser_permissions";
+    let key = "test_aes_key" + testbatch;
+    let grantee = "test_apiuser_permissions" + testbatch;
     let permType = "KEY USAGE";
     let granteepw = "J{J'vpKsnsNm3W6(6A,4_vdQ'}D"
 

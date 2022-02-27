@@ -3,7 +3,7 @@ import * as https from 'https';
 import { SSHLoginPermission, TIME_UNIT } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
 
-
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -12,8 +12,8 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("ssh permission tests", () => {
 
     let api: MamoriService;
-    let sshLogin = "test_fake_ssh_login";
-    let grantee = "test_apiuser_ssh";
+    let sshLogin = "test_fake_ssh_login" + testbatch;
+    let grantee = "test_apiuser_ssh" + testbatch;
     let granteepw = "J{J'vMy72BnpKsn\/a@C+W6(6A,4_vdQ'}D";
 
     beforeAll(async () => {

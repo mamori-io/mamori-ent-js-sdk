@@ -4,6 +4,7 @@ import { Key, KEY_TYPE, SSH_ALGORITHM } from '../../key';
 import { SshLogin } from '../../ssh-login';
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -14,9 +15,9 @@ describe("ssh login tests", () => {
 
     let api: MamoriService;
     let apiAsAPIUser: MamoriService;
-    let grantee = "test_apiuser_sshlogin";
+    let grantee = "test_apiuser_sshlogin" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!@34#12_vdQ'}D";
-    let sshKeyName = "test_sshlogin_ssh_key";
+    let sshKeyName = "test_sshlogin_ssh_key" + testbatch;
 
 
     beforeAll(async () => {
@@ -53,7 +54,7 @@ describe("ssh login tests", () => {
     });
 
     test('ssh login 01', async done => {
-        let k = new SshLogin("test_ssh_login_to_local");
+        let k = new SshLogin("test_ssh_login_to_local" + testbatch);
         await ignoreError(k.delete(api));
         //Create
         k.at("localhost", "22");

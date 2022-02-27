@@ -2,9 +2,9 @@
 import { MamoriService, LoginResponse } from '../../api';
 import * as https from 'https';
 
-const host = process.env.MAMORI_SERVER || 'https://192.168.154.168';
-const username = process.env.MAMORI_USERNAME || 'root';
-const password = process.env.MAMORI_PASSWORD || 'test';
+const host = process.env.MAMORI_SERVER || '';
+const username = process.env.MAMORI_USERNAME || '';
+const password = process.env.MAMORI_PASSWORD || '';
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 

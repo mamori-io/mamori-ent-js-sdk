@@ -4,6 +4,7 @@ import { Key, KEY_TYPE, SSH_ALGORITHM } from '../../key';
 import { SshTunnel } from '../../network';
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
+const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
@@ -14,9 +15,9 @@ describe("network ssh tunnel tests", () => {
 
     let api: MamoriService;
     let apiAsAPIUser: MamoriService;
-    let grantee = "test_apiuser_sshtunnel";
+    let grantee = "test_apiuser_sshtunnel" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!@34#12_vdQ'}D";
-    let sshKeyName = "test_sshtunnel_ssh_key";
+    let sshKeyName = "test_sshtunnel_ssh_key" + testbatch;
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
@@ -39,8 +40,6 @@ describe("network ssh tunnel tests", () => {
         //Create the SSH KEY
         let x = await new Key(sshKeyName).ofType(KEY_TYPE.SSH).withAlgorithm(SSH_ALGORITHM.RSA).ofSize(1024).create(api);
         expect(x).toContain("ssh-rsa");
-
-
     });
 
     afterAll(async () => {
@@ -51,7 +50,7 @@ describe("network ssh tunnel tests", () => {
     });
 
     test.skip('ssh tunnel 01', async done => {
-        let k = new SshTunnel("test_ssh_tunnel_to_local");
+        let k = new SshTunnel("test_ssh_tunnel_to_local" + testbatch);
         /*
         let k = new SshLogin("test_ssh_login_to_local");
         await ignoreError(k.delete(api));
