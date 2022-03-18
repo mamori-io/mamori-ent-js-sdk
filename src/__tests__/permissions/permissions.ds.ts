@@ -70,6 +70,8 @@ describe("datasource permission tests", () => {
         done();
     });
 
+
+
     test('grant 02', async done => {
         let resp = await noThrow(new DatasourcePermission()
             .on("*", "*", "*", "*")
@@ -96,7 +98,7 @@ describe("datasource permission tests", () => {
 
     });
 
-    test.skip('grant 03', async done => {
+    test('grant 03.01 past date range', async done => {
         let obj = new DatasourcePermission()
             .on("*", "*", "*", "*")
             .permission(DB_PERMISSION.SELECT)
@@ -106,14 +108,38 @@ describe("datasource permission tests", () => {
         await ignoreError(obj.revoke(api));
 
         let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(true);
+    });
+
+    test('grant 03', async done => {
+
+        let dt = new Date(new Date().setHours(0, 0, 0, 0)).toISOString().split("T");
+        let today = dt[0];
+        let fromD = today + " 00:00";
+        let toD = today + " 23:59:59";
+        console.log("%s %s", fromD, toD)
+
+        let obj = new DatasourcePermission()
+            .on("*", "*", "*", "*")
+            .permission(DB_PERMISSION.SELECT)
+            .grantee(grantee)
+            .withValidBetween(fromD, toD);
+
+        await ignoreError(obj.revoke(api));
+        let resp = await noThrow(obj.grant(api));
+        console.log(resp);
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT],
-        ["grantee", "equals", grantee],
-        ["valid_until", "=", '2022-01-14 13:00:00'],
-        ["valid_from", "=", '2021-12-31 13:00:00'],
-        ];
+        // ["valid_until", "=", '2022-01-14 13:00:00'],
+        //["valid_from", "=", '2021-12-31 13:00:00'],
+        let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT]];
         let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
+        console.log(res);
+
+        //let r2 = await noThrow(api.grantee_object_grants(grantee, DB_PERMISSION.SELECT, "*.*.*.*"));
+        //console.log(r2);
+
+        /*
         expect(res.totalCount).toBe(1);
 
         let resp2 = await ignoreError(obj.grant(api));
@@ -127,6 +153,20 @@ describe("datasource permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
+        */
+        done();
+    });
+
+    test('grant 01.01', async done => {
+        let obj = new DatasourcePermission()
+            .on("ss2016", "mamoritest", "dbo", "customer_pii")
+            .permission(DB_PERMISSION.SELECT)
+            .grantee(grantee);
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
+        // Test to check the query is working correctly
+        let res = await noThrow(api.grantee_object_grants(grantee, DB_PERMISSION.SELECT, "ss2016.mamoritest.dbo.customer_pii"));
+        expect(res.length).toBe(0);
         done();
     });
 

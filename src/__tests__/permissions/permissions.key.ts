@@ -160,4 +160,33 @@ describe("key permission tests", () => {
         done();
     });
 
+    test('grant 04 - mixed case', async done => {
+        let name = "CAPS" + key;
+        let objMixedCase = new KeyPermission()
+            .key(name)
+            .grantee(grantee);
+        let objLower = new KeyPermission()
+            .key(name.toLowerCase())
+            .grantee(grantee);
+
+        //make sure no exist
+        await ignoreError(objLower.revoke(api));
+        await ignoreError(objMixedCase.revoke(api));
+
+        //grant 1
+        let r1 = await noThrow(objMixedCase.grant(api));
+        expect(r1.errors).toBe(false);
+        //Grant 2
+        let r2 = await noThrow(objLower.grant(api));
+        expect(r2.errors).toBe(true);
+        //Revoke 1
+        let r3 = await noThrow(objMixedCase.revoke(api));
+        expect(r3.errors).toBe(false);
+        //revoke 2
+        let r4 = await noThrow(objLower.revoke(api));
+        expect(r4.errors).toBe(false);
+        //
+        done();
+    });
+
 });

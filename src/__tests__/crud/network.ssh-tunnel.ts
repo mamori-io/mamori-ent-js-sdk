@@ -17,7 +17,7 @@ describe("network ssh tunnel tests", () => {
     let apiAsAPIUser: MamoriService;
     let grantee = "test_apiuser_sshtunnel" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!@34#12_vdQ'}D";
-    let sshKeyName = "test_sshtunnel_ssh_key" + testbatch;
+    let sshKeyName = "mamori_server_ssh_tunnel_test_key";
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
@@ -38,8 +38,8 @@ describe("network ssh tunnel tests", () => {
         apiAsAPIUser = new MamoriService(host, INSECURE);
         await apiAsAPIUser.login(grantee, granteepw);
         //Create the SSH KEY
-        let x = await new Key(sshKeyName).ofType(KEY_TYPE.SSH).withAlgorithm(SSH_ALGORITHM.RSA).ofSize(1024).create(api);
-        expect(x).toContain("ssh-rsa");
+        //let x = await new Key(sshKeyName).ofType(KEY_TYPE.SSH).withAlgorithm(SSH_ALGORITHM.RSA).ofSize(1024).create(api);
+        //expect(x).toContain("ssh-rsa");
     });
 
     afterAll(async () => {
@@ -49,25 +49,21 @@ describe("network ssh tunnel tests", () => {
         await api.logout();
     });
 
-    test.skip('ssh tunnel 01', async done => {
+    test('ssh tunnel 01', async done => {
         let k = new SshTunnel("test_ssh_tunnel_to_local" + testbatch);
-        /*
-        let k = new SshLogin("test_ssh_login_to_local");
+        k.at("localhost", 22);
+        k.withCredentials("root", sshKeyName);
         await ignoreError(k.delete(api));
         //Create
-        k.at("localhost", "22");
-        k.withCredentials("root", sshKeyName);
         let res = await noThrow(k.create(api));
         expect(res.status).toBe("ok");
-
         //Ensure item returned properly
-        let x = (await noThrow(SshLogin.getAll(api))).filter((o: any) => o.name == k.name)[0];
-        expect(x.private_key_name).toBe(sshKeyName);
-
+        //let x = (await noThrow(SshTunnel.getAll(api))).filter((o: any) => o.name == k.name)[0];
+        //expect(x.private_key_name).toBe(sshKeyName);
+        /*
         //Ensure non-admins can't see any rows
         let x2 = (await noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
         expect(x2.length).toBe(0);
-
         //Grant to User
         let x3 = await noThrow(k.grantTo(api, grantee));
         expect(x3.errors).toBe(false);
