@@ -43,7 +43,6 @@ describe("network ssh tunnel tests", () => {
     });
 
     afterAll(async () => {
-        await new Key(sshKeyName).delete(api);
         await apiAsAPIUser.logout();
         await api.delete_user(grantee);
         await api.logout();
@@ -56,9 +55,14 @@ describe("network ssh tunnel tests", () => {
         await ignoreError(k.delete(api));
         //Create
         let res = await noThrow(k.create(api));
-        expect(res.status).toBe("ok");
+        expect(res).toBe("started");
         //Ensure item returned properly
-        //let x = (await noThrow(SshTunnel.getAll(api))).filter((o: any) => o.name == k.name)[0];
+        let x = (await noThrow(SshTunnel.getAll(api))).filter((o: any) => o.name == k.name)[0];
+        expect(x.type).toBe("ssh");
+        let resDel = await noThrow(k.delete(api));
+        expect(resDel).toBe("ok");
+        done();
+
         //expect(x.private_key_name).toBe(sshKeyName);
         /*
         //Ensure non-admins can't see any rows
@@ -73,7 +77,7 @@ describe("network ssh tunnel tests", () => {
 
         //Ensure user can't delete a key
         let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
-        expect(resDel2.response.status).toBe(500);
+        expect(resDel2.response.status).toBe(400);
 
         let x5 = await noThrow(k.revokeFrom(api, grantee));
         expect(x5.errors).toBe(false);
@@ -82,10 +86,7 @@ describe("network ssh tunnel tests", () => {
         expect(x6.length).toBe(0);
 
         //Delete the data source
-        let resDel = await noThrow(k.delete(api));
-        expect(resDel.status).toBe("ok");
         */
-        done();
     });
 
 

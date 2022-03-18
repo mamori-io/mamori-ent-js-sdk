@@ -98,7 +98,7 @@ describe("datasource permission tests", () => {
 
     });
 
-    test('grant 03.01 past date range', async done => {
+    test.skip('grant 03.01 past date range', async done => {
         let obj = new DatasourcePermission()
             .on("*", "*", "*", "*")
             .permission(DB_PERMISSION.SELECT)

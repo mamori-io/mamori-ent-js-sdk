@@ -169,6 +169,11 @@ describe("key permission tests", () => {
             .key(name.toLowerCase())
             .grantee(grantee);
 
+        await ignoreError(new Key(name).delete(api));
+        await new Key(name).ofType(KEY_TYPE.AES).create(api).catch(e => {
+            fail(handleAPIException(e));
+        });
+
         //make sure no exist
         await ignoreError(objLower.revoke(api));
         await ignoreError(objMixedCase.revoke(api));

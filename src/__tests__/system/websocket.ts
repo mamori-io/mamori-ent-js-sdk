@@ -50,7 +50,7 @@ describe("mamori catalog tests", () => {
         //Select from the connection log
         let sql = "select * from SYS.CONNECTIONS where login_username !='" + grantee + "' limit 10";
         let r = await noThrow(api.simple_query(sql));
-        console.log(r);
+        //console.log(r);
         done();
     });
 
