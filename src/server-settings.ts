@@ -48,4 +48,14 @@ export class ServerSettings {
         return this.api.update_provider(DEFAULT_AUTH_PROVIDERS.ADMIN, options)
     }
 
+    /*
+        has_license_permission(): boolean {
+            if (this.claims &&
+                this.claims.license_info && (permission in this.claims.license_info)) {
+                return (this.claims.license_info.permission == "true");
+            }
+            return true;
+        }
+    */
+
 }
