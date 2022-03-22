@@ -66,7 +66,7 @@ describe("role tests", () => {
         expect(x4.length).toBe(1);
         //Ensure user can't delete the item
         let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
-        expect(resDel2.response.status).toBe(400);
+        expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
         let x5 = await noThrow(k.revokeFrom(api, grantee));
         expect(x5.error).toBe(false);
         //Ensure the role was revoked

@@ -23,6 +23,8 @@ describe("encryption key tests", () => {
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
 
+
+        await ignoreError(api.delete_user(grantee));
         await api.create_user({
             username: grantee,
             password: granteepw,
@@ -73,7 +75,7 @@ describe("encryption key tests", () => {
 
         //Ensure user can't delete a key
         let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
-        expect(resDel2.response.status).toBe(400);
+        expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
 
 
         let x5 = await noThrow(k.revokeFrom(api, grantee));
@@ -131,7 +133,7 @@ describe("encryption key tests", () => {
 
         //Ensure user can't delete a key
         let resDelU = await ignoreError(kpub.delete(apiAsAPIUser));
-        expect(resDelU.response.status).toBe(400);
+        expect(resDelU.response.status).toBeGreaterThanOrEqual(400);
 
         let x5 = await noThrow(kpub.revokeFrom(api, grantee));
         expect(x5).toBe('Revoked');
@@ -178,7 +180,7 @@ describe("encryption key tests", () => {
 
         //Ensure user can't delete a key
         let resDelU = await ignoreError(k.delete(apiAsAPIUser));
-        expect(resDelU.response.status).toBe(400);
+        expect(resDelU.response.status).toBeGreaterThanOrEqual(400);
 
         let x5 = await noThrow(k.revokeFrom(api, grantee));
         expect(x5).toBe('Revoked');
@@ -223,7 +225,7 @@ describe("encryption key tests", () => {
 
         //Ensure user can't delete a key
         let resDelU = await ignoreError(k.delete(apiAsAPIUser));
-        expect(resDelU.response.status).toBe(400);
+        expect(resDelU.response.status).toBeGreaterThanOrEqual(400);
 
         let x5 = await noThrow(k.revokeFrom(api, grantee));
         expect(x5).toBe('Revoked');
@@ -271,7 +273,7 @@ describe("encryption key tests", () => {
 
         //Ensure user can't delete a key
         let resDelU = await ignoreError(k.delete(apiAsAPIUser));
-        expect(resDelU.response.status).toBe(400);
+        expect(resDelU.response.status).toBeGreaterThanOrEqual(400);
 
         let x5 = await noThrow(k.revokeFrom(api, grantee));
         expect(x5).toBe('Revoked');
@@ -316,7 +318,7 @@ describe("encryption key tests", () => {
 
         //Ensure user can't delete a key
         let resDelU = await ignoreError(k.delete(apiAsAPIUser));
-        expect(resDelU.response.status).toBe(400);
+        expect(resDelU.response.status).toBeGreaterThanOrEqual(400);
 
         let x5 = await noThrow(k.revokeFrom(api, grantee));
         expect(x5).toBe('Revoked');
@@ -359,7 +361,7 @@ describe("encryption key tests", () => {
 
         //Ensure user can't delete a key
         let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
-        expect(resDel2.response.status).toBe(400);
+        expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
 
 
         let x5 = await noThrow(k.revokeFrom(api, grantee));

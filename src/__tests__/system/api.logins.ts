@@ -12,7 +12,7 @@ describe("server based tests", () => {
 
     test('login should succeed', async done => {
         try {
-            console.log("%s %s %s", host, username, password);
+            console.log("%s %s", host, username);
             let api = new MamoriService(host, INSECURE);
             let response = await api.login(username, password);
             expect(response.username).toBe(username);

@@ -1,6 +1,7 @@
 import { MamoriService } from '../../../dist/api';
 import * as https from 'https';
 import { ServerSettings } from '../../../dist/server-settings';
+import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -11,13 +12,15 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("Server Settings - bootstrap user", () => {
 
     let api: MamoriService;
-    let apiuser = "test_apiuser_ss" + testbatch;
+    let apiuser = "t_apiuser_server_settings_" + testbatch;
     let apiuserpw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D";
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
+
+        await ignoreError(api.delete_user(apiuser));
         await api.create_user({
             username: apiuser,
             password: apiuserpw,

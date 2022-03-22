@@ -23,8 +23,6 @@ describe("mamori catalog tests", () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
-
-
         await ignoreError(api.delete_user(grantee));
         await api.create_user({
             username: grantee,
