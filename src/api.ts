@@ -272,22 +272,25 @@ export class MamoriService {
     }
 
     logout(): Promise<void> {
-        this.disconnectSocket();
+        return new Promise<void>((resolve, reject) => {
+            this.disconnectSocket().then(() => {
 
-        let result;
-        if (this.claims) {
-            result = this._http.request({ method: 'DELETE', url: '/sessions/logout' })
-                .then(() => {
+                if (this.claims) {
+                    this._http.request({ method: 'DELETE', url: '/sessions/logout' })
+                        .then(() => {
+                            this.username = undefined;
+                            this.authorization = null;
+                            resolve();
+                        }).catch(reject);
+                }
+                else {
+                    this.username = undefined;
                     this.authorization = null;
-                });
-        }
-        else {
-            result = Promise.resolve();
-            this.authorization = null;
-        }
+                    resolve();
+                }
 
-        this.username = undefined;
-        return result;
+            }).catch(reject);
+        });
     }
 
     has_priv(name: string): boolean {
@@ -305,108 +308,119 @@ export class MamoriService {
         this._socket = null;
     }
 
-    private connect_socket(): void {
-        let sid = this.token;
-        if (this._socket && !this._socket.isConnected()) {
-            this.resetSocket("Not null but not connected either");
-        }
-        if (!this._socket && sid) {
-
-            this._channels = {};
-            let ws = this._base.replace(/^http/, "ws").replace(/\/$/, "");
-
-            this._socket = new Socket(ws + "/socket", {
-                timeout: 90000000,
-                longpollerTimeout: 90000000,
-                heartbeatIntervalMs: 30000,
-                params: { token: sid }
-            });
-            this._socket.onError((e: any) => {
-                console.error("UI websocket error" + JSON.stringify(e));
-                this.trigger("heartbeat", { error: true });
-                //this.disconnectSocket();
-                // this.authorization = null;
-            });
-            this._socket.onMessage((m: any) => {
-                this.trigger("heartbeat", { error: false });
-            });
-            this._socket.onClose(() => {
-                this._queries = {};
-                this._to_join = {};
+    private connect_socket(): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            let sid = this.token;
+            if (this._socket && !this._socket.isConnected()) {
+                this.resetSocket("Not null but not connected either");
+            }
+            if (!this._socket && sid) {
+                let connected = false;
                 this._channels = {};
-                //this.resetSocket("Socket closed");
-            });
+                let ws = this._base.replace(/^http/, "ws").replace(/\/$/, "");
 
-            if (this._socket) {
+                this._socket = new Socket(ws + "/socket", {
+                    timeout: 90000000,
+                    longpollerTimeout: 90000000,
+                    heartbeatIntervalMs: 30000,
+                    params: { token: sid }
+                });
+                this._socket.onError((e: any) => {
+                    // console.error("UI websocket error" + JSON.stringify(e));
+                    this.trigger("heartbeat", { error: true });
+                    //this.disconnectSocket();
+                    // this.authorization = null;
+                    if(!connected) {
+                        reject(e);
+                    }
+                });
+                this._socket.onOpen(() => {
+                    resolve();
+                });
+                this._socket.onMessage((m: any) => {
+                    this.trigger("heartbeat", { error: false });
+                });
+                this._socket.onClose(() => {
+                    this._queries = {};
+                    this._to_join = {};
+                    this._channels = {};
+                    //this.resetSocket("Socket closed");
+                });
+
                 try {
                     this._socket.connect();
                     this.trigger("heartbeat", { error: false });
-                }
-                catch (err) {
+                } catch (err) {
                     this.trigger("heartbeat", { error: true });
                     console.error("Exception when connecting UI websocket");
                     console.error(err);
-                    //this.disconnectSocket();
+                    reject(err);
                 }
+            } else {
+                // we are already connected
+                resolve();
             }
-        }
+        });
     }
 
-    private disconnectSocket() {
-        this._queries = {};
-        this._to_join = {};
-        this._channels = {};
-        this.channelRouteChangeCallbacks = {};
-        if (this._socket) {
-            try {
-                if (this._socket.reconnectTimer != null) {
-                    this._socket.reconnectTimer.callback = () => console.log("nop");
-                    this._socket.reconnectTimer.reset();
+    private disconnectSocket(): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this._queries = {};
+            this._to_join = {};
+            this._channels = {};
+            this.channelRouteChangeCallbacks = {};
+            if (this._socket) {
+                try {
+                    if (this._socket.reconnectTimer != null) {
+                        this._socket.reconnectTimer.callback = () => console.log("nop");
+                        this._socket.reconnectTimer.reset();
+                    }
+                    this._socket.disconnect(resolve);
                 }
-                this._socket.disconnect();
-
-
+                catch (e) {
+                    reject(e);
+                }
+            } else {
+                resolve();
             }
-            catch (e) {
-                console.error(e);
-            }
-        }
+        });
     }
 
     public join(name: string, params: any, routeChangeCallback?: (channel: any) => any): Promise<Channel> {
-        this.connect_socket();
-
         let deferred = this._to_join[name];
-        if (!deferred) {
-            deferred = new Promise<Channel>((resolve, reject) => {
-                if (this._socket) {
-                    let channel = this._channels[name];
-                    if (channel) {
-                        delete this._to_join[name];
-                        resolve(channel);
-                    } else {
-                        channel = this._socket.channel(name, params || {});
 
-                        channel.join().receive("ok", (resp: any) => {
+        if (!deferred) {
+            deferred = this.connect_socket().then(() => {
+                return  new Promise<Channel>((resolve, reject) => {
+                    if (this._socket) {
+                        let channel = this._channels[name];
+                        if (channel) {
                             delete this._to_join[name];
-                            this._channels[name] = channel;
-                            this.channelRouteChangeCallbacks[name] = routeChangeCallback
-                                ? routeChangeCallback
-                                : (channel: Channel) => {
-                                    channel.leave()
-                                };
-                            channel.onClose(() => {
-                                delete this._channels[name];
-                                delete this.channelRouteChangeCallbacks[name];
-                            });
                             resolve(channel);
-                        }).receive("error", (resp: any) => {
-                            reject(resp);
-                        });
+                        } else {
+                            channel = this._socket.channel(name, params || {});
+
+                            channel.join().receive("ok", (resp: any) => {
+                                delete this._to_join[name];
+                                this._channels[name] = channel;
+                                this.channelRouteChangeCallbacks[name] = routeChangeCallback
+                                    ? routeChangeCallback
+                                    : (channel: Channel) => {
+                                        channel.leave()
+                                    };
+                                channel.onClose(() => {
+                                    delete this._channels[name];
+                                    delete this.channelRouteChangeCallbacks[name];
+                                });
+                                resolve(channel);
+                            }).receive("error", (resp: any) => {
+                                reject(resp);
+                            });
+                        }
+                    } else {
+                        reject("No connection available");
                     }
-                } else {
-                    reject("No connection available");
-                }
+                });
             });
 
             this._to_join[name] = deferred;
@@ -636,7 +650,6 @@ export class MamoriService {
         }
     }
 
-
     private new_query_job(): Promise<Channel> {
         return new Promise<Channel>((resolve, reject) => {
             let channel_name = "session:" + this.session_id;
@@ -671,7 +684,6 @@ export class MamoriService {
                         .receive("error", (resp) => reject(resp));
                 })
                 .catch((e) => reject(e));
-
         });
 
         return deferred;

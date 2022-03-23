@@ -40,16 +40,15 @@ describe("mamori catalog tests", () => {
     });
 
     afterAll(async () => {
-        console.log("**** AFTERALL 1");
         await ignoreError(apiAsAPIUser.logout());
         await ignoreError(api.delete_user(grantee));
         await api.logout();
-        console.log("**** AFTERALL 2");
     });
 
     test('catalog via ws 01', async done => {
         //Select from the connection log
         let sql = "select * from SYS.CONNECTIONS where login_username !='" + grantee + "' limit 10";
+
         let r = await noThrow(api.simple_query(sql));
         expect(r.length).toBeGreaterThan(0);
         done();
