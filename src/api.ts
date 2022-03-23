@@ -159,7 +159,7 @@ export class MamoriService {
     private _ws_token: Nullable<string> = null;
     private _handlers: StringIndexed<EventCallbacks> = {};
     private _socket: Nullable<Socket> = null;
-    private _channels: any = {};
+    private _channels: StringIndexed<Channel> = {};
     private channelRouteChangeCallbacks: any = {};
     private _to_join: any = {};
     private _queries: StringIndexed<PromiseHolder> = {};
@@ -274,7 +274,6 @@ export class MamoriService {
     logout(): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.disconnectSocket().then(() => {
-
                 if (this.claims) {
                     this._http.request({ method: 'DELETE', url: '/sessions/logout' })
                         .then(() => {
@@ -367,22 +366,28 @@ export class MamoriService {
         return new Promise<void>((resolve, reject) => {
             this._queries = {};
             this._to_join = {};
-            this._channels = {};
-            this.channelRouteChangeCallbacks = {};
-            if (this._socket) {
-                try {
-                    if (this._socket.reconnectTimer != null) {
-                        this._socket.reconnectTimer.callback = () => console.log("nop");
-                        this._socket.reconnectTimer.reset();
+
+            Promise.all(Object.values(this._channels).map(ch => new Promise<void>((resolve, reject) => {
+                ch.onClose(resolve);
+                ch.leave();
+            }))).then(() => {
+                this.channelRouteChangeCallbacks = {};
+                if (this._socket) {
+                    try {
+                        if (this._socket.reconnectTimer != null) {
+                            this._socket.reconnectTimer.callback = () => console.log("nop");
+                            this._socket.reconnectTimer.reset();
+                        }
+
+                        this._socket.disconnect(resolve);
                     }
-                    this._socket.disconnect(resolve);
+                    catch (e) {
+                        reject(e);
+                    }
+                } else {
+                    resolve();
                 }
-                catch (e) {
-                    reject(e);
-                }
-            } else {
-                resolve();
-            }
+            });
         });
     }
 

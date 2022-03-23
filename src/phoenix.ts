@@ -700,7 +700,10 @@ export class Socket {
 
     disconnect(callback?:any, code?: number, reason?: string){
         if(this.conn){
-            this.conn.onclose = callback;
+            if(callback) {
+                this.onClose(callback);
+            }
+            // this.conn.onclose = callback;
             if(code){ this.conn.close(code, reason || "") } else { this.conn.close() }
             this.conn = null
         } else {
