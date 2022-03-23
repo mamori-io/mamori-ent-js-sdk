@@ -12,7 +12,7 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("datasource permission tests", () => {
 
     let api: MamoriService;
-    let grantee = "test_apiuser_ds" + testbatch;
+    let grantee = "test_apiuser_permission_ds" + testbatch;
     let granteepw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D"
 
     beforeAll(async () => {
@@ -127,15 +127,19 @@ describe("datasource permission tests", () => {
 
         await ignoreError(obj.revoke(api));
         let resp = await noThrow(obj.grant(api));
-        console.log(resp);
+        //console.log(resp);
         expect(resp.errors).toBe(false);
 
-        // ["valid_until", "=", '2022-01-14 13:00:00'],
         //["valid_from", "=", '2021-12-31 13:00:00'],
-        let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT]];
+        let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT],
+        ["valid_from", "=", fromD + '.000000Z'],
+        ["valid_until", "=", toD + '.000000Z']];
         let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
-        console.log(res);
-
+        expect(res.totalCount).toBe(1);
+        let data = res.data[0];
+        expect(data.permissiontype).toBe(DB_PERMISSION.SELECT);
+        let id = data.id;
+        console.log("%s : %s", data.time_left, data.time_until);
         //let r2 = await noThrow(api.grantee_object_grants(grantee, DB_PERMISSION.SELECT, "*.*.*.*"));
         //console.log(r2);
 
