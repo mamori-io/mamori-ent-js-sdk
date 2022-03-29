@@ -1816,6 +1816,14 @@ export class MamoriService {
         return this.callAPI("DELETE", "/v1/wireguard/" + id);
     }
 
+    public wireguard_disconnect_user(username: string) {
+        return this.callAPI("DELETE", "/v1/wireguard/disconnect_user/" + username);
+    }
+
+    public wireguard_disconnect_peer(peer_public_key: string) {
+        return this.callAPI("DELETE", "/v1/wireguard/" + peer_public_key + "/disconnect");
+    }
+
     public get_wireguard_log() {
         return this.callAPI("GET", "/v1/wireguard/log");
     }

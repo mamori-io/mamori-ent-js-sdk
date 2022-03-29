@@ -42,6 +42,10 @@ export class WireGuardPeer implements ISerializable {
         });
     }
 
+    public static disconnectUser(api: MamoriService, username: string): Promise<any> {
+        return api.wireguard_disconnect_user(username);
+    }
+
     device_name: string;
     userid: string;
     allocated_ip_address: string;
@@ -164,6 +168,10 @@ export class WireGuardPeer implements ISerializable {
 
     public unlock(api: MamoriService) {
         return api.unlock_wireguard_peer(this.id);
+    }
+
+    public disconnect(api: MamoriService): Promise<any> {
+        return api.wireguard_disconnect_peer(this.public_key);
     }
 
 }
