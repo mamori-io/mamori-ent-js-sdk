@@ -137,7 +137,7 @@ describe("policy permission tests", () => {
 
     });
 
-    test('grant 04 - mixed case', async done => {
+    test.skip('grant 04 - mixed case', async done => {
         let name = "CAPS" + policy;
         let objMixedCase = new PolicyPermission()
             .policy(name)

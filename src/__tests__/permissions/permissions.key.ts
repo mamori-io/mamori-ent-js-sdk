@@ -160,7 +160,7 @@ describe("key permission tests", () => {
         done();
     });
 
-    test('grant 04 - mixed case', async done => {
+    test.skip('grant 04 - mixed case', async done => {
         let name = "CAPS" + key;
         let objMixedCase = new KeyPermission()
             .key(name)

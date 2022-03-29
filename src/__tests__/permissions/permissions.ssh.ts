@@ -156,7 +156,7 @@ describe("ssh permission tests", () => {
 
     });
 
-    test('grant 04 - mixed case', async done => {
+    test.skip('grant 04 - mixed case', async done => {
         let name = "CAPS" + sshLogin;
         let objMixedCase = new SSHLoginPermission()
             .sshLogin(name)

@@ -82,8 +82,8 @@ export interface SshLoginDesc {
     private_key_name: string;
 }
 
-export interface WireguardPeer {
-    id?: number;
+export interface WireguardPeerI {
+    id?: string;
     userid?: string;
     device_name: string;
     public_key?: string;
@@ -91,7 +91,7 @@ export interface WireguardPeer {
 }
 
 export interface AddWireguardPeerResponse {
-    peer: WireguardPeer;
+    peer: WireguardPeerI;
     private_key?: string;
 }
 
@@ -329,7 +329,7 @@ export class MamoriService {
                     this.trigger("heartbeat", { error: true });
                     //this.disconnectSocket();
                     // this.authorization = null;
-                    if(!connected) {
+                    if (!connected) {
                         reject(e);
                     }
                 });
@@ -396,7 +396,7 @@ export class MamoriService {
 
         if (!deferred) {
             deferred = this.connect_socket().then(() => {
-                return  new Promise<Channel>((resolve, reject) => {
+                return new Promise<Channel>((resolve, reject) => {
                     if (this._socket) {
                         let channel = this._channels[name];
                         if (channel) {
@@ -1792,8 +1792,24 @@ export class MamoriService {
         return this.callAPI("GET", "/v1/wireguard", options);
     }
 
-    public create_wireguard_peer(peer: WireguardPeer): Promise<AddWireguardPeerResponse> {
+    public create_wireguard_peer(peer: WireguardPeerI): Promise<AddWireguardPeerResponse> {
         return this.callAPI("POST", "/v1/wireguard", { peer: peer });
+    }
+
+    public update_wireguard_peer(peer: any) {
+        return this.callAPI("PUT", "/v1/wireguard/" + peer.id, { peer: peer });
+    }
+
+    public send_wireguard_notification(username: string, device_name: string, config: string) {
+        return this.callAPI("POST", "/v1/wireguard/notify", { username: username, device_name: device_name, config: config });
+    }
+
+    public lock_wireguard_peer(id: string) {
+        return this.callAPI("PUT", "/v1/wireguard/" + id + "/lock");
+    }
+
+    public unlock_wireguard_peer(id: string) {
+        return this.callAPI("PUT", "/v1/wireguard/" + id + "/unlock");
     }
 
     public delete_wireguard_peer(id: string) {

@@ -103,7 +103,7 @@ describe("ip resource permission tests", () => {
 
     });
 
-    test('grant 03 - mixed case', async done => {
+    test.skip('grant 03 - mixed case', async done => {
         let name = "CAPS" + resource;
         let objMixedCase = new IPResourcePermission()
             .resource(name)
