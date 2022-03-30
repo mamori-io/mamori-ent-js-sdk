@@ -165,12 +165,12 @@ export class WireGuardPeer implements ISerializable {
         );
     }
 
-    public lock(api: MamoriService) {
+    public lock(api: MamoriService): Promise<any> {
         if (!this.id) throw new Error("id not specified");
         return api.lock_wireguard_peer(this.id);
     }
 
-    public unlock(api: MamoriService) {
+    public unlock(api: MamoriService): Promise<any> {
         if (!this.id) throw new Error("id not specified");
         return api.unlock_wireguard_peer(this.id);
     }
