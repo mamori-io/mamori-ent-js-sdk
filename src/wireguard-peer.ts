@@ -117,12 +117,14 @@ export class WireGuardPeer implements ISerializable {
      * @param api  A logged-in MamoriService instance
      * @returns 
      */
-    public delete(api: MamoriService, id: string): Promise<any> {
+    public delete(api: MamoriService): Promise<any> {
         //Get the resource by name
-        return api.delete_wireguard_peer(id);
+        if (!this.id) throw new Error("id not specified");
+        return api.delete_wireguard_peer(this.id);
     }
 
     public update(api: MamoriService): Promise<any> {
+        if (!this.id) throw new Error("id not specified");
         return api.update_wireguard_peer(this);
     }
 
@@ -133,6 +135,7 @@ export class WireGuardPeer implements ISerializable {
      */
     public reset(api: MamoriService, notify: boolean): Promise<any> {
         return new Promise((resolve, reject) => {
+            if (!this.id) throw new Error("id not specified");
             let peer = { id: this.id, userid: this.userid, device_name: this.device_name };
             api.update_wireguard_peer(peer).then(result => {
                 if (notify) {
@@ -163,10 +166,12 @@ export class WireGuardPeer implements ISerializable {
     }
 
     public lock(api: MamoriService) {
+        if (!this.id) throw new Error("id not specified");
         return api.lock_wireguard_peer(this.id);
     }
 
     public unlock(api: MamoriService) {
+        if (!this.id) throw new Error("id not specified");
         return api.unlock_wireguard_peer(this.id);
     }
 

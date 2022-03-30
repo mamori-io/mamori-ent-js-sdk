@@ -70,7 +70,7 @@ describe("wireguard peer tests", () => {
         let x4 = await noThrow(k.unlock(api));
         expect(x4.status).toBe("ok");
         //delete peer
-        let x5 = await noThrow(k.delete(api, k.id));
+        let x5 = await noThrow(k.delete(api));
         expect(x5.status).toBe("ok");
         //
         done();
