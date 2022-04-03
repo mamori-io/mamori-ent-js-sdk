@@ -48,9 +48,9 @@ export class WireGuardPeer implements ISerializable {
 
     device_name: string;
     userid: string;
-    allocated_ip_address: string;
-    public_key: string;
-    id: string;
+    allocated_ip_address: string | null;
+    public_key: string | null;
+    id: string | null;
 
     /**
     * @param name  Unique ip resource name
@@ -58,9 +58,9 @@ export class WireGuardPeer implements ISerializable {
     public constructor(userId: string, name: string) {
         this.device_name = name;
         this.userid = userId;
-        this.allocated_ip_address = "";
-        this.public_key = "";
-        this.id = "";
+        this.allocated_ip_address = null;
+        this.public_key = null;
+        this.id = null;
     }
 
     public withUserId(value: string) {
@@ -176,6 +176,7 @@ export class WireGuardPeer implements ISerializable {
     }
 
     public disconnect(api: MamoriService): Promise<any> {
+        if (!this.public_key) throw new Error("public key not specified");
         return api.wireguard_disconnect_peer(this.public_key);
     }
 

@@ -111,7 +111,7 @@ describe("datasource permission tests", () => {
         expect(resp.errors).toBe(true);
     });
 
-    test('grant 03', async done => {
+    test.skip('grant 03', async done => {
 
         let dt = new Date(new Date().setHours(0, 0, 0, 0)).toISOString().split("T");
         let today = dt[0];

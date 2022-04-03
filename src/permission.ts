@@ -889,6 +889,71 @@ export class MamoriPermission extends PermissionBase {
 }
 
 
+export class RemoteDesktopLoginPermission extends PermissionBase {
+    private items?: string[];
+    private RDLoginName?: string;
+    public constructor() {
+        super();
+        this.RDLoginName = "";
+        this.items = [];
+    }
+
+    /**
+     * Set the RDP login to grant
+     * @param name The name of the RDP Login
+     * @returns  
+     */
+    public name(name: string): RemoteDesktopLoginPermission {
+        this.items = ["RDP"];
+        this.RDLoginName = name;
+        return this;
+    }
+
+    public prepare(): any {
+        let res = super.prepare();
+        this.options.grantables = this.items;
+        this.options.object_name = this.RDLoginName;
+        return res;
+    }
+
+    /**
+     * Initialize the object from JSON.
+     * Call toJSON to see the expected record.
+     * @param record JSON record
+     * @returns
+     */
+    fromJSON(record: any) {
+        for (let prop in this) {
+            if (prop == "items") {
+                this.items = record["permissions"].split(",");
+            } else if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+    /**
+    * Serialize the object to JSON
+    * @param
+    * @returns JSON 
+    */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            if (prop != "options") {
+                if (prop == "items") {
+                    res["permissions"] = this.items?.join(",");
+                } else {
+                    res[prop] = this[prop];
+                }
+
+            }
+        }
+        return res;
+    }
+}
+
+
 
 
 

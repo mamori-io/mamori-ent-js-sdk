@@ -16,6 +16,7 @@ import { Network, IpSecVpn, OpenVPN, SshTunnel } from "./network";
 import { SshLogin } from "./ssh-login";
 import { RoleGrant, Role } from "./role";
 import { Runnable } from './runnable';
+import { decodeMessage } from './utils';
 
 export { Datasource, Key, Network, SshLogin, Role, RoleGrant, IpSecVpn, OpenVPN, SshTunnel, Runnable };
 
@@ -83,11 +84,11 @@ export interface SshLoginDesc {
 }
 
 export interface WireguardPeerI {
-    id?: string;
+    id?: string | null;
     userid?: string;
     device_name: string;
-    public_key?: string;
-    allocated_ip_address: string;
+    public_key?: string | null;
+    allocated_ip_address: string | null;
 }
 
 export interface AddWireguardPeerResponse {
@@ -1839,4 +1840,57 @@ export class MamoriService {
     public reload_wireguard_config() {
         return this.callAPI("POST", "/v1/wireguard/reload");
     }
+
+    //Remote Desktop Methods
+    public search_remote_desktops(options: any): Promise<any> {
+        return this.callAPI("GET", "/v1/rdp", options);
+    }
+
+    public get_remote_desktop_details(name: string): Promise<any> {
+        return this.callAPI("GET", "/v1/rdp/" + name);
+    }
+
+    public create_remote_desktop(name: string, details: any): Promise<any> {
+        return this.callAPI("POST", "/v1/rdp/", { name: name, details: details });
+    }
+
+    public update_remote_desktop(id: number, name: string, details: any): Promise<any> {
+        return this.callAPI("PUT", "/v1/rdp/" + id, { name: name, details: details });
+    }
+
+    public get_remote_desktop_token(name: string): Promise<any> {
+        return this.callAPI("GET", "/v1/rdp/" + name + "/token");
+    }
+
+    public get_remote_desktop_download_token(recording_id: number, token_type: string): Promise<any> {
+        return this.callAPI("GET", "/v1/rdp/" + recording_id + "/download/" + token_type);
+    }
+
+    public delete_remote_desktop(name: string) {
+        return this.callAPI("DELETE", "/v1/rdp/" + name);
+    }
+
+    public get_remote_desktop_download_link(token: string, onprogress?: (message: string, percentage?: number) => void): Promise<any> {
+        return new Promise((resolve, reject) => {
+            let ws = new this._socket!.transport("wss://" + document.location.host + "/rdp/tunnel?" + token);
+            ws.onmessage = (e: any) => {
+                let msg = decodeMessage(e.data);
+                if (msg.command == "_status") {
+                    if (onprogress) {
+                        if (msg.params.length === 1) {
+                            onprogress(msg.params[0])
+                        } else {
+                            onprogress(msg.params[0], Number(msg.params[1]));
+                        }
+                    }
+                } else if (msg.command == "_download") {
+                    resolve("//" + document.location.host + "/rdp/stream/" + msg.params[0]);
+                } else if (msg.command == "error") {
+                    reject(msg.params[0]);
+                }
+            };
+        });
+    }
+
+
 }

@@ -7,6 +7,20 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 
+
+export function prepareFilter(filter: any): any {
+    let filters = filter;
+    if (filter && filter.length > 1) {
+        let ndx = 0;
+        filters = {};
+        filter.forEach((element: any) => {
+            filters[ndx.toString()] = element;
+            ndx++
+        });
+    }
+    return filters;
+}
+
 export function hex2a(hex: any) {
     var str = '';
     for (var i = 0; i < hex.length; i += 2) str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
@@ -61,4 +75,92 @@ export function ignoreError(call: Promise<any>): any {
         return x;
     }
 }
+
+export function objectClone(target: any, source: any) {
+    if (Array.isArray(source)) {
+        throw new Error('source is an array. must be an object');
+    }
+
+    Object.keys(source).forEach(key => {
+        const s_val = source[key];
+        const t_val = target[key];
+        if (Array.isArray(s_val)) {
+            target[key] = [];
+            s_val.forEach(e => {
+                let o = (typeof e == 'object') ? objectClone({}, e) : e;
+                target[key].push(o);
+            });
+        } else {
+            target[key] = t_val && s_val && typeof t_val === 'object' && typeof s_val === 'object'
+                ? objectClone(t_val, s_val)
+                : s_val;
+        }
+    });
+    return target
+}
+
+export interface Message {
+    command: string;
+    params: string[];
+}
+
+const LENGTH = 0;
+const DATA = 1;
+const SEP = 2;
+
+export function decodeMessage(s: string): Message {
+    let parts: string[] = [];
+
+    let state = LENGTH;
+    let fragmentLength = 0;
+    const L = s.length;
+    let idx = 0;
+    let ch = null;
+
+    while (idx < L) {
+        switch (state) {
+            case LENGTH:
+                ch = s.charAt(idx);
+                idx++;
+                if (ch == ".") {
+                    state = DATA;
+                } else if (ch >= "0" && ch <= "9") {
+                    fragmentLength = (fragmentLength * 10) + Number(ch);
+                } else {
+                    throw "Expected a number or a dot got '" + ch + "' at " + idx;
+                }
+                break;
+
+            case DATA:
+                if (idx + fragmentLength > L) {
+                    throw "Unexpected end of data";
+                }
+                let part = s.substr(idx, fragmentLength);
+                parts.push(part);
+                idx = idx + fragmentLength;
+                fragmentLength = 0;
+                state = SEP;
+                break;
+
+            case SEP:
+                ch = s.charAt(idx);
+                idx++;
+                if (ch == ",") {
+                    state = LENGTH;
+                } else if (ch == ";") {
+                    if (idx < L) {
+                        throw "Unexpected data after terminator";
+                    }
+                } else {
+                    throw "Expected comma or semicolon got '" + ch + "' at " + idx;
+                }
+                break;
+        }
+    }
+    let res: any = {};
+    res.command = parts.shift();
+    res.params = parts;
+    return res;
+}
+
 
