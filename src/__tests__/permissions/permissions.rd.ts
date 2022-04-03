@@ -125,7 +125,7 @@ describe("rdp permission tests", () => {
     test.skip('grant 03', async done => {
 
         let obj = await new RemoteDesktopLoginPermission()
-            .rdpLogin(rdpLogin)
+            .name(rdpLogin)
             .grantee(grantee)
             .withValidBetween("2022-01-01 00:00", "2022-01-15 00:00");
 
@@ -161,10 +161,10 @@ describe("rdp permission tests", () => {
     test.skip('grant 04 - mixed case', async done => {
         let name = "CAPS" + rdpLogin;
         let objMixedCase = new RemoteDesktopLoginPermission()
-            .rdpLogin(name)
+            .name(name)
             .grantee(grantee);
         let objLower = new RemoteDesktopLoginPermission()
-            .rdpLogin(name.toLowerCase())
+            .name(name.toLowerCase())
             .grantee(grantee);
 
         //make sure no exist
