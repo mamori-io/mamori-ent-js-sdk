@@ -1,6 +1,6 @@
 import { MamoriService } from '../../api';
 import * as https from 'https';
-import { DatasourcePermission, DB_PERMISSION, TIME_UNIT } from '../../permission';
+import { DatasourcePermission, DB_PERMISSION, RolePermission, TIME_UNIT } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -19,6 +19,7 @@ describe("datasource permission tests", () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
+        await ignoreError(api.delete_user(grantee));
         await api.create_user({
             username: grantee,
             password: granteepw,
@@ -171,6 +172,36 @@ describe("datasource permission tests", () => {
         // Test to check the query is working correctly
         let res = await noThrow(api.grantee_object_grants(grantee, DB_PERMISSION.SELECT, "ss2016.mamoritest.dbo.customer_pii"));
         expect(res.length).toBe(0);
+        done();
+    });
+
+    test('test 04.01 grant mix case', async done => {
+        //User needs creds and permissions on target DB
+        let p = ignoreError(new RolePermission().role("DB_CREDS").grantee(grantee).grant(api));
+
+        let obj = new DatasourcePermission()
+            .on("ss2016", "mamori", "dev", "customer_pii")
+            .permission(DB_PERMISSION.SELECT)
+            .grantee(grantee);
+
+        let obj2 = new DatasourcePermission()
+            .on("Ss2016", "Mamori", "Dev", "CUSTOMER_pii")
+            .permission(DB_PERMISSION.SELECT)
+            .grantee(grantee);
+
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
+        await ignoreError(obj2.revoke(api));
+
+        let r1 = await noThrow(obj.grant(api));
+        expect(r1.errors).toBe(false);
+        let r2 = await noThrow(obj2.grant(api));
+        expect(r2.errors).toBe(true);
+
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
+        await ignoreError(obj2.revoke(api));
+
         done();
     });
 

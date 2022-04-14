@@ -21,6 +21,7 @@ describe("mamori permission tests", () => {
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
         //create the user
+        await ignoreError(api.delete_user(grantee));
         let result = await api.create_user({
             username: grantee,
             password: granteepw,

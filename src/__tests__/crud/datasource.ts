@@ -24,6 +24,7 @@ if (dbPassword) {
             api = new MamoriService(host, INSECURE);
             await api.login(username, password);
 
+            await ignoreError(api.delete_user(grantee));
             await api.create_user({
                 username: grantee,
                 password: granteepw,

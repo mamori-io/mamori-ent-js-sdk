@@ -29,6 +29,7 @@ describe("key permission tests", () => {
             fail(handleAPIException(e));
         });
         //
+        await ignoreError(api.delete_user(grantee));
         await api.create_user({
             username: grantee,
             password: granteepw,
@@ -160,7 +161,7 @@ describe("key permission tests", () => {
         done();
     });
 
-    test.skip('grant 04 - mixed case', async done => {
+    test('grant 04 - mixed case', async done => {
         let name = "CAPS" + key;
         let objMixedCase = new KeyPermission()
             .key(name)

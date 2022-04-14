@@ -20,6 +20,7 @@ describe("rdp permission tests", () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
+        await ignoreError(api.delete_user(grantee));
         let result = await api.create_user({
             username: grantee,
             password: granteepw,
@@ -158,7 +159,7 @@ describe("rdp permission tests", () => {
 
     });
 
-    test.skip('grant 04 - mixed case', async done => {
+    test('grant 04 - mixed case', async done => {
         let name = "CAPS" + rdpLogin;
         let objMixedCase = new RemoteDesktopLoginPermission()
             .name(name)

@@ -25,6 +25,7 @@ describe("ip resource permission tests", () => {
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
         //create the user
+        await ignoreError(api.delete_user(grantee));
         let result = await api.create_user({
             username: grantee,
             password: granteepw,
@@ -103,7 +104,7 @@ describe("ip resource permission tests", () => {
 
     });
 
-    test.skip('grant 03 - mixed case', async done => {
+    test('grant 03 - mixed case', async done => {
         let name = "CAPS" + resource;
         let objMixedCase = new IPResourcePermission()
             .resource(name)
