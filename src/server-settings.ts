@@ -8,7 +8,7 @@
  */
 
 import { MamoriService } from './api';
-import { ISerializable } from "./i-serializable";
+
 
 
 export enum DEFAULT_AUTH_PROVIDERS {

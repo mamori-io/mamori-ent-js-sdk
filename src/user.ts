@@ -63,6 +63,26 @@ export class User implements ISerializable {
         return api.callAPI("GET", "/v1/roles?isdef=N&grantee=" + encodeURIComponent(name.toLowerCase()));
     }
 
+    public static clearMFARequests(api: MamoriService, username: string, peer_public_key?: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            let sql = "CALL CLEAR_AUTHENTICATION_REQUESTS(':USERNAME')".replace(":USERNAME", username);
+            api.simple_query(sql).then(() => {
+                if (peer_public_key) {
+                    return api.wireguard_disconnect_peer(peer_public_key).then(() => {
+                        resolve({ success: true, message: "User multi-factor cache and requests cleared." });
+                    });
+                } else {
+                    return api.wireguard_disconnect_user(username).then(() => {
+                        resolve({ success: true, message: "User multi-factor cache and requests cleared." });
+                    });
+                }
+            }).catch((error: any) => {
+                reject(error.message);
+            });
+        });
+    }
+
+
     /**
      * @param user fields as json
      * @returns 
@@ -161,5 +181,7 @@ export class User implements ISerializable {
             fullname: this.fullname,
         });
     }
+
+
 
 }
