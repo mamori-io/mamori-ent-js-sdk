@@ -16,7 +16,7 @@ describe("key permission tests", () => {
 
     let api: MamoriService;
     let key = "test_aes_key" + testbatch;
-    let grantee = "test_apiuser_permissions" + testbatch;
+    let grantee = "test_apiuser_permissions." + testbatch;
     let permType = "KEY USAGE";
     let granteepw = "J{J'vpKsnsNm3W6(6A,4_vdQ'}D"
 
@@ -199,7 +199,7 @@ describe("key permission tests", () => {
     });
 
     test('test 05 role grant', async done => {
-        let roleName = "test_permission_key_" + testbatch;
+        let roleName = "test_permission_key_." + testbatch;
         let role = new Role(roleName);
         await ignoreError(role.delete(api));
         let x = await noThrow(role.create(api));

@@ -13,7 +13,7 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("datasource permission tests", () => {
 
     let api: MamoriService;
-    let grantee = "test_apiuser_permission_ds" + testbatch;
+    let grantee = "test_apiuser_permission_.ds" + testbatch;
     let granteepw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D"
 
 
@@ -208,7 +208,7 @@ describe("datasource permission tests", () => {
     });
 
     test('test 05 role grant', async done => {
-        let roleName = "test_permission_ds_" + testbatch;
+        let roleName = "test_permission_ds_." + testbatch;
         let role = new Role(roleName);
         await ignoreError(role.delete(api));
         let x = await noThrow(role.create(api));

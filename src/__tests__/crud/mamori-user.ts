@@ -50,5 +50,31 @@ describe("mamori user tests", () => {
         done();
     });
 
+    //spaces, periods, dashes, and underscores
+    test('mamori user 02 - special characters', async done => {
+        let uname = grantee + ".-_TEST";
+        let k = new User(uname).withEmail(grantee + "@ace.com").withFullName("Test User");
+        await ignoreError(k.delete(api));
+        let res = await noThrow(k.create(api, granteepw));
+        expect(res.error).toBe(false);
+        let x = await noThrow(User.get(api, uname));
+        expect(x.username).toBe(uname);
+        //Test connection
+        let apiAsAPIUser: MamoriService = new MamoriService(host, INSECURE);
+        let x4 = await noThrow(apiAsAPIUser.login(uname, granteepw));
+        expect(x4.username).toBe(uname.toLowerCase());
+        ignoreError(apiAsAPIUser.logout());
+        //Update email
+        k.email = "testit@test.com";
+        let x2 = await noThrow(k.update(api));
+        expect(x2.error).toBe(false);
+        let x3 = await noThrow(User.get(api, uname));
+        expect(x3.email).toBe("testit@test.com");
+        let d = await noThrow(k.delete(api));
+        expect(res.error).toBe(false);
+        done();
+    });
+
+
 
 });

@@ -14,7 +14,7 @@ describe("ssh permission tests", () => {
 
     let api: MamoriService;
     let sshLogin = "test_fake_ssh_login" + testbatch;
-    let grantee = "test_apiuser_ssh" + testbatch;
+    let grantee = "test_apiuser_ssh." + testbatch;
     let granteepw = "J{J'vMy72BnpKsn\/a@C+W6(6A,4_vdQ'}D";
 
     beforeAll(async () => {
@@ -189,7 +189,7 @@ describe("ssh permission tests", () => {
     });
 
     test('test 05 role grant', async done => {
-        let roleName = "test_permission_ssh_" + testbatch;
+        let roleName = "test_permission_ssh_." + testbatch;
         let role = new Role(roleName);
         await ignoreError(role.delete(api));
         let x = await noThrow(role.create(api));

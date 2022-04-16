@@ -15,7 +15,7 @@ describe("role tests", () => {
 
     let api: MamoriService;
     let apiAsAPIUser: MamoriService;
-    let grantee = "test_roles_user" + testbatch;
+    let grantee = "test_roles_user." + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!98712_vdQ'}D"
 
     beforeAll(async () => {
