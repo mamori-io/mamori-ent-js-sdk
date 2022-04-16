@@ -2,6 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { RemoteDesktopLoginPermission, TIME_UNIT } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
+import { Role } from '../../role';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -181,11 +182,62 @@ describe("rdp permission tests", () => {
         //Revoke 1
         let r3 = await noThrow(objMixedCase.revoke(api));
         expect(r3.errors).toBe(false);
-        //revoke 2
-        let r4 = await noThrow(objLower.revoke(api));
-        expect(r4.errors).toBe(false);
+
+        let filter = [["permissiontype", "equals", "RDP"],
+        ["grantee", "equals", grantee]];
+        let r5 = await noThrow(new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter));
+        expect(r5.totalCount).toBe(0);
+
         //
         done();
     });
+
+    test('test 05 role grant', async done => {
+        let roleName = "test_permission_rd_" + testbatch;
+        let role = new Role(roleName);
+        await ignoreError(role.delete(api));
+        let x = await noThrow(role.create(api));
+        expect(x.error).toBe(false);
+        //
+        // GRANT
+        //
+        let obj = new RemoteDesktopLoginPermission()
+            .name(rdpLogin)
+            .grantee(roleName);
+
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
+
+        let filter = [["permissiontype", "equals", "RDP"],
+        ["grantee", "equals", roleName],
+        ["key_name", "equals", rdpLogin]];
+        let res = await new RemoteDesktopLoginPermission().grantee(roleName).list(api, filter);
+        expect(res.totalCount).toBe(0);
+
+        let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+
+        res = await new RemoteDesktopLoginPermission().grantee(roleName).list(api, filter);
+        expect(res.totalCount).toBe(1);
+
+        let resp2 = await ignoreError(obj.grant(api));
+        expect(resp2.errors).toBe(true);
+
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+
+        resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+
+        //Delete role
+        let d = await noThrow(role.delete(api));
+        expect(d.error).toBe(false);
+
+        done();
+    });
+
 
 });

@@ -2,6 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { MamoriPermission, MAMORI_PERMISSION, TIME_UNIT } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
+import { Role } from '../../role';
 
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -148,6 +149,54 @@ describe("mamori permission tests", () => {
         expect(resp.errors).toBe(false);
         done();
 
+    });
+
+    test('test 05 role grant', async done => {
+        let roleName = "test_permission_mamori_" + testbatch;
+        let role = new Role(roleName);
+        await ignoreError(role.delete(api));
+        let x = await noThrow(role.create(api));
+        expect(x.error).toBe(false);
+        //
+        // GRANT
+        //
+        let obj = new MamoriPermission()
+            .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
+            .grantee(roleName);
+
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
+
+        let filter = [["permissiontype", "equals", MAMORI_PERMISSION.VIEW_ALL_USER_LOGS],
+        ["grantee", "equals", roleName]];
+        let res = await new MamoriPermission().grantee(roleName).list(api, filter);
+        expect(res.totalCount).toBe(0);
+
+        let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+
+        res = await new MamoriPermission().grantee(roleName).list(api, filter);
+        expect(res.totalCount).toBe(1);
+
+        let resp2 = await ignoreError(obj.grant(api));
+        expect(resp2.errors).toBe(true);
+
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+
+        resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+
+
+
+        //Delete role
+        let d = await noThrow(role.delete(api));
+        expect(d.error).toBe(false);
+
+        done();
     });
 
 });

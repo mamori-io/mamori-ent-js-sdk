@@ -2,6 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { DatasourcePermission, DB_PERMISSION, RolePermission, TIME_UNIT } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
+import { Role } from '../../role';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -14,6 +15,7 @@ describe("datasource permission tests", () => {
     let api: MamoriService;
     let grantee = "test_apiuser_permission_ds" + testbatch;
     let granteepw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D"
+
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
@@ -201,6 +203,50 @@ describe("datasource permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
         await ignoreError(obj2.revoke(api));
+
+        done();
+    });
+
+    test('test 05 role grant', async done => {
+        let roleName = "test_permission_ds_" + testbatch;
+        let role = new Role(roleName);
+        await ignoreError(role.delete(api));
+        let x = await noThrow(role.create(api));
+        expect(x.error).toBe(false);
+        //
+        let obj = new DatasourcePermission()
+            .on("*", "*", "*", "*")
+            .permission(DB_PERMISSION.SELECT)
+            .grantee(role.roleid);
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
+        //
+        let filter = [["permissiontype", "equals", "SELECT"],
+        ["grantee", "equals", role.roleid]];
+        let res = await new DatasourcePermission().grantee(role.roleid).list(api, filter);
+        //Check permission no there
+        expect(res.totalCount).toBe(0);
+        //Grant
+        let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+        //Test Grant
+        let res2 = await new DatasourcePermission().grantee(role.roleid).list(api, filter);
+        expect(res2.totalCount).toBe(1);
+        //Ensure re-grant fails
+        let resp2 = await ignoreError(obj.grant(api));
+        expect(resp2.errors).toBe(true);
+        //Revoke
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+        //Test re-grant
+        resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+        //Revoke
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+        //Delete role
+        let d = await noThrow(role.delete(api));
+        expect(d.error).toBe(false);
 
         done();
     });

@@ -2,6 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { IPResourcePermission, TIME_UNIT } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
+import { Role } from '../../role';
 
 
 
@@ -126,10 +127,63 @@ describe("ip resource permission tests", () => {
         //Revoke 1
         let r3 = await noThrow(objMixedCase.revoke(api));
         expect(r3.errors).toBe(false);
+        let filter = [["permissiontype", "equals", permType],
+        ["grantee", "equals", grantee]];
+        let r5 = await noThrow(new IPResourcePermission().grantee(grantee).list(api, filter));
+        expect(r5.totalCount).toBe(0);
         //revoke 2
-        let r4 = await noThrow(objLower.revoke(api));
-        expect(r4.errors).toBe(false);
+        //let r4 = await noThrow(objLower.revoke(api));
+        //console.log(r4);
+        //expect(r4.errors).toBe(false);
         //
+        done();
+    });
+
+    test('test 05 role grant', async done => {
+        let roleName = "test_permission_ip_" + testbatch;
+        let role = new Role(roleName);
+        await ignoreError(role.delete(api));
+        let x = await noThrow(role.create(api));
+        expect(x.error).toBe(false);
+
+        //
+        // GRANT
+        //
+        let obj = new IPResourcePermission()
+            .resource(resource)
+            .grantee(roleName);
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
+        //check list
+        let filter = [["permissiontype", "equals", permType],
+        ["grantee", "equals", roleName]];
+        let res = await new IPResourcePermission().grantee(roleName).list(api, filter);
+        expect(res.totalCount).toBe(0);
+        //grant
+        let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+        //check list
+        res = await new IPResourcePermission().grantee(roleName).list(api, filter);
+        expect(res.totalCount).toBe(1);
+        //try re-grant
+        let resp2 = await ignoreError(obj.grant(api));
+        expect(resp2.errors).toBe(true);
+        //revoke
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+        //
+        resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+
+
+
+        //Delete role
+        let d = await noThrow(role.delete(api));
+        expect(d.error).toBe(false);
+
         done();
     });
 
