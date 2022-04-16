@@ -73,6 +73,42 @@ describe("datasource permission tests", () => {
         done();
     });
 
+    test('grant 01.01 Schema level', async done => {
+        let obj = new DatasourcePermission()
+            .on("*", "*", "*", "")
+            .permission(DB_PERMISSION.CREATE_TABLE)
+            .grantee(grantee);
+
+        //make sure no exist
+        await ignoreError(obj.revoke(api));
+
+        let filter = [["permissiontype", "equals", DB_PERMISSION.CREATE_TABLE],
+        ["grantee", "equals", grantee]];
+        let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(0);
+
+        let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+
+        res = await new DatasourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(1);
+
+        let resp2 = await ignoreError(obj.grant(api));
+        expect(resp2.errors).toBe(true);
+
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+
+        resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+
+        done();
+    });
+
+
 
 
     test('grant 02', async done => {
@@ -250,5 +286,7 @@ describe("datasource permission tests", () => {
 
         done();
     });
+
+
 
 });
