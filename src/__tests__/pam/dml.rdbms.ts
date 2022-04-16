@@ -70,29 +70,4 @@ describe("rdbms dml tests", () => {
         done();
     });
 
-    test.skip('masking sqlserver CH1711', async done => {
-        let apiUser: MamoriService = new MamoriService(host, INSECURE);
-        try {
-            await apiUser.login(user.username, granteepw);
-            //SET PASSTHROUGH for session
-            let x = await noThrow(ServerSession.setPassthrough(apiUser, "ss2014"));
-            expect(x.errors).toBe(false);
-            //ISSUE ORACLE QUERY AND CONFIRM DATA IS MASKED
-            let x1 = await noThrow(apiUser.simple_query("select top 5 * from dev.customer_pii"));
-            expect(x1.length).toBeGreaterThan(0);
-            expect(x1[0].first_name).toContain("XXXX");
-            //GRANT TO USER
-            let permission = new MamoriPermission().permission(MAMORI_PERMISSION.ALL_PRIVILEGES).grantee(user.username);
-            let x2 = await noThrow(permission.grant(api));
-            let x3 = await apiUser.simple_query("select top 5 * from dev.customer_pii");
-            expect(x3.length).toBeGreaterThan(0);
-            expect(x3[0].first_name).toContain("XXXX");
-            let x4 = await noThrow(permission.revoke(api));
-            expect(x4.errors).toBe(false);
-        } finally {
-            await apiUser.logout();
-        }
-        done();
-    });
-
 });
