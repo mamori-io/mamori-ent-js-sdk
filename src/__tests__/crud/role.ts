@@ -46,7 +46,9 @@ describe("role tests", () => {
     });
 
     test('role 01', async done => {
-        let k = new Role("test_automated_role");
+
+        let name = "test_automated_role" + testbatch;
+        let k = new Role(name);
 
         await ignoreError(k.delete(api));
         let res = await noThrow(k.create(api));
