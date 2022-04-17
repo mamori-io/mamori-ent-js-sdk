@@ -17,8 +17,7 @@ describe("masking policy tests", () => {
     let api: MamoriService;
 
     let user: User;
-    let policy = "test_fake_policy" + testbatch;
-    let grantee = "test_apiuser_policy" + testbatch;
+    let grantee = "test_apiuser_masking-policy" + testbatch;
     let granteepw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D"
 
     beforeAll(async () => {
