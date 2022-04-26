@@ -114,14 +114,20 @@ describe("mamori permission tests", () => {
         done();
     });
 
-    test.skip('grant 03', async done => {
+    test('grant 03', async done => {
 
-        let fromDT = "2022-01-01 00:00";
-        let toDT = "2023-01-01 00:00"
+        let dt = new Date();
+        let year = dt.getFullYear();
+        let month = (dt.getMonth() + 1).toString().padStart(2, '0');
+        let day = dt.getDate().toString().padStart(2, '0');
+        let today = year + "-" + month + "-" + day;
+        let fromD = today + " 00:00";
+        let toD = today + " 23:59:59";
+
         let obj = await new MamoriPermission()
             .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
             .grantee(grantee)
-            .withValidBetween(fromDT, toDT);
+            .withValidBetween(fromD, toD);
 
         await ignoreError(obj.revoke(api));
 
@@ -130,8 +136,8 @@ describe("mamori permission tests", () => {
 
         let filter = [["permissiontype", "equals", MAMORI_PERMISSION.VIEW_ALL_USER_LOGS],
         ["grantee", "equals", grantee],
-        ["valid_from", "=", fromDT],
-        ["valid_until", "=", toDT]
+        ["valid_from", "=", (new Date(fromD)).toISOString()],
+        ["valid_until", "=", (new Date(toD)).toISOString()]
         ];
         let res = await new MamoriPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(1);
@@ -141,6 +147,9 @@ describe("mamori permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
+
+        let res2 = await new MamoriPermission().grantee(grantee).list(api, filter);
+        expect(res2.totalCount).toBe(0);
 
         resp = await noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);

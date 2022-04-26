@@ -11,33 +11,36 @@ import { ISerializable } from "./i-serializable";
 import { prepareFilter } from './utils';
 
 
-/**
-  * A Mamori Directory User
-  */
-export class User implements ISerializable {
-
-    /**
-     * Searches remote logins
-     * NOTE: Non-admins will only be able to see their granted peers
-     * @param api 
-     * @param filter a filter in the format [["column1","=","value"],["column2","contains","value2"]]
-     * @returns users
-    */
-    public static list(api: MamoriService, from: number, to: number, filter?: any): Promise<any> {
-        let filters = prepareFilter(filter);
-        let payload = filter ? { skip: from, take: to, filter: filters } : { skip: from, take: to };
-        return api.users_search(payload);
+class UserBase implements ISerializable {
+    public constructor() {
     }
 
     /**
-     * @param api  A logged-in MamoriService instance
-     * @returns This User configuration
+      * Initialize the object from JSON.
+      * Call toJSON to see the expected record.
+      * @param record JSON record
+      * @returns
+      */
+    fromJSON(record: any) {
+        for (let prop in this) {
+            if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Serialize the object to JSON
+     * @param
+     * @returns JSON 
      */
-    public static get(api: MamoriService, username: string): Promise<User> {
-        return api.user(username).then(result => {
-            let u = new User(username).withEmail(result.email).withFullName(result.fullname);
-            return u;
-        });
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            res[prop] = this[prop];
+        }
+        return res;
     }
 
     /**
@@ -81,6 +84,39 @@ export class User implements ISerializable {
             });
         });
     }
+}
+
+
+/**
+  * A Mamori Directory User
+  */
+export class User extends UserBase {
+
+    /**
+     * Searches remote logins
+     * NOTE: Non-admins will only be able to see their granted peers
+     * @param api 
+     * @param filter a filter in the format [["column1","=","value"],["column2","contains","value2"]]
+     * @returns users
+    */
+    public static list(api: MamoriService, from: number, to: number, filter?: any): Promise<any> {
+        let filters = prepareFilter(filter);
+        let payload = filter ? { skip: from, take: to, filter: filters } : { skip: from, take: to };
+        return api.users_search(payload);
+    }
+
+    /**
+     * @param api  A logged-in MamoriService instance
+     * @returns This User configuration
+     */
+    public static get(api: MamoriService, username: string): Promise<User> {
+        return api.user(username).then(result => {
+            let u = new User(username).withEmail(result.email).withFullName(result.fullname);
+            return u;
+        });
+    }
+
+
 
 
     /**
@@ -99,6 +135,7 @@ export class User implements ISerializable {
      * @param roleid  Unique Role name
      */
     public constructor(name: string) {
+        super();
         this.username = name;
         this.email = "";
         this.fullname = "";
@@ -112,34 +149,6 @@ export class User implements ISerializable {
     public withFullName(fullname: string): User {
         this.fullname = fullname;
         return this;
-    }
-
-    /**
-        * Initialize the object from JSON.
-        * Call toJSON to see the expected record.
-        * @param record JSON record
-        * @returns
-        */
-    fromJSON(record: any) {
-        for (let prop in this) {
-            if (record.hasOwnProperty(prop)) {
-                this[prop] = record[prop];
-            }
-        }
-        return this;
-    }
-
-    /**
-     * Serialize the object to JSON
-     * @param
-     * @returns JSON 
-     */
-    toJSON(): any {
-        let res: any = {};
-        for (let prop in this) {
-            res[prop] = this[prop];
-        }
-        return res;
     }
 
 
@@ -182,6 +191,35 @@ export class User implements ISerializable {
         });
     }
 
+}
 
 
+
+/**
+  * A Mamori Directory User
+  */
+export class DirectoryUser extends UserBase {
+    /**
+     * @param user fields as json
+     * @returns 
+     */
+    public static build(user: any): User {
+        let result = new User(user.username);
+        return result;
+    }
+
+    username: string;
+    provider: string;
+    fullname: string;
+    email: string;
+    /**
+     * @param roleid  Unique Role name
+     */
+    public constructor(provider: string, name: string) {
+        super();
+        this.username = name;
+        this.provider = provider;
+        this.email = "";
+        this.fullname = "";
+    }
 }

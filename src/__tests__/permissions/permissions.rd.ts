@@ -124,12 +124,19 @@ describe("rdp permission tests", () => {
 
     });
 
-    test.skip('grant 03', async done => {
+    test('grant 03', async done => {
+        let dt = new Date();
+        let year = dt.getFullYear();
+        let month = (dt.getMonth() + 1).toString().padStart(2, '0');
+        let day = dt.getDate().toString().padStart(2, '0');
+        let today = year + "-" + month + "-" + day;
+        let fromD = today + " 00:00";
+        let toD = today + " 23:59:59";
 
         let obj = await new RemoteDesktopLoginPermission()
             .name(rdpLogin)
             .grantee(grantee)
-            .withValidBetween("2022-01-01 00:00", "2022-01-15 00:00");
+            .withValidBetween(fromD, toD);
 
         await ignoreError(obj.revoke(api));
 
@@ -139,8 +146,8 @@ describe("rdp permission tests", () => {
         let filter = [["permissiontype", "equals", "RDP"],
         ["grantee", "equals", grantee],
         ["key_name", "equals", rdpLogin],
-        ["valid_until", "=", '2022-01-14 13:00:00'],
-        ["valid_from", "=", '2021-12-31 13:00:00'],
+        ["valid_from", "=", (new Date(fromD)).toISOString()],
+        ["valid_until", "=", (new Date(toD)).toISOString()]
         ];
         let res = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(1);
@@ -150,6 +157,9 @@ describe("rdp permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
+
+        let res2 = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter);
+        expect(res2.totalCount).toBe(0);
 
         resp = await noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);

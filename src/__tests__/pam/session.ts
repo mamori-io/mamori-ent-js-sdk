@@ -46,8 +46,6 @@ describe("masking policy tests", () => {
             //SET PASSTHROUGH Should fail since user does not have DB creds for DB
             let x = await noThrow(ServerSession.setPassthrough(apiUser, "oracle193"));
             expect(x.errors).toBe(true);
-            let hasOldMessage = x.message.includes("does not have 'PROTECTED PASSTHROUGH'");
-            expect(hasOldMessage).toBe(false);
             //Grant roles with db permissions
             let p = await noThrow(new RolePermission().role("db_creds").grantee(grantee).grant(api));
             expect(p.errors).toBe(false);

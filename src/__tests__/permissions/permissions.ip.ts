@@ -105,7 +105,54 @@ describe("ip resource permission tests", () => {
 
     });
 
-    test('grant 03 - mixed case', async done => {
+    test('grant 03 - grant between', async done => {
+
+        let dt = new Date();
+        let year = dt.getFullYear();
+        let month = (dt.getMonth() + 1).toString().padStart(2, '0');
+        let day = dt.getDate().toString().padStart(2, '0');
+        let today = year + "-" + month + "-" + day;
+        let fromD = today + " 00:00";
+        let toD = today + " 23:59:59";
+
+        let obj = await new IPResourcePermission()
+            .resource(resource)
+            .grantee(grantee)
+            .withValidBetween(fromD, toD);
+
+        await ignoreError(obj.revoke(api));
+        let resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+
+        let filter = [["permissiontype", "equals", permType],
+        ["grantee", "equals", grantee],
+        ["key_name", "equals", resource],
+        ["valid_from", "=", (new Date(fromD)).toISOString()],
+        ["valid_until", "=", (new Date(toD)).toISOString()]
+        ];
+
+        let res = await new IPResourcePermission().grantee(grantee).list(api, filter);
+        expect(res.totalCount).toBe(1);
+
+        let resp2 = await ignoreError(obj.grant(api));
+        expect(resp2.errors).toBe(true);
+
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+
+        let res2 = await new IPResourcePermission().grantee(grantee).list(api, filter);
+        expect(res2.totalCount).toBe(0);
+
+        resp = await noThrow(obj.grant(api));
+        expect(resp.errors).toBe(false);
+
+        resp = await noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
+        done();
+
+    });
+
+    test('grant 04 - mixed case', async done => {
         let name = "CAPS" + resource;
         let objMixedCase = new IPResourcePermission()
             .resource(name)
