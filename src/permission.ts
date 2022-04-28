@@ -832,9 +832,9 @@ export class IPResourcePermission extends PermissionBase {
 export class MamoriPermission extends PermissionBase {
     private items?: MAMORI_PERMISSION[]
 
-    public constructor() {
+    public constructor(permissions?: MAMORI_PERMISSION[]) {
         super();
-        this.items = [];
+        this.items = permissions ? permissions : [];
     }
     /**
      * Initialize the object from JSON.

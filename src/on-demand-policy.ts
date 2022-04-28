@@ -16,7 +16,7 @@ export enum POLICY_TYPES {
 }
 
 
-class OnDemandPolicy implements ISerializable {
+export class OnDemandPolicy implements ISerializable {
 
 
     /**
@@ -49,7 +49,11 @@ class OnDemandPolicy implements ISerializable {
     fromJSON(record: any) {
         for (let prop in this) {
             if (record.hasOwnProperty(prop)) {
-                this[prop] = record[prop];
+                if (prop == 'parameters') {
+                    this[prop] = JSON.parse(record[prop]);
+                } else {
+                    this[prop] = record[prop];
+                }
             }
         }
         return this;
@@ -63,48 +67,107 @@ class OnDemandPolicy implements ISerializable {
     toJSON(): any {
         let res: any = {};
         for (let prop in this) {
-            res[prop] = this[prop];
+            if (prop == 'parameters') {
+                res[prop] = JSON.stringify(this[prop]);
+            } else {
+                res[prop] = this[prop];
+            }
         }
         return res;
     }
 
-    script: string;
+    sqlText: string;
     name: string;
-    description: string | null;
-    requires: string | null;
-    requiresList: string;
+    description: string;
+    requires: string;
     type: POLICY_TYPES;
     request_role: string;
     request_alert: string;
     request_default_message: string;
     endorse_alert: string;
-    endorse_alertList: string[];
     endorse_default_message: string;
     endorse_agent_count: string;
     execute_on_endorse: boolean;
     execute_alert: string;
     deny_alert: string;
     parameters: any[];
+    approval_expiry: string;
+
     public constructor(name: string) {
 
         this.name = name;
-        this.description = null;
-        this.script = "";
-        this.requires = null;
-        this.requiresList = [];
-
-        type: POLICY_TYPES[0],
-            request_role: null,
-                request_alert: null,
-                    request_default_message: null,
-                        endorse_alert: null,
-                            endorse_alertList: [],
-                                endorse_default_message: null,
-                                    endorse_agent_count: "1",
-                                        execute_on_endorse: false,
-                                            execute_alert: null,
-                                                deny_alert: null,
+        this.description = "";
+        this.sqlText = "";
+        this.requires = "";
+        this.type = POLICY_TYPES.POLICY;
+        this.request_role = "";
+        this.request_alert = "";
+        this.request_default_message = "";
+        this.endorse_alert = "";
+        this.endorse_default_message = "";
+        this.endorse_agent_count = "1";
+        this.execute_on_endorse = false;
+        this.execute_alert = "";
+        this.deny_alert = "";
+        this.parameters = [];
+        this.approval_expiry = "24";
     }
 
+    public clearParameters() {
+        this.parameters = [];
+    }
+
+    public addParameter(name: string, description: string, defaultValue: any): any[] {
+        this.parameters.push({ name: name, description: description, default_value: defaultValue });
+        return this.parameters;
+    }
+
+    public deleteParameter(name: string): any[] {
+        let index = -1;
+        for (let i = 0; this.parameters.length - 1 >= i; i++) {
+            if (this.parameters[i].name === name) {
+                index = i;
+                break;
+            }
+        }
+        if (index > -1) {
+            this.parameters.splice(index, 1);
+        }
+        return this.parameters;
+    }
+
+    public create(api: MamoriService): Promise<any> {
+        return api.policies_create_procedure(
+            this.name,
+            this.parameters.length > 0 ? this.parameters : null,
+            this.requires,
+            this.type,
+            this.description,
+            this.request_role,
+            this.request_alert,
+            this.request_default_message,
+            this.endorse_alert,
+            this.endorse_default_message,
+            this.endorse_agent_count,
+            this.deny_alert,
+            this.execute_on_endorse ? "true" : "false",
+            this.execute_alert,
+            this.approval_expiry,
+            this.sqlText);
+    }
+
+    public delete(api: MamoriService) {
+        return api.policies_drop_procedure(this.name);
+    }
+
+    public update(api: MamoriService) {
+        return this.delete(api).then(r => {
+            return this.create(api);
+        });
+    }
+
+    public withScript(lines: string[]) {
+        this.sqlText = "BEGIN; " + lines.join(";") + " END"
+    }
 
 }
