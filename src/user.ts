@@ -116,9 +116,6 @@ export class User extends UserBase {
         });
     }
 
-
-
-
     /**
      * @param user fields as json
      * @returns 
@@ -178,9 +175,8 @@ export class User extends UserBase {
         return api.delete_user(this.username);
     }
 
-
     /**
-     * Update this Role with the current properties.
+     * Update this user with the current properties.
      * @param api  A logged-in MamoriService instance
      * @returns 
      */
@@ -221,5 +217,23 @@ export class DirectoryUser extends UserBase {
         this.provider = provider;
         this.email = "";
         this.fullname = "";
+    }
+
+    /**
+     * Delete.
+     * @param api  A logged-in MamoriService instance
+     * @returns 
+     */
+    public create(api: MamoriService): Promise<any> {
+        return api.callAPI("POST", "/v1/directory_users", { provider: this.provider, username: this.username });
+    }
+
+    /**
+     * Delete.
+     * @param api  A logged-in MamoriService instance
+     * @returns 
+     */
+    public delete(api: MamoriService): Promise<any> {
+        return api.delete_external_user(this.username);
     }
 }
