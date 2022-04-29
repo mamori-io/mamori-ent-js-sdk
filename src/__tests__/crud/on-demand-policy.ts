@@ -109,7 +109,7 @@ describe("on-demand policy crud tests", () => {
         expect(x.error).toBe(false);
 
         let x3 = await noThrow(OnDemandPolicy.get(api, name));
-        console.log(x3);
+        expect(x3.name).toBeDefined();
 
         let x2 = await noThrow(k.delete(api));
         expect(x2.error).toBe(false);

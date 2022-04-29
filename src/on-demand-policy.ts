@@ -179,7 +179,6 @@ export class OnDemandPolicy implements ISerializable {
         for (let i = 0; params.length > i; i++) {
             res[i.toString()] = params[i];
         }
-        console.log(res);
         return res;
     }
 
