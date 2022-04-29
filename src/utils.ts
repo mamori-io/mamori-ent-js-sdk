@@ -27,6 +27,20 @@ export function hex2a(hex: any) {
     return str;
 }
 
+export function base64_encode(v: any): any {
+    if (v) {
+        return Buffer.from(v, 'binary').toString('base64');
+    }
+    return v;
+}
+
+export function base64_decode(v: any): any {
+    if (v) {
+        return Buffer.from(v, 'base64').toString();
+    }
+    return v;
+}
+
 export function sqlEscape(s: string): string {
     return s.replace(/'/g, "''");
 }

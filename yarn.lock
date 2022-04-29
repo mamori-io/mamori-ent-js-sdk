@@ -3074,6 +3074,10 @@ set-value@^2.0.0, set-value@^2.0.1:
     is-plain-object "^2.0.3"
     split-string "^3.0.1"
 
+"sexp@github:dparnell/sexp":
+  version "0.1.5"
+  resolved "https://codeload.github.com/dparnell/sexp/tar.gz/52e32d2c5652287dee5311f9ce77b28cb4b9cc37"
+
 shebang-command@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/shebang-command/-/shebang-command-1.2.0.tgz#44aac65b695b03398968c39f363fee5deafdf1ea"
