@@ -36,8 +36,46 @@ export class OnDemandPolicy implements ISerializable {
      * @param api  A logged-in MamoriService instance
      * @returns This User configuration
      */
-    public static get(api: MamoriService, name: string): Promise<OnDemandPolicy> {
-        return this.list(api, 0, 10, [["procedure_name", "=", name]]);
+    public static get(api: MamoriService, name: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+
+            this.list(api, 0, 1, [["name", "=", name]]).then(result => {
+                if (result.data.length > 0) {
+                    let o = result.data[0];
+                    let p = new OnDemandPolicy(o.name).fromJSON(o);
+                    p.loadDetails(api).then(r => {
+                        resolve(r);
+                    }).catch(e => {
+                        reject(e);
+                    });
+                } else {
+                    resolve(null);
+                }
+            });
+
+        });
+
+    }
+
+    public loadDetails(api: MamoriService): Promise<any> {
+        return new Promise((resolve, reject) => {
+            api.policies_get_procedure_sql(this.name)
+                .then((sqlText) => {
+                    this.sqlText = sqlText
+                        .trim()
+                        .replace(/\s+{\s/g, "\n  {{ ")
+                        .replace(/\s}\s/g, " }} ");
+                    api.policies_get_procedure_parameters(this.name)
+                        .then((parameters) => {
+                            this.parameters = parameters;
+                            resolve(this);
+                        }).catch(e => {
+                            reject(e);
+                        });
+                }).catch(e => {
+                    reject(e);
+                });
+        });
     }
 
     /**
@@ -117,7 +155,7 @@ export class OnDemandPolicy implements ISerializable {
         this.parameters = [];
     }
 
-    public addParameter(name: string, description: string, defaultValue: any): any[] {
+    public addParameter(name: string, description: string, defaultValue: string): any[] {
         this.parameters.push({ name: name, description: description, default_value: defaultValue });
         return this.parameters;
     }
@@ -136,10 +174,19 @@ export class OnDemandPolicy implements ISerializable {
         return this.parameters;
     }
 
+    private prepareParameters(params: any[]): any {
+        let res: any = {};
+        for (let i = 0; params.length > i; i++) {
+            res[i.toString()] = params[i];
+        }
+        console.log(res);
+        return res;
+    }
+
     public create(api: MamoriService): Promise<any> {
         return api.policies_create_procedure(
             this.name,
-            this.parameters.length > 0 ? this.parameters : null,
+            this.parameters.length > 0 ? this.prepareParameters(this.parameters) : null,
             this.requires,
             this.type,
             this.description,

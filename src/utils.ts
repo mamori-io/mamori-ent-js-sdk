@@ -10,7 +10,7 @@
 
 export function prepareFilter(filter: any): any {
     let filters = filter;
-    if (filter && filter.length > 1) {
+    if (filter && filter.length > 0) {
         let ndx = 0;
         filters = {};
         filter.forEach((element: any) => {
