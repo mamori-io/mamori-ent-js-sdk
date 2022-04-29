@@ -1713,6 +1713,7 @@ export class MamoriService {
         deny_alert: string,
         execute_on_endorse: string,
         execute_alert: string,
+        approval_expiry: string,
         sql: string) {
         return this.callAPI("POST", "/v1/policies/create_procedure", {
             procedure_name: procedure_name,
@@ -1729,6 +1730,7 @@ export class MamoriService {
             deny_alert: deny_alert ? deny_alert : "",
             execute_on_endorse: execute_on_endorse ? execute_on_endorse : "false",
             execute_alert: execute_alert ? execute_alert : "",
+            approval_expiry: approval_expiry,
             sql: sql,
         });
     }

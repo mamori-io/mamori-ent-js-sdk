@@ -10,7 +10,7 @@
 
 export function prepareFilter(filter: any): any {
     let filters = filter;
-    if (filter && filter.length > 1) {
+    if (filter && filter.length > 0) {
         let ndx = 0;
         filters = {};
         filter.forEach((element: any) => {
@@ -25,6 +25,20 @@ export function hex2a(hex: any) {
     var str = '';
     for (var i = 0; i < hex.length; i += 2) str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
     return str;
+}
+
+export function base64_encode(v: any): any {
+    if (v) {
+        return Buffer.from(v, 'binary').toString('base64');
+    }
+    return v;
+}
+
+export function base64_decode(v: any): any {
+    if (v) {
+        return Buffer.from(v, 'base64').toString();
+    }
+    return v;
 }
 
 export function sqlEscape(s: string): string {
