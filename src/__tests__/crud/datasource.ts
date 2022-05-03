@@ -16,7 +16,7 @@ if (dbPassword) {
     describe("datasource tests", () => {
 
         let api: MamoriService;
-        let grantee = "test_apiuser_datasource" + testbatch;
+        let grantee = "test_apiuser._datasource" + testbatch;
         let granteepw = "J{J'vpKs!$n3213W6(6A,4_vdQ'}D"
 
         beforeAll(async () => {
