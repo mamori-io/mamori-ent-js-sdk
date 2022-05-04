@@ -44,7 +44,7 @@ describe("rdbms dml tests", () => {
         await api.logout();
     });
 
-    test.skip('masking oracle CH1711', async done => {
+    test('masking oracle CH1711', async done => {
         let apiUser: MamoriService = new MamoriService(host, INSECURE);
         try {
             await apiUser.login(user.username, granteepw);
