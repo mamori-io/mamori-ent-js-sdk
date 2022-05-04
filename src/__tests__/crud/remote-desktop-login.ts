@@ -1,6 +1,6 @@
 import { MamoriService } from '../../api';
 import * as https from 'https';
-import { RemoteDesktopLogin, REMOTE_DESKTOP_PROTOCOL } from '../../remote-desktop-login';
+import { LOGIN_PROMPT_MODE, RemoteDesktopLogin, REMOTE_DESKTOP_PROTOCOL } from '../../remote-desktop-login';
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -46,7 +46,7 @@ describe("remote desktop login tests", () => {
     test('rmd-rdp login 01', async done => {
         let o = new RemoteDesktopLogin("test_rdp_login" + testbatch, REMOTE_DESKTOP_PROTOCOL.RDP);
         await ignoreError(o.delete(api));
-        o.at("host", "port").withCredentialsRequired(true);
+        o.at("host", "port").withLoginMode(LOGIN_PROMPT_MODE.MAMORI_PROMPT);
         //verify to and from json
         let k = o.fromJSON(o.toJSON());
         let res = await noThrow(k.create(api));

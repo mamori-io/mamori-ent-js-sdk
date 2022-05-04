@@ -16,6 +16,12 @@ export enum REMOTE_DESKTOP_PROTOCOL {
     VNC = "vnc"
 }
 
+export enum LOGIN_PROMPT_MODE {
+    MANUAL = "manual",
+    OS_PROMPT = "os",
+    MAMORI_PROMPT = "mamori"
+}
+
 export enum KEYBOARD_LAYOUTS {
     UNSPECIFIED = "",
     BRAZILIAN_PORTUGUESE = "pt-br-qwerty",
@@ -213,6 +219,31 @@ export class RemoteDesktopLogin implements ISerializable {
         this._record_session = true;
     }
 
+    set loginMode(mode: LOGIN_PROMPT_MODE) {
+        let rec = this.rdp ? this.rdp! : this.vnc!;
+        if (mode == LOGIN_PROMPT_MODE.MANUAL) {
+            rec._credentials_required = true;
+            rec.username = "";
+            rec.password = "";
+        } else if (mode == LOGIN_PROMPT_MODE.OS_PROMPT) {
+            rec._credentials_required = false;
+            rec.username = "";
+            rec.password = "";
+        } else if (mode == LOGIN_PROMPT_MODE.MAMORI_PROMPT) {
+            rec._credentials_required = true;
+            rec.username = "";
+            rec.password = "";
+        }
+    }
+
+    get loginMode(): LOGIN_PROMPT_MODE {
+        let rec = this.rdp ? this.rdp! : this.vnc!;
+        if (rec._credentials_required) {
+            return (rec.username != "") ? LOGIN_PROMPT_MODE.MANUAL : LOGIN_PROMPT_MODE.MAMORI_PROMPT;
+        }
+        return LOGIN_PROMPT_MODE.OS_PROMPT;
+    }
+
     set id(value: number) {
         this._id = value;
     }
@@ -345,6 +376,19 @@ export class RemoteDesktopLogin implements ISerializable {
     }
 
     /**
+     * Update an existing rd with the current properties.
+     * id must be set
+     * @param api  A logged-in MamoriService instance
+     * @returns 
+     */
+    public update(api: MamoriService): Promise<any> {
+        let payload = objectClone({}, this.rdp);
+        payload._protocol = this._protocol;
+        payload._record_session = this._record_session;
+        return api.update_remote_desktop(this.id, this.name, payload);
+    }
+
+    /**
      * Delete this SshLogin.
      * @param api  A logged-in MamoriService instance
      * @returns 
@@ -378,6 +422,11 @@ export class RemoteDesktopLogin implements ISerializable {
         return this;
     }
 
+    public withLoginMode(mode: LOGIN_PROMPT_MODE): RemoteDesktopLogin {
+        this.loginMode = mode;
+        return this;
+    }
+
     /**
      * Set the creadentials to use when connecting to the target resource
      * @param user        Required user name
@@ -393,20 +442,6 @@ export class RemoteDesktopLogin implements ISerializable {
         } else {
             this.rdp!.username = user;
             this.rdp!.password = password;
-        }
-        return this;
-    }
-
-    /**
-   * Set to true if you want the user to enter their credentials
-   * @param value        True/False
-   * @returns 
-   */
-    public withCredentialsRequired(value: boolean): RemoteDesktopLogin {
-        if (this._protocol == REMOTE_DESKTOP_PROTOCOL.RDP) {
-            this.rdp!._credentials_required = value;
-        } else {
-            this.vnc!._credentials_required = value;
         }
         return this;
     }

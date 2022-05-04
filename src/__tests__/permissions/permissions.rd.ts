@@ -3,6 +3,8 @@ import * as https from 'https';
 import { RemoteDesktopLoginPermission, TIME_UNIT } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
+import { LOGIN_PROMPT_MODE, RemoteDesktopLogin, REMOTE_DESKTOP_PROTOCOL } from '../../remote-desktop-login';
+import { Console } from 'console';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -246,6 +248,56 @@ describe("rdp permission tests", () => {
         let d = await noThrow(role.delete(api));
         expect(d.error).toBe(false);
 
+        done();
+    });
+
+    test('grant 06 - rename with grants', async done => {
+        let name = rdpLogin;
+        let name2 = rdpLogin + " EdiTed";
+        //Clear prior RD
+        await ignoreError(new RemoteDesktopLogin(name, REMOTE_DESKTOP_PROTOCOL.RDP).delete(api));
+        await ignoreError(new RemoteDesktopLogin(name2, REMOTE_DESKTOP_PROTOCOL.RDP).delete(api));
+        //Check for prior grants
+        let filter1 = [["permissiontype", "equals", "RDP"],
+        ["grantee", "equals", grantee], ["key_name", "equals", name]];
+        let filter2 = [["permissiontype", "equals", "RDP"],
+        ["grantee", "equals", grantee], ["key_name", "equals", name2]];
+
+
+        //Create RD 1
+        let rd = new RemoteDesktopLogin(name, REMOTE_DESKTOP_PROTOCOL.RDP)
+            .at("somehost", 3389)
+            .withLoginMode(LOGIN_PROMPT_MODE.MAMORI_PROMPT);
+        let x1 = await noThrow(rd.create(api));
+        expect(x1.error).toBe(false);
+        let res = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter1);
+        expect(res.totalCount).toBe(0);
+        //GRANT RD
+        await rd.grantTo(api, grantee);
+        let res2 = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter1);
+        expect(res2.totalCount).toBe(1);
+
+        //RENAME RD
+        let x = await noThrow(RemoteDesktopLogin.getByName(api, name));
+        expect(x.id).toBeDefined();
+        x.name = name2;
+        let x4 = await noThrow(x.update(api));
+        expect(x4.error).toBe(false);
+        //Check RD
+        let res3a = await noThrow(RemoteDesktopLogin.list(api, 0, 100, [["name", "equals", name2]]));
+        expect(res3a.totalCount).toBe("1");
+        //Check Grant
+        let res3 = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter1);
+        expect(res3.totalCount).toBe(0);
+        let res4 = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter2);
+        expect(res4.totalCount).toBe(1);
+
+        await ignoreError(new RemoteDesktopLogin(name, REMOTE_DESKTOP_PROTOCOL.RDP).delete(api));
+        await ignoreError(new RemoteDesktopLogin(name2, REMOTE_DESKTOP_PROTOCOL.RDP).delete(api));
+
+        let res5 = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter2);
+        expect(res5.totalCount).toBe(0);
+        //
         done();
     });
 
