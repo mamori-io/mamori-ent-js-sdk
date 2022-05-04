@@ -41,7 +41,7 @@
         "websocket": "^1.0.34"
     },
     "jest": {
-        "testTimeout": 15000,
+        "testTimeout": 25000,
         "testEnvironment": "node",
         "transform": {
             ".(ts|tsx)": "ts-jest"
