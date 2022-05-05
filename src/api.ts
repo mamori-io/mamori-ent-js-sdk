@@ -600,12 +600,30 @@ export class MamoriService {
         });
     }
 
-    public select(sql: string, search_query?: string): Promise<QueryResponse> {
+    public select(sql: string, search_query?: any): Promise<QueryResponse> {
         return this.callAPI("POST", "/v1/query", {
             sql: sql,
             search_query: search_query,
         });
     }
+
+    public create_db_policy(name: string, priority: any, description: string): Promise<any> {
+        let options = { name: name, priority: priority, description: description };
+        return this.callAPI("POST", "/v1/policies/dbpolicy", options);
+    }
+
+    public read_db_policy(name: string): Promise<any> {
+        return this.callAPI("GET", "/v1/policies/dbpolicy/" + name);
+    }
+
+    public delete_db_policy(name: string): Promise<any> {
+        return this.callAPI("DELETE", "/v1/policies/dbpolicy/" + name);
+    }
+
+    public update_db_policy(id: any, rec: any): Promise<any> {
+        return this.callAPI("PUT", "/v1/policies/dbpolicy/" + id, rec);
+    }
+
 
     // public get_smtp_cfg() {
     //     return this.callAPI("GET", "/v1/smtp");

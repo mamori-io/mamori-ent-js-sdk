@@ -2,7 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { KeyPermission, TIME_UNIT } from '../../permission';
 import { Key, KEY_TYPE } from '../../key';
-import { handleAPIException, ignoreError, noThrow } from '../../utils';
+import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
 
 
@@ -56,9 +56,9 @@ describe("key permission tests", () => {
             .revoke(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", key]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, key]];
         let res = await new KeyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
         done();
@@ -74,9 +74,9 @@ describe("key permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", key]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, key]];
         let res = await new KeyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
@@ -110,9 +110,9 @@ describe("key permission tests", () => {
             .grant(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", key],
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, key],
         ["time_left", ">", 3500]
         ];
         let res = await new KeyPermission().grantee(grantee).list(api, filter);
@@ -147,11 +147,12 @@ describe("key permission tests", () => {
         let resp = await noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", key],
-        ["valid_from", "=", (new Date(fromD)).toISOString()],
-        ["valid_until", "=", (new Date(toD)).toISOString()]
+
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, key],
+        ["valid_from", FILTER_OPERATION.EQUALS, (new Date(fromD)).toISOString()],
+        ["valid_until", FILTER_OPERATION.EQUALS, (new Date(toD)).toISOString()]
         ];
         let res = await new KeyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(1);
@@ -201,8 +202,8 @@ describe("key permission tests", () => {
         let r3 = await noThrow(objMixedCase.revoke(api));
         expect(r3.errors).toBe(false);
         //
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", grantee]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let r5 = await noThrow(new KeyPermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
         //
@@ -224,9 +225,9 @@ describe("key permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", roleName],
-        ["key_name", "equals", key]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, roleName],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, key]];
         let res = await new KeyPermission().grantee(roleName).list(api, filter);
         expect(res.totalCount).toBe(0);
 

@@ -2,7 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { Role } from '../../role';
 import { DatasourcePermission, DB_PERMISSION, TIME_UNIT } from '../../permission';
-import { handleAPIException, noThrow, ignoreError } from '../../utils';
+import { handleAPIException, noThrow, ignoreError, FILTER_OPERATION } from '../../utils';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -99,7 +99,7 @@ describe("role tests", () => {
         let resp = await noThrow(grant.grant(api));
         expect(resp.errors).toBe(false);
         //CONFIRM ROLE HAS THE PERMISSION
-        let filter0 = [["permissiontype", "equals", DB_PERMISSION.PASSTHROUGH]];
+        let filter0 = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, DB_PERMISSION.PASSTHROUGH]];
         let r0 = await grant.list(api, filter0);
         expect(r0.totalCount).toBe(1);
         //CONFIRM ADMIN DOES NOT HAVE THE PERMISSIONS

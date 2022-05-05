@@ -1,7 +1,7 @@
 import { MamoriService } from '../../api';
 import * as https from 'https';
 import { PolicyPermission, TIME_UNIT } from '../../permission';
-import { handleAPIException, ignoreError, noThrow } from '../../utils';
+import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
 
 
@@ -48,9 +48,9 @@ describe("policy permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", "POLICY"],
-        ["grantee", "equals", grantee],
-        ["policy", "equals", policy]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "POLICY"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["policy", FILTER_OPERATION.EQUALS_STRING, policy]];
         let res = await new PolicyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
@@ -85,9 +85,9 @@ describe("policy permission tests", () => {
             .grant(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", "POLICY"],
-        ["grantee", "equals", grantee],
-        ["policy", "equals", policy],
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "POLICY"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["policy", FILTER_OPERATION.EQUALS_STRING, policy],
         ["time_left", ">", 3500]
         ];
         let res = await new PolicyPermission().grantee(grantee).list(api, filter);
@@ -123,9 +123,9 @@ describe("policy permission tests", () => {
         let resp = await noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", "POLICY"],
-        ["grantee", "equals", grantee],
-        ["policy", "equals", policy],
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "POLICY"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["policy", FILTER_OPERATION.EQUALS_STRING, policy],
         ["valid_from", "=", (new Date(fromD)).toISOString()],
         ["valid_until", "=", (new Date(toD)).toISOString()]
         ];
@@ -173,8 +173,8 @@ describe("policy permission tests", () => {
         let r3 = await noThrow(objMixedCase.revoke(api));
         expect(r3.errors).toBe(false);
         //
-        let filter = [["permissiontype", "equals", "POLICY"],
-        ["grantee", "equals", grantee]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "POLICY"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let r5 = await noThrow(new PolicyPermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
         //
@@ -197,9 +197,9 @@ describe("policy permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", "POLICY"],
-        ["grantee", "equals", roleName],
-        ["policy", "equals", policy]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "POLICY"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, roleName],
+        ["policy", FILTER_OPERATION.EQUALS_STRING, policy]];
         let res = await new PolicyPermission().grantee(roleName).list(api, filter);
         expect(res.totalCount).toBe(0);
 

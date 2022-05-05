@@ -1,7 +1,7 @@
 import { MamoriService } from '../../api';
 import * as https from 'https';
 import { RemoteDesktopLoginPermission, TIME_UNIT } from '../../permission';
-import { handleAPIException, ignoreError, noThrow } from '../../utils';
+import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
 import { LOGIN_PROMPT_MODE, RemoteDesktopLogin, REMOTE_DESKTOP_PROTOCOL } from '../../remote-desktop-login';
 import { Console } from 'console';
@@ -49,9 +49,9 @@ describe("rdp permission tests", () => {
             .revoke(api);
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", "RDP"],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", rdpLogin]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "RDP"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, rdpLogin]];
         let res = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
         done();
@@ -67,9 +67,9 @@ describe("rdp permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", "RDP"],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", rdpLogin]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "RDP"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, rdpLogin]];
         let res = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
@@ -108,9 +108,9 @@ describe("rdp permission tests", () => {
             .grant(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", "RDP"],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", rdpLogin],
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "RDP"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, rdpLogin],
         ["time_left", ">", 3500]
         ];
         let res = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter);
@@ -145,9 +145,9 @@ describe("rdp permission tests", () => {
         let resp = await noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", "RDP"],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", rdpLogin],
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "RDP"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, rdpLogin],
         ["valid_from", "=", (new Date(fromD)).toISOString()],
         ["valid_until", "=", (new Date(toD)).toISOString()]
         ];
@@ -195,8 +195,8 @@ describe("rdp permission tests", () => {
         let r3 = await noThrow(objMixedCase.revoke(api));
         expect(r3.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", "RDP"],
-        ["grantee", "equals", grantee]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "RDP"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let r5 = await noThrow(new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
 
@@ -220,9 +220,9 @@ describe("rdp permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", "RDP"],
-        ["grantee", "equals", roleName],
-        ["key_name", "equals", rdpLogin]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "RDP"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, roleName],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, rdpLogin]];
         let res = await new RemoteDesktopLoginPermission().grantee(roleName).list(api, filter);
         expect(res.totalCount).toBe(0);
 
@@ -258,10 +258,10 @@ describe("rdp permission tests", () => {
         await ignoreError(new RemoteDesktopLogin(name, REMOTE_DESKTOP_PROTOCOL.RDP).delete(api));
         await ignoreError(new RemoteDesktopLogin(name2, REMOTE_DESKTOP_PROTOCOL.RDP).delete(api));
         //Check for prior grants
-        let filter1 = [["permissiontype", "equals", "RDP"],
-        ["grantee", "equals", grantee], ["key_name", "equals", name]];
-        let filter2 = [["permissiontype", "equals", "RDP"],
-        ["grantee", "equals", grantee], ["key_name", "equals", name2]];
+        let filter1 = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "RDP"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee], ["key_name", FILTER_OPERATION.EQUALS_STRING, name]];
+        let filter2 = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "RDP"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee], ["key_name", FILTER_OPERATION.EQUALS_STRING, name2]];
 
 
         //Create RD 1
@@ -284,7 +284,7 @@ describe("rdp permission tests", () => {
         let x4 = await noThrow(x.update(api));
         expect(x4.error).toBe(false);
         //Check RD
-        let res3a = await noThrow(RemoteDesktopLogin.list(api, 0, 100, [["name", "equals", name2]]));
+        let res3a = await noThrow(RemoteDesktopLogin.list(api, 0, 100, [["name", FILTER_OPERATION.EQUALS_STRING, name2]]));
         expect(res3a.totalCount).toBe("1");
         //Check Grant
         let res3 = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter1);

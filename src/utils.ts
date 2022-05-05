@@ -7,6 +7,21 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 
+export enum FILTER_OPERATION {
+    EQUALS_STRING = "equals",
+    CONTAINS = "contains",
+    NOT_CONTAINS = "notcontains",
+    STARTS_WITH = "startswith",
+    ENDS_WITH = "endswith",
+    IS_BLANK = "isblank",
+    IS_NOT_BLANK = "isnotblank",
+    GREATER_THAN = ">",
+    LESS_THAN = "<",
+    GREATER_THAN_OR_EQUAL = ">=",
+    LESS_THAN_OR_EQUAL = "<=",
+    EQUALS = "=",
+    NOT_EQUAL = "<>"
+}
 
 export function prepareFilter(filter: any): any {
     let filters = filter;

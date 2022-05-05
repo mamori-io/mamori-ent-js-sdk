@@ -1,7 +1,7 @@
 import { MamoriService } from '../../api';
 import * as https from 'https';
 import { IPResourcePermission, TIME_UNIT } from '../../permission';
-import { handleAPIException, ignoreError, noThrow } from '../../utils';
+import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
 
 
@@ -52,8 +52,8 @@ describe("ip resource permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
         //check list
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", grantee]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let res = await new IPResourcePermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
         //grant
@@ -87,9 +87,9 @@ describe("ip resource permission tests", () => {
 
         expect(r1.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", resource],
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, resource],
         ["time_left", ">", 3500]
         ];
 
@@ -124,9 +124,9 @@ describe("ip resource permission tests", () => {
         let resp = await noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", grantee],
-        ["key_name", "equals", resource],
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", FILTER_OPERATION.EQUALS_STRING, resource],
         ["valid_from", "=", (new Date(fromD)).toISOString()],
         ["valid_until", "=", (new Date(toD)).toISOString()]
         ];
@@ -174,8 +174,9 @@ describe("ip resource permission tests", () => {
         //Revoke 1
         let r3 = await noThrow(objMixedCase.revoke(api));
         expect(r3.errors).toBe(false);
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", grantee]];
+
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let r5 = await noThrow(new IPResourcePermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
         //revoke 2
@@ -202,8 +203,8 @@ describe("ip resource permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
         //check list
-        let filter = [["permissiontype", "equals", permType],
-        ["grantee", "equals", roleName]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, roleName]];
         let res = await new IPResourcePermission().grantee(roleName).list(api, filter);
         expect(res.totalCount).toBe(0);
         //grant

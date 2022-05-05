@@ -19,9 +19,9 @@ async function GrantSSHLogin(sshlogin: string, grantee: string) {
         .grantee(grantee)
         .grant(api);
     let filter = {
-        "0": ["permissiontype", "equals", "SSH"],
-        "1": ["grantee", "equals", grantee],
-        "3": ["key_name", "equals", sshlogin]
+        "0": ["permissiontype", FILTER_OPERATION.EQUALS_STRING, "SSH"],
+        "1": ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
+        "3": ["key_name", FILTER_OPERATION.EQUALS_STRING, sshlogin]
     };
     let res = await new SSHLoginPermission().grantee(grantee).list(api, filter);
     console.log(res);

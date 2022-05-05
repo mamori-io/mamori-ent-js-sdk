@@ -1,7 +1,7 @@
 import { MamoriService } from '../../api';
 import * as https from 'https';
 import { DatasourcePermission, DB_PERMISSION, RolePermission, TIME_UNIT } from '../../permission';
-import { handleAPIException, ignoreError, noThrow } from '../../utils';
+import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -47,8 +47,8 @@ describe("datasource permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", "SELECT"],
-        ["grantee", "equals", grantee]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "SELECT"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
@@ -82,8 +82,8 @@ describe("datasource permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", DB_PERMISSION.CREATE_TABLE],
-        ["grantee", "equals", grantee]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, DB_PERMISSION.CREATE_TABLE],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
@@ -117,8 +117,8 @@ describe("datasource permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", DB_PERMISSION.CREATE_SCHEMA],
-        ["grantee", "equals", grantee]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, DB_PERMISSION.CREATE_SCHEMA],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
@@ -152,8 +152,8 @@ describe("datasource permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
 
-        let filter = [["permissiontype", "equals", DB_PERMISSION.MASKED],
-        ["grantee", "equals", grantee]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, DB_PERMISSION.MASKED],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
@@ -187,8 +187,8 @@ describe("datasource permission tests", () => {
             .grant(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT],
-        ["grantee", "equals", grantee],
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, DB_PERMISSION.SELECT],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
         ["time_left", ">", 3500]
         ];
         let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
@@ -240,7 +240,7 @@ describe("datasource permission tests", () => {
         expect(resp.errors).toBe(false);
 
         //Check if permissions exist for grantee
-        let filter = [["permissiontype", "equals", DB_PERMISSION.SELECT],
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, DB_PERMISSION.SELECT],
         ["valid_from", "=", (new Date(fromD)).toISOString()],
         ["valid_until", "=", (new Date(toD)).toISOString()]];
         let res = await new DatasourcePermission().grantee(grantee).list(api, filter);
@@ -317,8 +317,8 @@ describe("datasource permission tests", () => {
         //make sure no exist
         await ignoreError(obj.revoke(api));
         //
-        let filter = [["permissiontype", "equals", "SELECT"],
-        ["grantee", "equals", role.roleid]];
+        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "SELECT"],
+        ["grantee", FILTER_OPERATION.EQUALS_STRING, role.roleid]];
         let res = await new DatasourcePermission().grantee(role.roleid).list(api, filter);
         //Check permission no there
         expect(res.totalCount).toBe(0);
