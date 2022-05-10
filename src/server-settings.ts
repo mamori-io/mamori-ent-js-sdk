@@ -33,6 +33,13 @@ export class ServerSettings {
     }
 
     /**
+       * @param domain  server IP or dns entry
+       */
+    public setServerDomain(domain: string): Promise<any> {
+        return this.api.setServerDomain(domain);
+    }
+
+    /**
      * @param enabled  Enable or disable the root login
      * @param password (Optional) update the password
      */
@@ -47,6 +54,10 @@ export class ServerSettings {
         }
         return this.api.update_provider(DEFAULT_AUTH_PROVIDERS.ADMIN, options)
     }
+
+
+
+
 
     /*
         has_license_permission(): boolean {
