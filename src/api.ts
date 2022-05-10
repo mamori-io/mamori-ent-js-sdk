@@ -996,6 +996,18 @@ export class MamoriService {
         return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee");
     }
 
+    public get_grantee_roles_recursive(roleid: string) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee?recursive=Y");
+    }
+
+    public get_granted_roles(roleid: string) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/granted");
+    }
+
+    public get_granted_roles_recursive(roleid: string) {
+        return this.callAPI("GET", "/v1/roles/" + roleid + "/granted?recursive=Y");
+    }
+
     public get_grantee_grantable_roles(roleid: string) {
         return this.callAPI("GET", "/v1/roles/" + roleid + "/grantee/grantable");
     }
@@ -1131,18 +1143,39 @@ export class MamoriService {
     // Permissions
     //
 
-    public grant_to(grantee: string, grantables: string[], object_name?: string, withGrantOption?: boolean) {
-        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), {
+    public grant_to(grantee: string, grantables: string[], object_name?: string | null, withGrantOption?: boolean, options?: any) {
+        let payload: any = {
             grantables: grantables,
             object_name: object_name,
             with_grant_option: withGrantOption,
+        };
+        for (let prop in options) {
+            payload[prop] = options[prop];
+        }
+        return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), payload).then(r => {
+            if (r && r.length > 0 && r[0] === "ok") {
+                return { error: false, result: r };
+            }
+            return { error: true, result: r };
         });
     }
 
-    public revoke_from(grantee: string, grantables: string[], object_name?: string) {
-        return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), {
-            grantables: grantables,
-            object_name: object_name
+    public revoke_from(grantee: string, grantables: string[], object_name?: string | null, options?: any) {
+        let payload: any = {
+            grantables: grantables
+        };
+        if (object_name) {
+            payload.object_name = object_name;
+        }
+
+        for (let prop in options) {
+            payload[prop] = options[prop];
+        }
+        return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), payload).then(r => {
+            if (r && r.length > 0 && r[0] === "ok") {
+                return { error: false, result: r };
+            }
+            return { error: true, result: r };
         });
     }
 

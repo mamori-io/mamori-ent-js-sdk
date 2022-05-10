@@ -8,6 +8,7 @@
  */
 import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
+import { TIME_UNIT } from './permission';
 
 
 export interface RoleGrant {
@@ -41,28 +42,7 @@ export class Role implements ISerializable {
             "SELECT roleid,position,lastupdate FROM (select * from SYS.SYSROLES WHERE lower(isDef) = 'y' AND roleid <> 'public') a ");
     }
 
-    /**
-     * All roles granted, directly or indirectly.
-     * @param api 
-     * @param user_or_role  Optional user or role name. If null, use the logged-in user.
-     * @returns Array of arrays of columns 'uuid', 'roleid', 'grantee', 'valid_from', 'valid_until'
-     */
-    public static async getAllGrantedRoles(api: MamoriService, user_or_role?: string): Promise<any> {
-        let name = user_or_role || api.username || "";
-        let result = await api.callAPI("GET", "/v1/roles?recursive=Y&grantee=" + encodeURIComponent(name.toLowerCase()));
-        return result.rows;
-    }
 
-    /**
-     * All roles directly granted.
-     * @param api 
-     * @param user_or_role  Optional user or role name. If null, use the logged-in user.
-     * @returns Array of Role objects
-     */
-    public static getGrantedRoles(api: MamoriService, user_or_role?: string): Promise<any> {
-        let name = user_or_role || api.username || "";
-        return api.callAPI("GET", "/v1/roles?isdef=N&grantee=" + encodeURIComponent(name.toLowerCase()));
-    }
 
     /**
      * @param role
@@ -73,6 +53,28 @@ export class Role implements ISerializable {
         result.position = role.position;
 
         return result;
+    }
+
+    /**
+    * grant option for a duration of time
+    * @param TIME_UNIT
+    * @param amount 
+    * @returns 
+    */
+    public static optionValidFor(unit: TIME_UNIT, value: number): any {
+        return { valid_unit: unit, valid_duration: value };
+    }
+
+    public static optionValidFrom(from: string): any {
+        return { valid_from: from };
+    }
+
+    public static optionValidUntil(until: string): any {
+        return { valid_until: until };
+    }
+
+    public static optionValidBetween(from: string, until: string): any {
+        return { valid_from: from, valid_until: until };
     }
 
     roleid: string;
@@ -171,12 +173,8 @@ export class Role implements ISerializable {
      * @param withGrantOption  Optional.
      * @returns 
      */
-    public grant(api: MamoriService, grantables: string[], object_name?: string, withGrantOption?: boolean): Promise<any> {
-        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(this.roleid.toLowerCase()), {
-            grantables: grantables,
-            object_name: object_name,
-            with_grant_option: withGrantOption,
-        });
+    public grant(api: MamoriService, grantables: string[], object_name?: string, withGrantOption?: boolean, options?: any): Promise<any> {
+        return api.grant_to(this.roleid, grantables, object_name, withGrantOption, options);
     }
 
     /**
@@ -185,8 +183,8 @@ export class Role implements ISerializable {
      * @param user_or_role 
      * @returns 
      */
-    public grantTo(api: MamoriService, user_or_role: string): Promise<any> {
-        return api.callAPI("POST", "/v1/roles/" + this.roleid + "/user", { selected_user: user_or_role });
+    public grantTo(api: MamoriService, user_or_role: string, grantable: boolean, options?: any): Promise<any> {
+        return api.grant_to(user_or_role, [this.roleid], null, grantable, options);
     }
 
     /**
@@ -196,11 +194,8 @@ export class Role implements ISerializable {
      * @param object_name      Optional object, e.g. a table <datasource>.<database>.<schema>.<table>
      * @returns 
      */
-    public revoke(api: MamoriService, grantables: string[], object_name?: string): Promise<any> {
-        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(this.roleid.toLowerCase()), {
-            grantables: grantables,
-            object_name: object_name
-        });
+    public revoke(api: MamoriService, grantables: string[], object_name?: string, options?: any): Promise<any> {
+        return api.revoke_from(this.roleid, grantables, object_name, options);
     }
 
     /**
@@ -209,8 +204,8 @@ export class Role implements ISerializable {
      * @param user_or_role
      * @returns 
      */
-    public revokeFrom(api: MamoriService, user_or_role: string): Promise<any> {
-        return api.callAPI("DELETE", "/v1/roles/" + this.roleid + "/user", { selected_user: user_or_role });
+    public revokeFrom(api: MamoriService, user_or_role: string, options?: any): Promise<any> {
+        return api.revoke_from(user_or_role, [this.roleid], options);
     }
 
     /**
@@ -219,12 +214,31 @@ export class Role implements ISerializable {
      * @returns Array of RoleGrant objects with an extra type attribute with values: role or user.
      */
     public getGrantees(api: MamoriService): Promise<any> {
-        let sql =
-            "SELECT g.*, CASE WHEN EXISTS(SELECT 1 FROM SYS.SYSROLES r WHERE r.isDef = 'Y' AND r.roleid = g.grantee) THEN 'role' ELSE 'user' END AS type" +
-            "  FROM SYS.SYSROLES g" +
-            " WHERE g.isDef = 'N'" +
-            "   AND g.roleId = '" + this.roleid + "'";
-        return api.select(sql);
+        return api.get_granted_roles(this.roleid.toLocaleLowerCase());
+    }
+
+    public getGranteesRecursive(api: MamoriService): Promise<any> {
+        return api.get_granted_roles_recursive(this.roleid.toLocaleLowerCase());
+    }
+
+    /**
+     * All roles granted, directly or indirectly.
+     * @param api 
+     * @param user_or_role  Optional user or role name. If null, use the logged-in user.
+     * @returns Array of arrays of columns 'uuid', 'roleid', 'grantee', 'valid_from', 'valid_until'
+     */
+    public getAllGrantedRoles(api: MamoriService): Promise<any> {
+        return api.get_grantee_roles_recursive(this.roleid.toLocaleLowerCase());
+    }
+
+    /**
+     * All roles directly granted.
+     * @param api 
+     * @param user_or_role  Optional user or role name. If null, use the logged-in user.
+     * @returns Array of Role objects
+     */
+    public getGrantedRoles(api: MamoriService): Promise<any> {
+        return api.get_grantee_roles(this.roleid.toLocaleLowerCase());
     }
 
     /**
