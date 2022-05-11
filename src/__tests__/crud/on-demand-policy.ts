@@ -71,8 +71,8 @@ describe("on-demand policy crud tests", () => {
         //grant request permission to user role
         await ignoreError(new MamoriPermission([MAMORI_PERMISSION.REQUEST]).grantee(requestRole).grant(api));
         //Grant roles to users
-        await ignoreError(new Role(agentRole).grantTo(api, agent));
-        await ignoreError(new Role(requestRole).grantTo(api, grantee));
+        await ignoreError(new Role(agentRole).grantTo(api, agent, false));
+        await ignoreError(new Role(requestRole).grantTo(api, grantee, false));
 
         //login in sessions
         apiAsAgent = new MamoriService(host, INSECURE);
