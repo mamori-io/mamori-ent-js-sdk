@@ -36,6 +36,22 @@ export function prepareFilter(filter: any): any {
     return filters;
 }
 
+export function addFilterToDxGridOptions(options: any, column: string, operation: string, value: any) {
+    let filter = [column, operation, value];
+    if (options.filter == "undefined" || !options.filter) {
+        options.filter = filter;
+    } else {
+
+        if (typeof options.filter[0] == 'object') {
+            options.filter.push("and");
+            options.filter.push(filter);
+        } else {
+            let oldSingleFilter = [options.filter[0], options.filter[1], options.filter[2]];
+            options.filter = [oldSingleFilter, 'and', filter];
+        }
+    }
+}
+
 export function hex2a(hex: any) {
     var str = '';
     for (var i = 0; i < hex.length; i += 2) str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));

@@ -608,7 +608,10 @@ export class MamoriService {
     }
 
     public create_db_policy(name: string, priority: any, description: string): Promise<any> {
-        let options = { name: name, priority: priority, description: description };
+        let options: any = { name: name, description: description };
+        if (priority && !isNaN(Number(priority))) {
+            options.priority = priority;
+        }
         return this.callAPI("POST", "/v1/policies/dbpolicy", options);
     }
 
@@ -1786,11 +1789,18 @@ export class MamoriService {
         });
     }
 
-    public policies_get_policy_projections(query: any) {
-        return this.callAPI("PUT", "/v1/policies/get_policy_projections", query);
+
+
+    public db_masking_policies(query: any) {
+        return this.callAPI("PUT", "/v1/policies/dbpolicy/search", query);
     }
 
-    public policies_set_policy_projection(table_name: string, column_name: string, projection_expression: string, policy_name: string, table_type: string) {
+    public policies_get_policy_column_rules(query: any) {
+        return this.callAPI("PUT", "/v1/policies/get_policy_column_rules", query);
+    }
+
+    public policies_set_policy_projection(table_name: string, column_name: string, projection_expression: string
+        , policy_name: string, table_type: any) {
         return this.callAPI("PUT", "/v1/policies/set_policy_projection", {
             table_name: table_name,
             column_name: column_name,

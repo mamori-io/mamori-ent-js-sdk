@@ -9,8 +9,13 @@
 import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 import { PolicyPermission } from './permission';
-import { prepareFilter } from './utils';
+import { FILTER_OPERATION, prepareFilter, addFilterToDxGridOptions } from './utils';
 
+
+export enum TABLE_TYPE {
+    TABLE = "table",
+    RESULTSET = "resultset"
+}
 
 export class SQLMaskingPolicy implements ISerializable {
 
@@ -24,11 +29,7 @@ export class SQLMaskingPolicy implements ISerializable {
     public static list(api: MamoriService, from: number, to: number, filter?: any): Promise<any> {
         let filters = prepareFilter(filter);
         let payload = filter ? { skip: from, take: to, filter: filters } : { skip: from, take: to };
-
-        return api.select(
-            "select * from SYS.DATA_POLICIES ",
-            payload
-        )
+        return api.db_masking_policies(payload);
     }
 
     /**
@@ -88,15 +89,36 @@ export class SQLMaskingPolicy implements ISerializable {
         this.rules = [];
     }
 
+    public listColumnRules(api: MamoriService): Promise<any> {
+        let payload = {};
+        addFilterToDxGridOptions(payload, "name", FILTER_OPERATION.EQUALS_STRING, this.name);
+        return api.policies_get_policy_column_rules(payload).then((data) => {
+            return data;
+        });
+    }
+
+    public addColumnRule(api: MamoriService, table_name: string, column_name: string, expression: string, table_type?: TABLE_TYPE | null): Promise<any> {
+        return api.policies_set_policy_projection(table_name, column_name, expression, this.name, table_type).then(r => {
+            if (r && r.length > 0) {
+                return { errors: false, response: r[0] };
+            }
+        });
+    }
+
+    public deleteColumnRule(api: MamoriService, table_name: string, column_name: string, table_type?: TABLE_TYPE | null): Promise<any> {
+        return api.policies_set_policy_projection(table_name, column_name, "REVEAL", this.name, table_type);
+    }
+
     public create(api: MamoriService): Promise<any> {
         return api.create_db_policy(this.name, this.priority, "");
     }
 
     public update(api: MamoriService): Promise<any> {
         let data: any = { id: this.id, name: this.name };
-        if (this.priority) {
+        if (this.priority && !isNaN(Number(this.priority))) {
             data.priority = this.priority;
         }
+        console.log("**** %o", data);
         return api.update_db_policy(this.id, data);
     }
 

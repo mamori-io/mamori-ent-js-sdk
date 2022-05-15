@@ -43,7 +43,7 @@ class Example extends Runnable {
     await dm.policies_set_policy_projection(table, column, transform, policy_name, type);
     console.info("Created policy: ", policy_name, " for: ", table, ".", column);
 
-    var offResult = await dm.policies_get_policy_projections({ filter: ["name", "=", policy_name] });
+    var offResult = await dm.policies_get_policy_column_rules({ filter: ["name", "=", policy_name] });
     if (offResult.data) {
       for (var i in offResult.data) {
         console.info(policy_name, " policy: ", offResult.data[i]);

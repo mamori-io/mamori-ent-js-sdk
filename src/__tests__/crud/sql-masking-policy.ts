@@ -3,52 +3,109 @@ import * as https from 'https';
 import { SQLMaskingPolicy } from '../../sql-masking-policy';
 import { Role } from '../../role';
 import { User } from '../../user';
-import { MamoriPermission, MAMORI_PERMISSION, PolicyPermission } from '../../permission';
+import { DatasourcePermission, DB_PERMISSION, MamoriPermission, MAMORI_PERMISSION, PolicyPermission } from '../../permission';
 import { handleAPIException, noThrow, ignoreError, FILTER_OPERATION } from '../../utils';
+import { Datasource } from '../../datasource';
+import { ServerSession } from '../../server-session';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
+const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
 describe("sql-masking-policy crud tests", () => {
 
     let api: MamoriService;
-    let apiAsAgent: MamoriService;
-    let apiAsAPIUser: MamoriService;
-    let testRole = "test_sql-masking_user_role" + testbatch;
+    let dsName = "maskingPolicyDS" + testbatch;
+    let ds: Datasource | null = null;
+    let testRole = "test_sql_masking_user_role" + testbatch;
     let grantee = "test_sql-masking_user." + testbatch;
     let granteepw = "J{J'vpKs!$nas!23(6A,4!98712_vdQ'}D"
+    let admin = "test_sql-masking_admin." + testbatch;
+    let adminpw = "J{J'vpKs!$sadmins!23(6A,12_vdQ'}D"
+
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
-        //User
+
+        //Admin user
+        let adminU = new User(admin).withEmail("usertest@ace.com").withFullName("Policy User");
+        await ignoreError(adminU.delete(api));
+        let res4 = await noThrow(adminU.create(api, adminpw));
+        expect(res4.error).toBe(false);
+        let res5 = await noThrow(new Role("mamori_admin").grantTo(api, admin, false));
+        expect(res5.error).toBe(false);
+
+        //Policy User
         let policyU = new User(grantee).withEmail("usertest@ace.com").withFullName("Policy User");
         await ignoreError(policyU.delete(api));
         let res2 = await noThrow(policyU.create(api, granteepw));
         expect(res2.error).toBe(false);
-        //create roles
-        await ignoreError(new Role(testRole).delete(api));
-        await ignoreError(new Role(testRole).create(api));
 
-        //login in sessions
-        apiAsAPIUser = new MamoriService(host, INSECURE);
-        await apiAsAPIUser.login(grantee, granteepw);
+
+
+
+        if (dbPassword) {
+            let ds = new Datasource(dsName);
+            ds.ofType("POSTGRESQL", 'postgres')
+                .at("localhost", 54321)
+                .withCredentials('postgres', dbPassword)
+                .withDatabase('mamorisys')
+                .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
+            await ignoreError(ds.delete(api));
+            let res = await noThrow(ds.create(api));
+            expect(res.error).toBe(false);
+            //Make a role
+            let role = new Role(testRole);
+            await ignoreError(role.delete(api));
+            await ignoreError(role.create(api));
+            //Grant credential
+            let ccred = await noThrow(ds.addCredential(api, testRole, 'postgres', dbPassword));
+            expect(ccred.error).toBe(false);
+            //grant role to user
+            let r2 = await noThrow(role.grantTo(api, admin, false));
+            expect(r2.error).toBe(false);
+            let r3 = await noThrow(role.grantTo(api, grantee, false));
+            expect(r3.error).toBe(false);
+            // Grant ALL 
+            let p1 = await noThrow(new DatasourcePermission()
+                .on(ds.name, "*", "*", "")
+                .permissions([DB_PERMISSION.CREATE_TABLE, DB_PERMISSION.DROP_TABLE])
+                .grantee(admin)
+                .grant(api));
+            expect(p1.errors).toBe(false);
+            let p2 = await noThrow(new DatasourcePermission()
+                .on(ds.name, "*", "*", "*")
+                .permissions([DB_PERMISSION.INSERT, DB_PERMISSION.SELECT, DB_PERMISSION.DELETE])
+                .grantee(testRole)
+                .grant(api));
+            expect(p2.errors).toBe(false);
+            let p3 = await noThrow(new DatasourcePermission()
+                .on(ds.name, "*", "", "")
+                .permission(DB_PERMISSION.MASKED)
+                .grantee(testRole)
+                .grant(api));
+            expect(p3.errors).toBe(false);
+
+        }
     });
 
     afterAll(async () => {
-
-        await apiAsAPIUser.logout();
+        await api.delete_user(admin);
         await api.delete_user(grantee);
         await ignoreError(new Role(testRole).delete(api));
+        if (ds) {
+            await ignoreError(ds.delete(api));
+        }
         await api.logout();
     });
 
-    test('sql masking policy 01', async done => {
+    test('masking policy 001', async done => {
         let name = "test_sql-masking.policy._" + testbatch;
         let o = new SQLMaskingPolicy(name);
         o.priority = 100;
@@ -66,7 +123,6 @@ describe("sql-masking-policy crud tests", () => {
         ["policy", FILTER_OPERATION.EQUALS_STRING, name]];
         let res = await new PolicyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
-
         //Grant a policy
         let x4 = await noThrow(o.grantTo(api, grantee));
         expect(x4.errors).toBe(false);
@@ -95,6 +151,64 @@ describe("sql-masking-policy crud tests", () => {
         expect(res4.totalCount).toBe(0);
         done();
     });
+
+    test('masking policy 002', async done => {
+        if (dbPassword) {
+            let apiAsAdmin = new MamoriService(host, INSECURE);
+            await apiAsAdmin.login(admin, adminpw);
+            let x = await noThrow(ServerSession.setPassthrough(apiAsAdmin, dsName));
+            expect(x.errors).toBe(false);
+
+            let apiAsAPIUser = new MamoriService(host, INSECURE);
+            await apiAsAPIUser.login(grantee, granteepw);
+            let x2 = await noThrow(ServerSession.setPassthrough(apiAsAPIUser, dsName));
+            expect(x2.errors).toBe(false);
+            let schemaName = 'testschema' + testbatch;
+            try {
+                //Create the schema, table and insert data         
+
+                let q1 = await noThrow(apiAsAdmin.simple_query("DROP SCHEMA " + schemaName + " CASCADE"));
+                let q2 = await noThrow(apiAsAdmin.simple_query("CREATE SCHEMA " + schemaName));
+                let q3 = await noThrow(apiAsAdmin.simple_query("CREATE TABLE " + schemaName + ".TAB1 (col1 varchar(50),col2 varchar(50))"));
+                let q4 = await noThrow(apiAsAdmin.simple_query("INSERT INTO " + schemaName + ".TAB1 (col1,col2) values ('value1','value2')"));
+
+
+                //Create masking policy & masking rule
+                let name = "test_002_SqlMaskingPolicy_" + testbatch;
+                let o = new SQLMaskingPolicy(name);
+                await ignoreError(o.delete(api));
+                let q7 = await noThrow(o.create(api));
+                expect(q7.error).toBe(false);
+                let q8 = await noThrow(o.addColumnRule(api, dsName + ".mamorisys." + schemaName + ".tab1", "col1", "masked by full()"));
+                expect(q8.errors).toBe(false);
+                let q9 = await noThrow(o.listColumnRules(api));
+                expect(q9.totalCount).toBe("1");
+
+                let q5 = await noThrow(apiAsAdmin.simple_query("select * from " + schemaName + ".TAB1"));
+                expect(q5[0].col1).toBe("value1");
+                let q13 = await noThrow(apiAsAPIUser.simple_query("select * from " + schemaName + ".TAB1"));
+                expect(q13[0].col1).toBe("value1");
+
+                let q11 = await noThrow(o.grantTo(api, testRole));
+                expect(q11.errors).toBe(false);
+                let q12 = await noThrow(apiAsAdmin.simple_query("select * from " + schemaName + ".TAB1"));
+                expect(q12[0].col1).toBe("XXXXXX");
+                let q14 = await noThrow(apiAsAPIUser.simple_query("select * from " + schemaName + ".TAB1"));
+                expect(q14[0].col1).toBe("XXXXXX");
+
+            }
+            finally {
+                //DROP TEST SCHEMA
+                let q6 = await noThrow(apiAsAdmin.simple_query("DROP SCHEMA " + schemaName + " CASCADE"));
+                await apiAsAPIUser.logout();
+                await apiAsAdmin.logout();
+            }
+        }
+
+        done();
+    });
+
+
 
 
 

@@ -2,6 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { User } from '../../user';
 import { ServerSession } from '../../server-session';
+import { SQLMaskingPolicy } from '../../sql-masking-policy';
 import { MamoriPermission, MAMORI_PERMISSION, PolicyPermission, RolePermission, TIME_UNIT } from '../../permission';
 import { handleAPIException, ignoreError, noThrow } from '../../utils';
 
@@ -92,6 +93,21 @@ describe("masking policy tests", () => {
         } finally {
             await apiUser.logout();
         }
+        done();
+    });
+
+
+    test('masking via policy', async done => {
+        let name = "Test_Pam_Sql-masking.policy._" + testbatch;
+        let o = new SQLMaskingPolicy(name);
+        await ignoreError(o.delete(api));
+        let x = await noThrow(o.create(api));
+        expect(x.error).toBe(false);
+
+        //Add column masking
+
+
+
         done();
     });
 
