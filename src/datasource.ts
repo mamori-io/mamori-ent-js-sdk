@@ -8,6 +8,7 @@
  */
 import { MamoriService, LoginResponse } from './api';
 import { ISerializable } from "./i-serializable";
+import { CREDENTIAL_RESET_OPTIONS } from './utils';
 
 /**
  * A datasource represents a target database.
@@ -85,8 +86,8 @@ export class Datasource implements ISerializable {
     enabled?: boolean;
     urlProperties?: string;
     extraOptions?: string;
-
-
+    credential_reset_days?: string;
+    credential_role?: string;
 
     /**
          * Initialize the object from JSON.
@@ -132,7 +133,7 @@ export class Datasource implements ISerializable {
     public create(api: MamoriService): Promise<any> {
         var options = this.makeOptionsSql();
         let loggedInUser = (api.authorization as unknown as LoginResponse).username;
-        let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password } };
+        let auth = { a: { system_name: this.name, mamori_user: loggedInUser, username: this.user, password: this.password } };
 
         return api.callAPI("POST", "/v1/systems", {
             preview: 'N',
@@ -141,6 +142,7 @@ export class Datasource implements ISerializable {
             authorizations: auth
         });
     }
+
 
     /**
      * Delete this datasource.
@@ -159,7 +161,7 @@ export class Datasource implements ISerializable {
     public update(api: MamoriService): Promise<any> {
         var options = this.makeOptionsSql();
         let loggedInUser = (api.authorization as unknown as LoginResponse).username;
-        let auth = { a: { system_name: this.name, cirro_user: loggedInUser, username: this.user, password: this.password } };
+        let auth = { a: { system_name: this.name, mamori_user: loggedInUser, username: this.user, password: this.password } };
 
         return api.callAPI("PUT", "/v1/systems/" + this.name, {
             preview: "N",
@@ -168,6 +170,8 @@ export class Datasource implements ISerializable {
             authorizations: auth
         });
     }
+
+
 
     /**
      * @param api  A logged-in MamoriService instance
@@ -190,6 +194,24 @@ export class Datasource implements ISerializable {
             datasource: this.name,
             username: dbUser,
             password: dbPassword
+        });
+    }
+
+    /**
+     * 
+     * @param api 
+     * @param grantee    A user or role to be granted a credential to access this datasource.
+     * @param dbUser     Database user
+     * @param dbPassword Database user's password
+     * @param resetDays  Number of days for password reset
+     * @returns 
+     */
+    public addCredentialWithManagedPassword(api: MamoriService, grantee: string, dbUser: string, dbPassword: string, resetDays: string) {
+        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {
+            datasource: this.name,
+            username: dbUser,
+            password: dbPassword,
+            reset_days: resetDays
         });
     }
 
@@ -327,11 +349,26 @@ export class Datasource implements ISerializable {
         return this;
     }
 
+    public withPasswordPolicy(resetDays: string, credentialRole: string): Datasource {
+        this.credential_reset_days = resetDays;
+        this.credential_role = credentialRole;
+        return this;
+    }
+
+
     private makeOptionsSql() {
         var options =
             "DRIVER '" + this.driver + "'" +
             ", USER '" + this.user + "'" +
             ", PASSWORD '" + this.password + "'";
+
+        if (this.credential_reset_days && this.credential_reset_days.length > 0) {
+            options = options + "," + CREDENTIAL_RESET_OPTIONS.CRED_RESET_DAYS + " '" + this.credential_reset_days + "'";
+        }
+        if (this.credential_role && this.credential_role.length > 0) {
+            options = options + "," + CREDENTIAL_RESET_OPTIONS.CRED_ROLE + " '" + this.credential_role + "'";
+        }
+
         if (this.port) {
             options = options + ", PORT '" + this.port + "'";
         }

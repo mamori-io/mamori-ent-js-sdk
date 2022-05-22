@@ -118,7 +118,6 @@ export class SQLMaskingPolicy implements ISerializable {
         if (this.priority && !isNaN(Number(this.priority))) {
             data.priority = this.priority;
         }
-        console.log("**** %o", data);
         return api.update_db_policy(this.id, data);
     }
 

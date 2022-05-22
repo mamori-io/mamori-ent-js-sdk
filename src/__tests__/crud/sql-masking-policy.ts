@@ -178,7 +178,7 @@ describe("sql-masking-policy crud tests", () => {
                 let o = new SQLMaskingPolicy(name);
                 await ignoreError(o.delete(api));
                 let q7 = await noThrow(o.create(api));
-                expect(q7.error).toBe(false);
+                expect(q7.errors).toBe(false);
                 let q8 = await noThrow(o.addColumnRule(api, dsName + ".mamorisys." + schemaName + ".tab1", "col1", "masked by full()"));
                 expect(q8.errors).toBe(false);
                 let q9 = await noThrow(o.listColumnRules(api));

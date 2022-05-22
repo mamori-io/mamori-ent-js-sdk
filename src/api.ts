@@ -1157,9 +1157,9 @@ export class MamoriService {
         }
         return this.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), payload).then(r => {
             if (r && r.length > 0 && r[0] === "ok") {
-                return { error: false, result: r };
+                return { errors: false, result: r };
             }
-            return { error: true, result: r };
+            return { errors: true, result: r };
         });
     }
 
@@ -1176,9 +1176,9 @@ export class MamoriService {
         }
         return this.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()), payload).then(r => {
             if (r && r.length > 0 && r[0] === "ok") {
-                return { error: false, result: r };
+                return { errors: false, result: r };
             }
-            return { error: true, result: r };
+            return { errors: true, result: r };
         });
     }
 

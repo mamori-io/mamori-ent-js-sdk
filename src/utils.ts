@@ -7,6 +7,11 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 
+export const CREDENTIAL_RESET_OPTIONS = {
+    CRED_RESET_DAYS: "CREDENTIALRESETDAYS",
+    CRED_ROLE: "CREDENTIALROLE",
+};
+
 export enum FILTER_OPERATION {
     EQUALS_STRING = "equals",
     CONTAINS = "contains",
