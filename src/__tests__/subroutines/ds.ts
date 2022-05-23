@@ -29,7 +29,7 @@ export async function createNewPassthroughSession(host: string, username: string
 export async function createPGDatabaseUser(api: MamoriService, username: string, password: string, database: string) {
     await dropPGDatabaseUser(api, username, database);
     let x1 = await noThrow(api.simple_query("CREATE USER " + username + " LOGIN PASSWORD '" + password + "'"));
-    console.log("CREATE USER %s %s %o", username, password, x1);
+    // console.log("CREATE USER %s %s %o", username, password, x1);
     expect(x1.errors).toBeUndefined();
     let x2 = await noThrow(api.simple_query("GRANT ALL PRIVILEGES ON DATABASE " + database + " TO " + username + ""));
     expect(x2.errors).toBeUndefined();
