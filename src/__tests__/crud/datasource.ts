@@ -78,7 +78,7 @@ if (dbPassword) {
         test.skip('datasource 002 - postgres password policy', async done => {
 
             //Create DS
-            let dsHost = host;
+            let dsHost = "localhost";
             let dsport = "54321";
             let dsUser = "postgres";
             let dsDBPW = dbPassword;
@@ -163,10 +163,48 @@ if (dbPassword) {
             done();
         });
 
+        test('datasource 003 - delete cred on disabled ds', async done => {
 
+            //Create DS
+            let dsHost = "localhost";
+            let dsport = "54321";
+            let dsUser = "postgres";
+            let dsDBPW = dbPassword;
+            let dsDB = "mamorisys";
 
+            let dsName = "test_003_local_pg" + testbatch;
+            let ds = new Datasource(dsName);
+            await ignoreError(ds.delete(api));
+            ds.ofType("POSTGRESQL", 'postgres')
+                .at(dsHost, dsport)
+                .withCredentials(dsUser, dsDBPW)
+                .withDatabase(dsDB);
+            let res = await noThrow(ds.create(api));
+            expect(res.errors).toBeUndefined();
 
-
-
+            //CREATE THE USER
+            let uName = 'T003' + grantee;
+            await ignoreError(api.delete_user(uName));
+            let r1 = await noThrow(api.create_user({
+                username: uName,
+                password: granteepw,
+                fullname: grantee,
+                identified_by: "password",
+                email: "test@test.test"
+            }));
+            expect(r1.error).toBe(false);
+            //ADD CREDENTIAL
+            let ccred = await noThrow(ds.addCredential(api, uName, dsUser, dsDBPW));
+            expect(ccred.error).toBe(false);
+            //DISABLE DS
+            let r = await noThrow(ds.update(api, { enabled: false }));
+            expect(r.errors).toBeUndefined();
+            let r2 = await noThrow(ds.removeCredential(api, uName));
+            expect(r2.errors).toBeUndefined();
+            //CLEAN UP
+            await ignoreError(ds.delete(api));
+            await ignoreError(api.delete_user(uName));
+            done();
+        });
     });
 }

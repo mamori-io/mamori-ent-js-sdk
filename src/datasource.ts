@@ -158,10 +158,13 @@ export class Datasource implements ISerializable {
      * @param api  A logged-in MamoriService instance
      * @returns
      */
-    public update(api: MamoriService): Promise<any> {
-        var options = this.makeOptionsSql();
+    public update(api: MamoriService, properties: any): Promise<any> {
+        var options = this.makeUpdateOptionsSQL(properties);
         let loggedInUser = (api.authorization as unknown as LoginResponse).username;
-        let auth = { a: { system_name: this.name, mamori_user: loggedInUser, username: this.user, password: this.password } };
+        let auth: any = {};
+        if (this.authChanged(properties)) {
+            auth = { a: { system_name: properties.name, mamori_user: loggedInUser, username: properties.user, password: properties.password } };
+        }
 
         return api.callAPI("PUT", "/v1/systems/" + this.name, {
             preview: "N",
@@ -169,6 +172,10 @@ export class Datasource implements ISerializable {
             options: options,
             authorizations: auth
         });
+    }
+
+    private authChanged(properties: any): boolean {
+        return (properties.user || properties.password || properties.name);
     }
 
 
@@ -355,47 +362,73 @@ export class Datasource implements ISerializable {
         return this;
     }
 
+    private generateOptionsSQL(rec: any): string {
+        let res: any[] = [];
+
+        if (rec.driver) {
+            res.push("DRIVER '" + rec.driver + "'");
+        }
+        if (rec.user) {
+            res.push("USER '" + rec.user + "'");
+        }
+        if (rec.password) {
+            res.push("PASSWORD '" + rec.password + "'");
+        }
+
+        if (rec.credential_reset_days && rec.credential_reset_days.length > 0) {
+            res.push(CREDENTIAL_RESET_OPTIONS.CRED_RESET_DAYS + " '" + rec.credential_reset_days + "'");
+        }
+        if (rec.credential_role && rec.credential_role.length > 0) {
+            res.push(CREDENTIAL_RESET_OPTIONS.CRED_ROLE + " '" + rec.credential_role + "'");
+        }
+
+        if (rec.port) {
+            res.push(" PORT '" + rec.port + "'");
+        }
+        if (rec.tempDatabase) {
+            res.push(" TEMPDATABASE '" + rec.tempDatabase + "'");
+        }
+        else if (rec.database) {
+            res.push(" TEMPDATABASE '" + rec.database + "'");
+        }
+        if (rec.database) {
+            res.push(" DEFAULTDATABASE '" + rec.database + "'");
+        }
+        if (rec.caseSensitive) {
+            res.push(" OBJECTNAMECASESENSITIVE 'TRUE'");
+        }
+        if (rec.enabled != undefined) {
+            res.push(" ENABLED '" + (rec.enabled ? "TRUE" : "FALSE") + "'");
+        }
+        if (rec.group) {
+            res.push(" DATASOURCE GROUP '" + rec.group + "'");
+        }
+        if (rec.urlProperties) {
+            res.push(" CONNECTION_PROPERTIES '" + rec.urlProperties + "'");
+        }
+        let r = res.join(",");
+        if (rec.extraOptions) {
+            r = r + ", " + rec.extraOptions;
+        }
+        return r;
+    }
+
+    private makeUpdateOptionsSQL(properties: any): any {
+        let options: any = {};
+        for (let prop in properties) {
+            let v1 = (this as any)[prop];
+            let v2 = properties[prop];
+            if (v1 != v2) {
+                options[prop] = properties[prop];
+            }
+        }
+        return this.generateOptionsSQL(options);
+    }
+
+
+
 
     private makeOptionsSql() {
-        var options =
-            "DRIVER '" + this.driver + "'" +
-            ", USER '" + this.user + "'" +
-            ", PASSWORD '" + this.password + "'";
-
-        if (this.credential_reset_days && this.credential_reset_days.length > 0) {
-            options = options + ", " + CREDENTIAL_RESET_OPTIONS.CRED_RESET_DAYS + " '" + this.credential_reset_days + "'";
-        }
-        if (this.credential_role && this.credential_role.length > 0) {
-            options = options + ", " + CREDENTIAL_RESET_OPTIONS.CRED_ROLE + " '" + this.credential_role + "'";
-        }
-
-        if (this.port) {
-            options = options + ", PORT '" + this.port + "'";
-        }
-        if (this.tempDatabase) {
-            options = options + ", TEMPDATABASE '" + this.tempDatabase + "'";
-        }
-        else if (this.database) {
-            options = options + ", TEMPDATABASE '" + this.database + "'";
-        }
-        if (this.database) {
-            options = options + ", DEFAULTDATABASE '" + this.database + "'";
-        }
-        if (this.caseSensitive) {
-            options = options + ", OBJECTNAMECASESENSITIVE 'TRUE'";
-        }
-        if (this.enabled != undefined) {
-            options = options + ", ENABLED '" + (this.enabled ? "TRUE" : "FALSE") + "'";
-        }
-        if (this.group) {
-            options = options + ", DATASOURCE GROUP '" + this.group + "'";
-        }
-        if (this.urlProperties) {
-            options = options + ", CONNECTION_PROPERTIES '" + this.urlProperties + "'";
-        }
-        if (this.extraOptions) {
-            options = options + ", " + this.extraOptions;
-        }
-        return options;
+        return this.generateOptionsSQL(this);
     }
 }
