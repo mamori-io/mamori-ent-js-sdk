@@ -133,7 +133,7 @@ export class Datasource implements ISerializable {
     public create(api: MamoriService): Promise<any> {
         var options = this.makeOptionsSql();
         let loggedInUser = (api.authorization as unknown as LoginResponse).username;
-        let auth = { a: { system_name: this.name, mamori_user: loggedInUser, username: this.user, password: this.password } };
+        let auth = this.credential_reset_days ? [] : { a: { system_name: this.name, mamori_user: loggedInUser, username: this.user, password: this.password } };
 
         return api.callAPI("POST", "/v1/systems", {
             preview: 'N',
