@@ -27,18 +27,19 @@
         "@types/jest": "^26.0.20",
         "@types/node": "^10.12.9",
         "@types/websocket": "^1.0.2",
+        "@types/ws": "^8.5.3",
         "jest": "^26.6.3",
         "ts-jest": "^26.5.0",
         "ts-node": "^9.1.1",
         "typescript": "^3.1.6"
     },
     "dependencies": {
-        "sexp": "github:dparnell/sexp",
         "@types/minimist": "^1.2.1",
         "axios": "^0.21.1",
         "moment-timezone": "0.5.13",
+        "sexp": "github:dparnell/sexp",
         "typedoc": "^0.20.36",
-        "websocket": "^1.0.34"
+        "ws": "^8.6.0"
     },
     "jest": {
         "testTimeout": 25000,

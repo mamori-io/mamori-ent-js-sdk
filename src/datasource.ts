@@ -12,7 +12,7 @@ import { CREDENTIAL_RESET_OPTIONS } from './utils';
 
 /**
  * A datasource represents a target database.
- * 
+ *
  * Example use:
  * ```javascript
  * await new Datasource("test")
@@ -26,10 +26,10 @@ import { CREDENTIAL_RESET_OPTIONS } from './utils';
  * or
  * ```javascript
  * await Datasource.build({
- *     name: "test", 
- *     type: "POSTGRESQL", 
- *     driver: "postgres", 
- *     host: "10.0.2.2", 
+ *     name: "test",
+ *     type: "POSTGRESQL",
+ *     driver: "postgres",
+ *     host: "10.0.2.2",
  *     port: 5432
  *     user: "postgres",
  *     password: "postgres",
@@ -41,7 +41,7 @@ import { CREDENTIAL_RESET_OPTIONS } from './utils';
 export class Datasource implements ISerializable {
 
     /**
-     * @param api 
+     * @param api
      * @returns All the datasources the logged-in user has access to.
      */
     public static getAll(api: MamoriService): Promise<any> {
@@ -49,7 +49,7 @@ export class Datasource implements ISerializable {
     }
 
     /**
-     * @param api 
+     * @param api
      * @returns The database drivers configured.
      */
     public static getDrivers(api: MamoriService): Promise<any> {
@@ -57,7 +57,7 @@ export class Datasource implements ISerializable {
     }
 
     /**
-     * @param api 
+     * @param api
      * @returns The datasource types supported.
      */
     public static getTypes(api: MamoriService): Promise<any> {
@@ -65,8 +65,8 @@ export class Datasource implements ISerializable {
     }
 
     /**
-     * @param ds 
-     * @returns 
+     * @param ds
+     * @returns
      */
     public static build(ds: any): Datasource {
         return new Datasource(ds.name).fromJSON(ds);
@@ -107,7 +107,7 @@ export class Datasource implements ISerializable {
     /**
      * Serialize the object to JSON
      * @param
-     * @returns JSON 
+     * @returns JSON
      */
     toJSON(): any {
         let res: any = {};
@@ -128,12 +128,12 @@ export class Datasource implements ISerializable {
     /**
      * Create a new datasource with the current properties.
      * @param api  A logged-in MamoriService instance
-     * @returns 
+     * @returns
      */
     public create(api: MamoriService): Promise<any> {
         var options = this.makeOptionsSql();
         let loggedInUser = (api.authorization as unknown as LoginResponse).username;
-        let auth = { a: { system_name: this.name, mamori_user: loggedInUser, username: this.user, password: this.password } };
+        let auth = this.credential_reset_days ? [] : { a: { system_name: this.name, mamori_user: loggedInUser, username: this.user, password: this.password } };
 
         return api.callAPI("POST", "/v1/systems", {
             preview: 'N',
@@ -147,7 +147,7 @@ export class Datasource implements ISerializable {
     /**
      * Delete this datasource.
      * @param api  A logged-in MamoriService instance
-     * @returns 
+     * @returns
      */
     public delete(api: MamoriService): Promise<any> {
         return api.callAPI("DELETE", "/v1/systems/" + this.name);
@@ -156,7 +156,7 @@ export class Datasource implements ISerializable {
     /**
      * Update this datasource with the current properties.
      * @param api  A logged-in MamoriService instance
-     * @returns 
+     * @returns
      */
     public update(api: MamoriService): Promise<any> {
         var options = this.makeOptionsSql();
@@ -182,12 +182,12 @@ export class Datasource implements ISerializable {
     }
 
     /**
-     * 
-     * @param api 
+     *
+     * @param api
      * @param grantee    A user or role to be granted a credential to access this datasource.
      * @param dbUser     Database user
      * @param dbPassword Database user's password
-     * @returns 
+     * @returns
      */
     public addCredential(api: MamoriService, grantee: string, dbUser: string, dbPassword: string) {
         return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {
@@ -198,13 +198,13 @@ export class Datasource implements ISerializable {
     }
 
     /**
-     * 
-     * @param api 
+     *
+     * @param api
      * @param grantee    A user or role to be granted a credential to access this datasource.
      * @param dbUser     Database user
      * @param dbPassword Database user's password
      * @param resetDays  Number of days for password reset
-     * @returns 
+     * @returns
      */
     public addCredentialWithManagedPassword(api: MamoriService, grantee: string, dbUser: string, dbPassword: string, resetDays: string) {
         return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", {
@@ -216,9 +216,9 @@ export class Datasource implements ISerializable {
     }
 
     /**
-     * @param api 
+     * @param api
      * @param grantee    A user or role with a credential to access this datasource.
-     * @returns 
+     * @returns
      */
     public removeCredential(api: MamoriService, grantee: string) {
         return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization", { datasource: this.name });
@@ -226,11 +226,11 @@ export class Datasource implements ISerializable {
 
     /**
      * Validate credential details.
-     * @param api 
+     * @param api
      * @param grantee    A user or role to be granted a credential to access this datasource.
      * @param dbUser     Database user
      * @param dbPassword Database user's password
-     * @returns 
+     * @returns
      */
     public validateCredential(api: MamoriService, grantee: string, dbUser: string, dbPassword: string) {
         return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(grantee.toLowerCase()) + "/datasource_authorization/validate", {
@@ -243,7 +243,7 @@ export class Datasource implements ISerializable {
     /**
      * @param type   Required datasource type, e.g. ORACLE, POSTGRESQL, SQL_SERVER
      * @param driver Required datasource name
-     * @returns 
+     * @returns
      */
     public ofType(type: string, driver: string): Datasource {
         this.type = type;
@@ -255,7 +255,7 @@ export class Datasource implements ISerializable {
      * Set the address of the target resource
      * @param host  Required host name or IP address of the target resource
      * @param port  Required listening port of the target resource
-     * @returns 
+     * @returns
      */
     public at(host: string, port: any): Datasource {
         this.host = host;
@@ -265,7 +265,7 @@ export class Datasource implements ISerializable {
 
     /**
      * @param group  Optional datasource group
-     * @returns 
+     * @returns
      */
     public inGroup(group: string): Datasource {
         this.group = group;
@@ -276,7 +276,7 @@ export class Datasource implements ISerializable {
      * Set the creadentials to use when connecting to the target resource
      * @param user      Required user name
      * @param password  Required password
-     * @returns 
+     * @returns
      */
     public withCredentials(user: string, password: string): Datasource {
         this.user = user;
@@ -287,7 +287,7 @@ export class Datasource implements ISerializable {
     /**
      * For some databases, a database name is required to connect.
      * @param database  Optional default database
-     * @returns 
+     * @returns
      */
     public withDatabase(database: string): Datasource {
         this.database = database;
@@ -304,7 +304,7 @@ export class Datasource implements ISerializable {
      * A database name is required for any temporary tables.
      * Defaults to the database value if not set.
      * @param database  Database for any temporary tables.
-     * @returns 
+     * @returns
      */
     public withTempDatabase(tempDatabase: string): Datasource {
         this.tempDatabase = tempDatabase;
@@ -312,8 +312,8 @@ export class Datasource implements ISerializable {
     }
 
     /**
-     * @param caseSensitive  Optionally specify case sensitivity of the datasource names. Default: false  
-     * @returns 
+     * @param caseSensitive  Optionally specify case sensitivity of the datasource names. Default: false
+     * @returns
      */
     public withCaseSensitive(caseSensitive: boolean): Datasource {
         this.caseSensitive = caseSensitive;
@@ -321,8 +321,8 @@ export class Datasource implements ISerializable {
     }
 
     /**
-     * @param enabled  Optionally enable or disable this datasource 
-     * @returns 
+     * @param enabled  Optionally enable or disable this datasource
+     * @returns
      */
     public enable(enabled: boolean): Datasource {
         this.enabled = enabled;
@@ -331,7 +331,7 @@ export class Datasource implements ISerializable {
 
     /**
      * @param urlProperties  Optional properties to add to the JDBC URL
-     * @returns 
+     * @returns
      */
     public withConnectionProperties(urlProperties: string): Datasource {
         this.urlProperties = urlProperties;
@@ -342,7 +342,7 @@ export class Datasource implements ISerializable {
      * More options are available in the full SQL syntax.
      * E.g., "POOL_MAXIMUM '3', ENABLED FALSE"
      * @param extraOptions  Optional extras
-     * @returns 
+     * @returns
      */
     public withOptions(extraOptions: string): Datasource {
         this.extraOptions = extraOptions;
@@ -363,10 +363,10 @@ export class Datasource implements ISerializable {
             ", PASSWORD '" + this.password + "'";
 
         if (this.credential_reset_days && this.credential_reset_days.length > 0) {
-            options = options + "," + CREDENTIAL_RESET_OPTIONS.CRED_RESET_DAYS + " '" + this.credential_reset_days + "'";
+            options = options + ", " + CREDENTIAL_RESET_OPTIONS.CRED_RESET_DAYS + " '" + this.credential_reset_days + "'";
         }
         if (this.credential_role && this.credential_role.length > 0) {
-            options = options + "," + CREDENTIAL_RESET_OPTIONS.CRED_ROLE + " '" + this.credential_role + "'";
+            options = options + ", " + CREDENTIAL_RESET_OPTIONS.CRED_ROLE + " '" + this.credential_role + "'";
         }
 
         if (this.port) {
