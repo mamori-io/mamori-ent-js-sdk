@@ -180,7 +180,7 @@
  */
 
 
-import { w3cwebsocket as WebSocket, IMessageEvent as MessageEvent } from "websocket";
+import { WebSocket } from "ws";
 
 const VSN = "2.0.0"
 const SOCKET_STATES = {connecting: 0, open: 1, closing: 2, closed: 3}
@@ -722,7 +722,7 @@ export class Socket {
         }
         if(this.conn){ return }
 
-        this.conn = new this.transport(this.endPointURL())
+        this.conn = new this.transport(this.endPointURL(), this.params.protocols || [], this.params.options )
         this.conn.timeout   = this.longpollerTimeout
         this.conn.onopen    = () => this.onConnOpen()
         this.conn.onerror   = (error: any) => this.onConnError(error)
@@ -850,7 +850,7 @@ export class Socket {
         }
     }
 
-    onConnMessage(rawMessage: MessageEvent){
+    onConnMessage(rawMessage: any){
         this.decode(rawMessage.data as string, (msg: any) => {
             let {topic, event, payload, ref, join_ref} = msg
             if(ref && ref === this.pendingHeartbeatRef){ this.pendingHeartbeatRef = null }

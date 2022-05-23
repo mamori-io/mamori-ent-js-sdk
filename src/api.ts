@@ -166,15 +166,17 @@ export class MamoriService {
     private _queries: StringIndexed<PromiseHolder> = {};
     private _lastAccess: Nullable<number> = null;
     private _authorization: Nullable<string> = null;
+    private _wsOptions: Nullable<any> = null;
 
     username?: string;
 
-    constructor(base: string, httpsAgent?: https.Agent) {
+    constructor(base: string, httpsAgent?: https.Agent, websocketOptions?: any) {
         this._base = base;
         this._http = axios.create({
             baseURL: base,
             httpsAgent: httpsAgent
         });
+        this._wsOptions = websocketOptions;
     }
 
     public on(name: string, handler: EventCallback): void {
@@ -323,7 +325,7 @@ export class MamoriService {
                     timeout: 90000000,
                     longpollerTimeout: 90000000,
                     heartbeatIntervalMs: 30000,
-                    params: { token: sid }
+                    params: { token: sid, options: this._wsOptions }
                 });
                 this._socket.onError((e: any) => {
                     // console.error("UI websocket error" + JSON.stringify(e));

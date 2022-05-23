@@ -4,7 +4,9 @@ import { Datasource } from '../../datasource';
 import { handleAPIException, noThrow, ignoreError, FILTER_OPERATION } from '../../utils';
 import { DatasourcePermission, DB_PERMISSION } from '../../permission';
 import { ServerSession } from '../../server-session';
-const INSECURE = new https.Agent({ rejectUnauthorized: false });
+
+const SOCKET_OPTIONS = { rejectUnauthorized: false };
+const INSECURE = new https.Agent(SOCKET_OPTIONS);
 
 export async function setPassthroughPermissions(api: MamoriService, grantee: string, dsName: string) {
     let r2 = await noThrow(new DatasourcePermission().on(dsName, "", "", "").permission(DB_PERMISSION.MASKED).grantee(grantee).grant(api));
@@ -16,7 +18,7 @@ export async function setPassthroughPermissions(api: MamoriService, grantee: str
 
 export async function createNewPassthroughSession(host: string, username: string, password: string, datasourceName: string): Promise<MamoriService> {
     //CREATE NEW SESSION AND SET TO PASSTHROUGH
-    let apiU = new MamoriService(host, INSECURE);
+    let apiU = new MamoriService(host, INSECURE, SOCKET_OPTIONS);
     let r1 = await noThrow(apiU.login(username, password));
     expect(r1.login_token).toBeDefined();
     let r4 = await noThrow(ServerSession.setPassthrough(apiU, datasourceName));
