@@ -75,14 +75,14 @@ if (dbPassword) {
 
 
 
-        test('datasource 002 - password policy', async done => {
+        test.skip('datasource 002 - postgres password policy', async done => {
 
             //Create DS
-            let dsHost = "10.0.0.224";
-            let dsport = "5412";
+            let dsHost = host;
+            let dsport = "54321";
             let dsUser = "postgres";
-            let dsDBPW = "password";
-            let dsDB = "postgres";
+            let dsDBPW = dbPassword;
+            let dsDB = "mamorisys";
 
             let dsName = "test_002_local_pg" + testbatch;
             let ds = new Datasource(dsName);
@@ -105,7 +105,7 @@ if (dbPassword) {
             }));
             expect(r1.error).toBe(false);
             //ADD CREDENTIAL
-            let ccred = await noThrow(ds.addCredential(api, uName, 'postgres', dbPassword));
+            let ccred = await noThrow(ds.addCredential(api, uName, dsUser, dsDBPW));
             expect(ccred.error).toBe(false);
             //SET PERMISSIONS
             await setPassthroughPermissions(api, uName, dsName);
@@ -115,8 +115,8 @@ if (dbPassword) {
                 let pw = "!testPW";
                 let loginU1 = ("testu1002" + testbatch).toLowerCase();
                 let loginU2 = ("testu2002" + testbatch).toLowerCase();
-                await createPGDatabaseUser(apiU, loginU1, pw, "mamorisys");
-                await createPGDatabaseUser(apiU, loginU2, pw, "mamorisys");
+                await createPGDatabaseUser(apiU, loginU1, pw, dsDB);
+                await createPGDatabaseUser(apiU, loginU2, pw, dsDB);
                 //CHECK U1 Password no longer works with credential validate
                 let r7 = await noThrow(ds.validateCredential(api, grantee, loginU1, pw));
                 expect(r7).toBe("Authorization valid");
@@ -138,10 +138,12 @@ if (dbPassword) {
                 ds2.ofType("POSTGRESQL", 'postgres')
                     .at(dsHost, dsport)
                     .withCredentials(loginU1, pw)
+                    .withDatabase(dsDB)
                     .withPasswordPolicy("30", rName);
                 let r6 = await noThrow(ds2.create(api));
                 expect(r6.errors).toBeUndefined();
                 let r9 = await noThrow(ds2.validateCredential(api, grantee, loginU1, pw));
+                console.log(r9);
                 expect(r9.errors).toBeDefined();
                 let r10 = await noThrow(ds2.addCredentialWithManagedPassword(api, grantee, loginU2, pw, "15"));
                 expect(r10.errors).toBeUndefined();
@@ -150,8 +152,8 @@ if (dbPassword) {
 
                 await ignoreError(dsRole.delete(api));
                 await ignoreError(ds2.delete(api));
-                await dropPGDatabaseUser(apiU, loginU1, "mamorisys");
-                await dropPGDatabaseUser(apiU, loginU2, "mamorisys");
+                await dropPGDatabaseUser(apiU, loginU1, dsDB);
+                await dropPGDatabaseUser(apiU, loginU2, dsDB);
             } finally {
                 //CLEAN UP
                 await ignoreError(apiU.logout());
@@ -160,6 +162,8 @@ if (dbPassword) {
             }
             done();
         });
+
+
 
 
 
