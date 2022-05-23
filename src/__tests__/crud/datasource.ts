@@ -78,14 +78,19 @@ if (dbPassword) {
         test('datasource 002 - password policy', async done => {
 
             //Create DS
+            let dsHost = "10.0.0.224";
+            let dsport = "5412";
+            let dsUser = "postgres";
+            let dsDBPW = "password";
+            let dsDB = "postgres";
+
             let dsName = "test_002_local_pg" + testbatch;
             let ds = new Datasource(dsName);
             await ignoreError(ds.delete(api));
             ds.ofType("POSTGRESQL", 'postgres')
-                .at("localhost", 54321)
-                .withCredentials('postgres', dbPassword)
-                .withDatabase('mamorisys')
-                .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
+                .at(dsHost, dsport)
+                .withCredentials(dsUser, dsDBPW)
+                .withDatabase(dsDB);
             let res = await noThrow(ds.create(api));
             expect(res.error).toBe(false);
             //CREATE THE USER
@@ -131,12 +136,9 @@ if (dbPassword) {
                 let ds2 = new Datasource("A" + dsName);
                 await ignoreError(ds2.delete(api));
                 ds2.ofType("POSTGRESQL", 'postgres')
-                    .at("localhost", 54321)
+                    .at(dsHost, dsport)
                     .withCredentials(loginU1, pw)
-                    .withDatabase('mamorisys')
-                    .withPasswordPolicy("30", rName)
-                    .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true')
-                    ;
+                    .withPasswordPolicy("30", rName);
                 let r6 = await noThrow(ds2.create(api));
                 expect(r6.errors).toBeUndefined();
                 let r9 = await noThrow(ds2.validateCredential(api, grantee, loginU1, pw));
