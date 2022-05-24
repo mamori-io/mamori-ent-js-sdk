@@ -64,7 +64,7 @@ describe("role tests", () => {
         expect(x2.length).toBe(0);
         //Grant to user
         let x3 = await noThrow(k.grantTo(api, grantee, false));
-        expect(x3.error).toBe(false);
+        expect(x3.errors).toBe(false);
         //Ensure user can see the role
         let x4 = (await noThrow(k.getGrantees(apiAsAPIUser)))
         expect(x4.length).toBe(1);
@@ -72,7 +72,7 @@ describe("role tests", () => {
         let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
         expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
         let x5 = await noThrow(k.revokeFrom(api, grantee));
-        expect(x5.error).toBe(false);
+        expect(x5.errors).toBe(false);
         //Ensure the role was revoked
         let x6 = (await noThrow(k.getGrantees(apiAsAPIUser)))
         expect(x6.length).toBe(0);
@@ -98,12 +98,12 @@ describe("role tests", () => {
 
         //Grant to user
         let x3 = await noThrow(k.grantTo(api, grantee, false, Role.optionValidFor(TIME_UNIT.MINUTES, 30)));
-        expect(x3.error).toBe(false);
+        expect(x3.errors).toBe(false);
         //Ensure user can see the role
         let x4 = await noThrow(k.getGrantees(api));
         expect(x4.length).toBe(1);
         let x5 = await noThrow(k.revokeFrom(api, grantee));
-        expect(x5.error).toBe(false);
+        expect(x5.errors).toBe(false);
         //Ensure the role was revoked
         let x6 = await noThrow(k.getGrantees(api));
         expect(x6.length).toBe(0);

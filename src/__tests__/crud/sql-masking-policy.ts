@@ -39,7 +39,7 @@ describe("sql-masking-policy crud tests", () => {
         let res4 = await noThrow(adminU.create(api, adminpw));
         expect(res4.error).toBe(false);
         let res5 = await noThrow(new Role("mamori_admin").grantTo(api, admin, false));
-        expect(res5.error).toBe(false);
+        expect(res5.errors).toBe(false);
 
         //Policy User
         let policyU = new User(grantee).withEmail("usertest@ace.com").withFullName("Policy User");
@@ -69,9 +69,9 @@ describe("sql-masking-policy crud tests", () => {
             expect(ccred.error).toBe(false);
             //grant role to user
             let r2 = await noThrow(role.grantTo(api, admin, false));
-            expect(r2.error).toBe(false);
+            expect(r2.errors).toBe(false);
             let r3 = await noThrow(role.grantTo(api, grantee, false));
-            expect(r3.error).toBe(false);
+            expect(r3.errors).toBe(false);
             // Grant ALL 
             let p1 = await noThrow(new DatasourcePermission()
                 .on(ds.name, "*", "*", "")
@@ -178,7 +178,7 @@ describe("sql-masking-policy crud tests", () => {
                 let o = new SQLMaskingPolicy(name);
                 await ignoreError(o.delete(api));
                 let q7 = await noThrow(o.create(api));
-                expect(q7.errors).toBe(false);
+                expect(q7.errors).toBeUndefined();
                 let q8 = await noThrow(o.addColumnRule(api, dsName + ".mamorisys." + schemaName + ".tab1", "col1", "masked by full()"));
                 expect(q8.errors).toBe(false);
                 let q9 = await noThrow(o.listColumnRules(api));

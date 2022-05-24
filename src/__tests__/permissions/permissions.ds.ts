@@ -275,8 +275,11 @@ describe("datasource permission tests", () => {
 
     test('test 04.01 grant mix case', async done => {
         //User needs creds and permissions on target DB
-        let p = await ignoreError(new RolePermission().role("DB_CREDS").grantee(grantee).grant(api));
+        let rp = new RolePermission().role("DB_CREDS").grantee("grantee");
+        await noThrow(rp.grant(api));
 
+        //let p = await noThrow(new RolePermission().role("DB_CREDS").grantee(grantee).grant(api));
+        //console.log("****1 %o", p);
         let obj = new DatasourcePermission()
             .on("ss2016", "mamori", "dev", "customer_pii")
             .permission(DB_PERMISSION.SELECT)

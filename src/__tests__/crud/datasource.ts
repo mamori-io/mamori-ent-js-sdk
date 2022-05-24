@@ -75,7 +75,7 @@ if (dbPassword) {
 
 
 
-        test.skip('datasource 002 - postgres password policy', async done => {
+        test('datasource 002 - postgres password policy', async done => {
 
             //Create DS
             let dsHost = "localhost";
