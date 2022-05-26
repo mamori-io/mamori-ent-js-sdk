@@ -3,11 +3,14 @@ import * as https from 'https';
 import { DatasourcePermission, DB_PERMISSION, RolePermission, TIME_UNIT } from '../../permission';
 import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
+import { Datasource } from '../../datasource';
+import { setPassthroughPermissions } from '../subroutines/ds';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
+const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
 describe("datasource permission tests", () => {
@@ -274,6 +277,9 @@ describe("datasource permission tests", () => {
     });
 
     test('test 04.01 grant mix case', async done => {
+
+        //Ensure main admin also has db creds to be able to grant
+        await ignoreError(new RolePermission().role("DB_CREDS").grantee(username).grant(api));
         //User needs creds and permissions on target DB
         let rp = new RolePermission().role("DB_CREDS").grantee("grantee");
         await noThrow(rp.grant(api));
@@ -350,6 +356,70 @@ describe("datasource permission tests", () => {
         done();
     });
 
+
+    test.skip('test 06 select limit', async done => {
+        //Create object with 5 rows
+        //Grant select 
+        if (dbPassword) {
+            //******SETUP
+            //CREATE DS TO LOCAL PG
+            let dsHost = "localhost";
+            let dsport = "54321";
+            let dsUser = "postgres";
+            let dsDBPW = dbPassword;
+            let dsDB = "postgres";
+            let dsName = "test_p_006_local_pg" + testbatch;
+            let rName = dsName + "_006_role" + testbatch;
+            //
+            let ds = new Datasource(dsName);
+            await ignoreError(ds.delete(api));
+            ds.ofType("POSTGRESQL", 'postgres')
+                .at(dsHost, dsport)
+                .withCredentials(dsUser, dsDBPW)
+                .withDatabase(dsDB);
+            let res = await noThrow(ds.create(api));
+            expect(res.error).toBe(false);
+            try {
+                //
+                // Create new role
+                //
+                let dsRole = new Role(rName);
+                await ignoreError(dsRole.delete(api));
+                let r4 = await noThrow(dsRole.create(api));
+                expect(r4.errors).toBeUndefined();
+                //Add Credential to role
+                let r1 = await noThrow(ds.addCredential(api, dsRole.roleid, dsUser, dsDBPW));
+                expect(r1.error).toBe(false);
+                //add connect permissions to role
+                await setPassthroughPermissions(api, dsRole.roleid, ds.name);
+                //Grant to users
+                let r5 = await noThrow(dsRole.grantTo(api, username, false));
+                expect(r5.errors).toBe(false);
+                let r6 = await noThrow(dsRole.grantTo(api, grantee, false));
+                expect(r6.errors).toBe(false);
+
+
+
+
+            } finally {
+                await ignoreError(ds.delete(api));
+                await ignoreError(new Role(rName).delete(api));
+            }
+
+
+            //CREATE ROLE & GRANT PERMISSIONS
+            //SET PASSTHROUGH
+            //CREATE TABLE AND DATA
+
+            //***** TEST
+            //CREATE ROLE WITH LIMIT
+            //SELECT FROM DATA
+
+        }
+
+
+        done();
+    });
 
 
 });
