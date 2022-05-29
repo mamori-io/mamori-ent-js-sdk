@@ -631,11 +631,22 @@ export class MamoriService {
 
 
     public get_smtp_cfg() {
-        return this.callAPI("GET", "/v1/smtp");
+        return this.callAPI("GET", "/v1/smtp").then((data: any) => {
+            return this.system_properties().then((props) => {
+                data.logo = props.email_logo;
+                data.logo_height = props.email_logo_height;
+                return data;
+            });
+        });
     }
 
     public set_smtp_cfg(options: any) {
-        return this.callAPI("PUT", "/v1/smtp", options);
+        return this.callAPI("PUT", "/v1/smtp", options).then(r => {
+            return this.set_system_properties({
+                email_logo: options.logo,
+                email_logo_height: options.logo_height,
+            });
+        });
     }
 
     public send_test_email(options: any) {
@@ -1958,25 +1969,32 @@ export class MamoriService {
     }
 
     public setServerDomain(domain: string) {
-        let url = "https://" + domain + "/";
-        let calls = [];
-        //Set SMTP
-        let smtp = { web_url: url, port: "", server: "", host: "", ssl: false };
-        calls.push(this.set_smtp_cfg(smtp));
-        //SET WG
-        calls.push(this.set_system_properties({ wireguard_public_address: domain }));
-        //RDP URI
-        calls.push(this.set_system_properties({ rdp_uri: url + "rdp" }));
-        //SET PUSHTOTP
-        let conf = { type: "", name: "", authentication_timeout: "180", cache_authentication_timeout: "900", mamori_service_url: url }
-        conf.type = "pushtotp";
-        conf.name = "pushtotp"
-        calls.push(this.update_provider(conf.name, conf));
-        //SET PUSHMOBILE
-        conf.type = "pushmobile";
-        conf.name = "pushmobile"
-        calls.push(this.update_provider(conf.name, conf));
-        return Promise.all(calls);
+        //get smtp settings
+        return this.get_smtp_cfg().then((smtpSettings: any) => {
+            //console.log("**** %o", smtpSettings);
+            let url = "https://" + domain + "/";
+            let calls = [];
+            //Set SMTP
+            //let smtp = { web_url: url, port: smtpSettings.port, server: smtpSettings.server, email_from: smtpSettings.email_from, host: smtpSettings.hostname, ssl: smtpSettings.ssl, username: smtpSettings.username };
+            let smtp = { web_url: url, port: "", server: "", host: "", ssl: false };
+            calls.push(this.set_smtp_cfg(smtp));
+            //SET WG
+            calls.push(this.set_system_properties({ wireguard_public_address: domain }));
+            //RDP URI
+            calls.push(this.set_system_properties({ rdp_uri: url + "rdp" }));
+            //SET PUSHTOTP
+            let conf = { type: "", name: "", authentication_timeout: "180", cache_authentication_timeout: "900", mamori_service_url: url }
+            conf.type = "pushtotp";
+            conf.name = "pushtotp"
+            calls.push(this.update_provider(conf.name, conf));
+            //SET PUSHMOBILE
+            conf.type = "pushmobile";
+            conf.name = "pushmobile"
+            calls.push(this.update_provider(conf.name, conf));
+            return Promise.all(calls);
+        })
+
+
     }
 
 

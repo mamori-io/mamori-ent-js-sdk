@@ -108,29 +108,32 @@ describe("Server Settings - bootstrap user", () => {
         }
     });
 
-    test('set server domain', async done => {
-        let o = new ServerSettings(api);
-        //192.0.0.1
-        let domain = "192.0.0.1";
-        let r = await noThrow(o.setServerDomain(domain));
-        if (r && r.length > 0) {
-            expect(r[0]).toBe("ok");
-            expect(r[1][0]).toBe("ok");
-            expect(r[2][0]).toBe("ok");
-            expect(r[3].error).toBe(false);
-            expect(r[4].error).toBe(false);
+    test.skip('set server domain', async done => {
+        try {
+            //let this.get_smtp_cfg().then((smtpSettings: any)
+            let o = new ServerSettings(api);
+            //192.0.0.1
+            let domain = "192.0.0.1";
+            let r = await noThrow(o.setServerDomain(domain));
+            if (r && r.length > 0) {
+                expect(r[0].length).toBe(0);
+                expect(r[1][0]).toBe("ok");
+                expect(r[2][0]).toBe("ok");
+                expect(r[3].error).toBe(false);
+                expect(r[4].error).toBe(false);
+            }
+        } finally {
+            let o2 = new ServerSettings(api);
+            let u = new URL(host);
+            let r2 = await noThrow(o2.setServerDomain(u.host));
+            if (r2 && r2.length > 0) {
+                expect(r2[0].length).toBe(0);
+                expect(r2[1][0]).toBe("ok");
+                expect(r2[2][0]).toBe("ok");
+                expect(r2[3].error).toBe(false);
+                expect(r2[4].error).toBe(false);
+            }
         }
-        let u = new URL(host);
-        let r2 = await noThrow(o.setServerDomain(u.host));
-        if (r2 && r2.length > 0) {
-            expect(r[0]).toBe("ok");
-            expect(r[1][0]).toBe("ok");
-            expect(r[2][0]).toBe("ok");
-            expect(r[3].error).toBe(false);
-            expect(r[4].error).toBe(false);
-        }
-        //let x = await noThrow(api.get_system_properties("?properties=wireguard_public_address,rdp_uri"));
-        //console.log(x);
         done();
     });
 
