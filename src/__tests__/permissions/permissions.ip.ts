@@ -1,8 +1,11 @@
 import { MamoriService } from '../../api';
 import * as https from 'https';
 import { IPResourcePermission, TIME_UNIT } from '../../permission';
-import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
+import { addFilterToDxGridOptions, FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
+import { WireGuardPeer } from '../../wireguard-peer';
+import { assert } from 'console';
+import { IpResource } from '../../ip-resource';
 
 
 
@@ -36,9 +39,15 @@ describe("ip resource permission tests", () => {
         }).catch(e => {
             fail(handleAPIException(e));
         })
+
+        //Create the IP Resource
+        let cidr = "10.0.0.0/16";
+        let ports = "7777";
+        let baseR = await ignoreError(new IpResource(resource).withCIDR(cidr).withPorts(ports).create(api));
     });
 
     afterAll(async () => {
+        await ignoreError(new IpResource(resource).delete(api));
         await api.delete_user(grantee);
         await api.logout();
 
@@ -188,6 +197,17 @@ describe("ip resource permission tests", () => {
     });
 
     test('test 05 role grant', async done => {
+
+        //create the wg peer for the grantee
+        let peer = "test_peer_" + testbatch;
+        let k = new WireGuardPeer(grantee, peer);
+        await noThrow(k.create(api));
+        let payload = {};
+        addFilterToDxGridOptions(payload, "userid", FILTER_OPERATION.EQUALS_STRING, grantee);
+        let r6 = await noThrow(api.search_wireguard_peers(payload));
+        expect(r6.data.length).toBeGreaterThan(0);
+        let pPublicKey = r6.data[0].public_key;
+        //
         let roleName = "test_permission_ip_." + testbatch;
         let role = new Role(roleName);
         await ignoreError(role.delete(api));
@@ -213,6 +233,23 @@ describe("ip resource permission tests", () => {
         //check list
         res = await new IPResourcePermission().grantee(roleName).list(api, filter);
         expect(res.totalCount).toBe(1);
+        //Grant role to grantee
+        await noThrow(role.grantTo(api, grantee, false));
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        //let r10 = await noThrow(new IPResourcePermission().resource(resource).grantee(grantee).grant(api));
+        let r7 = await noThrow(api.get_wireguard_status());
+        let r8 = r7.filter((o: any) => o.public_key === pPublicKey);
+        //console.log("**** 111 %o", r8);
+        expect(r8[0].allowed_dst_ip.length).toBe(2)
+
+        await noThrow(role.revokeFrom(api, grantee));
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        let r9 = await noThrow(api.get_wireguard_status());
+        let r10 = r9.filter((o: any) => o.public_key === pPublicKey);
+        //console.log("**** 222 %o", r10);
+        expect(r10[0].allowed_dst_ip.length).toBe(1)
+
+
         //try re-grant
         let resp2 = await ignoreError(obj.grant(api));
         expect(resp2.errors).toBe(true);
@@ -226,8 +263,7 @@ describe("ip resource permission tests", () => {
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-
-
+        await noThrow(role.revokeFrom(api, grantee));
         //Delete role
         let d = await noThrow(role.delete(api));
         expect(d.error).toBe(false);
