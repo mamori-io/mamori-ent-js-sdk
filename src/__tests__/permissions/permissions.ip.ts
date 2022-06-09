@@ -241,7 +241,7 @@ describe("ip resource permission tests", () => {
         let r8 = r7.filter((o: any) => o.public_key === pPublicKey);
         //console.log("**** 111 %o", r8);
         expect(r8[0].allowed_dst_ip.length).toBe(2)
-
+        //
         await noThrow(role.revokeFrom(api, grantee));
         await new Promise(resolve => setTimeout(resolve, 10000));
         let r9 = await noThrow(api.get_wireguard_status());
