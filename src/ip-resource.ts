@@ -112,8 +112,19 @@ export class IpResource implements ISerializable {
      */
     public delete(api: MamoriService): Promise<any> {
         //Get the resource by name
-        return api.callAPI("DELETE", "/v1/ip_resources/" + this.name);
+        return api.callAPI("DELETE", "/v1/ip_resources/" + encodeURIComponent(this.name));
     }
+
+    public update(api: MamoriService, data: any): Promise<any> {
+        let rec: any = { cidr: data.cidr, ports: data.ports };
+        if (this.name != data.name) {
+            rec.name = data.name;
+        }
+        //Get the resource by name
+        return api.callAPI("PUT", "/v1/ip_resources/" + encodeURIComponent(this.name), { resource: rec });
+    }
+
+
 
 
 }

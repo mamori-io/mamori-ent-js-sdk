@@ -39,9 +39,8 @@ export class Role implements ISerializable {
     public static getAll(api: MamoriService): Promise<any> {
         //return api.callAPI("GET", "/v1/roles?isdef=Y");
         return api.select(
-            "SELECT roleid,position,lastupdate FROM (select * from SYS.SYSROLES WHERE lower(isDef) = 'y' AND roleid <> 'public') a ");
+            "SELECT uuid,roleid,position,externalname,withadminoption,valid_from,valid_until,granted_by_request_id,revoked_by_request_id,grant_provider,lastupdate FROM (select * from SYS.SYSROLES WHERE lower(isDef) = 'y' AND roleid <> 'public') a ");
     }
-
 
 
     /**
@@ -49,10 +48,7 @@ export class Role implements ISerializable {
      * @returns 
      */
     public static build(role: any): Role {
-        let result = new Role(role.roleid, role.externalName);
-        result.position = role.position;
-
-        return result;
+        return new Role(role.roleid, role.externalname).fromJSON(role);
     }
 
     /**

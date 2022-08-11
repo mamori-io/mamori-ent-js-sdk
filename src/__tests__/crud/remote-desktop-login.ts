@@ -53,29 +53,33 @@ describe("remote desktop login tests", () => {
         expect(res.error).toBe(false);
         //Get Details Call
         let x = await noThrow(RemoteDesktopLogin.getByName(api, k.name));
-        expect(x.id).toBeDefined();
+        expect(x._id).toBeDefined();
         //let x2 = await noThrow(RemoteDesktopLogin.getByName(apiAsAPIUser, k.name));
         //expect(x2.errors).toBe(true);
         //List Call
-        let x3 = await RemoteDesktopLogin.list(api, 0, 10, [["name", "=", k.name]]);
+        let x3 = await noThrow(RemoteDesktopLogin.list(api, 0, 10, [["name", "=", k.name]]));
         expect(x3.data.length).toBe(1);
-        let x4 = await RemoteDesktopLogin.list(apiAsAPIUser, 0, 10, [["name", "=", k.name]]);
+        let x4 = await noThrow(RemoteDesktopLogin.list(apiAsAPIUser, 0, 10, [["name", "=", k.name]]));
         expect(x4.data.length).toBe(0);
         //Grant permission to user
         let x5 = await noThrow(k.grantTo(api, grantee));
         expect(x5.errors).toBe(false);
-        let x6 = await RemoteDesktopLogin.list(apiAsAPIUser, 0, 10, [["name", "=", k.name]]);
+        let x6 = await noThrow(RemoteDesktopLogin.list(apiAsAPIUser, 0, 10, [["name", "=", k.name]]));
+
         expect(x6.data.length).toBe(1);
         //Ensure user can't delete a key
         let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
         expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
 
         let x7 = await noThrow(k.revokeFrom(api, grantee));
+
         expect(x7.errors).toBe(false);
-        let x8 = await RemoteDesktopLogin.list(apiAsAPIUser, 0, 10, [["name", "=", k.name]]);
+        let x8 = await noThrow(RemoteDesktopLogin.list(apiAsAPIUser, 0, 10, [["name", "=", k.name]]));
+
         expect(x8.data.length).toBe(0);
         //Delete
         let x9 = await noThrow(k.delete(api));
+
         expect(x9.error).toBe(false);
         //
         done();

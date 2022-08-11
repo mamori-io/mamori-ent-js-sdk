@@ -18,7 +18,7 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("ip resource permission tests", () => {
 
     let api: MamoriService;
-    let resource = "webaccess" + testbatch;
+    let resource = "webaccess-" + testbatch;
     let permType = "IP USAGE";
     let grantee = "test_apiuser_ip." + testbatch;
     let granteepw = "J{J'vpKsn3213W6(6A,4_vdQ'}D"

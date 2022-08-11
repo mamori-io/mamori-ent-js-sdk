@@ -30,7 +30,7 @@ import { SSHLoginPermission } from './permission';
  *     host: "10.0.2.2", 
  *     port: 1122
  *     user: "postgres",
- *     privateKey: "my_key",
+ *     private_key_name: "my_key",
  *     password: "postgres"
  * }).create(api)
  * ```
@@ -51,18 +51,25 @@ export class SshLogin implements ISerializable {
         return result;
     }
 
-    name: string;
-    host?: string;
-    port?: number;
-    user?: string;
-    password?: string;
-    privateKey?: string;
+    public id: string;
+    public name: string;
+    public host?: string;
+    public port?: number;
+    public user?: string;
+    public password?: string;
+    public private_key_name?: string;
 
     /**
      * @param name  Unique SshLogin name
      */
     public constructor(name: string) {
+        this.id = '';
         this.name = name;
+        this.host = '';
+        this.port = 22;
+        this.user = '';
+        this.private_key_name = '';
+        this.password = '';
     }
 
     /**
@@ -73,8 +80,22 @@ export class SshLogin implements ISerializable {
          */
     fromJSON(record: any) {
         for (let prop in this) {
-            if (record.hasOwnProperty(prop)) {
-                this[prop] = record[prop];
+            try {
+                if (record.hasOwnProperty(prop)) {
+                    this[prop] = record[prop];
+                }
+            } catch (e) {
+
+            }
+        }
+        if (record.uri) {
+            let token = record.uri.split("@");
+            this.user = token[0].replace("ssh://", "");
+            let hostToken = token[1].split(":");
+            this.host = hostToken[0];
+            this.port = 22;
+            if (hostToken.length > 1) {
+                this.port = hostToken[1];
             }
         }
         return this;
@@ -101,7 +122,7 @@ export class SshLogin implements ISerializable {
      */
     public create(api: MamoriService): Promise<any> {
         let uri = "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port);
-        let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" + sqlEscape(uri) + "', '" + this.privateKey + "', '" + sqlEscape(this.password || "") + "')";
+        let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" + sqlEscape(uri) + "', '" + this.private_key_name + "', '" + sqlEscape(this.password || "") + "')";
         return api.select(query).then((res: any) => {
             return res[0];
         });
@@ -114,6 +135,24 @@ export class SshLogin implements ISerializable {
      */
     public delete(api: MamoriService): Promise<any> {
         return api.select("CALL DELETE_SSH_LOGIN('" + sqlEscape(this.name) + "')").then((res: any) => {
+            return res[0];
+        });
+    }
+
+    public update(api: MamoriService): Promise<any> {
+        let uri = "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port);
+        return api.select("call update_ssh_login(" +
+            sqlEscape(this.id) +
+            ", '" +
+            sqlEscape(this.name) +
+            "', '" +
+            sqlEscape(uri) +
+            "', '" +
+            this.private_key_name +
+            "', '" +
+            sqlEscape(this.password || "") +
+            "')"
+        ).then((res: any) => {
             return res[0];
         });
     }
@@ -141,14 +180,14 @@ export class SshLogin implements ISerializable {
     /**
      * Set the creadentials to use when connecting to the target resource
      * @param user        Required user name
-     * @param privateKey  Required private key name
+     * @param private_key_name  Required private key name
      * @param password    Optional password
      * @returns 
      */
-    public withCredentials(user: string, privateKey: string, password?: string): SshLogin {
+    public withCredentials(user: string, private_key_name: string, password?: string): SshLogin {
         this.user = user;
         this.password = password;
-        this.privateKey = privateKey;
+        this.private_key_name = private_key_name;
         return this;
     }
 }

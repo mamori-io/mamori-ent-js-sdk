@@ -311,20 +311,25 @@ export class RemoteDesktopLogin implements ISerializable {
                 }
             }
         }
-        if (this.rdp) {
+        if (this.rdp && record.rdp) {
+            this.rdp = JSON.parse(JSON.stringify(record.rdp));
+        } else if (this.rdp) {
             for (let prop in this.rdp) {
                 if (record.hasOwnProperty(prop)) {
                     (this.rdp as any)[prop] = record[prop];
                 }
             }
         }
-        if (this.vnc) {
-            for (let prop in this.vnc) {
-                if (record.hasOwnProperty(prop)) {
-                    (this.vnc as any)[prop] = record[prop];
+        if (this.vnc && record.vnc) {
+            this.vnc = JSON.parse(JSON.stringify(record.vnc));
+        } else
+            if (this.vnc) {
+                for (let prop in this.vnc) {
+                    if (record.hasOwnProperty(prop)) {
+                        (this.vnc as any)[prop] = record[prop];
+                    }
                 }
             }
-        }
         return this;
     }
 

@@ -97,7 +97,52 @@ export enum MAMORI_PERMISSION {
 }
 
 
-class PermissionBase implements ISerializable {
+export class Permissions {
+    public static list(api: MamoriService, filter?: any): Promise<any> {
+
+        let filters = filter;
+        if (filter && Array.isArray(filter)) {
+            let ndx = 0;
+            filters = {};
+            filter.forEach((element: any) => {
+                filters[ndx.toString()] = element;
+                ndx++
+            });
+        }
+
+        let path = "/v1/search/grantee_permissions";
+        let payload = filter ? { filter: filters } : {};
+        return api.callAPI("PUT", path, payload);
+    }
+
+    public static factory(rec: any): PermissionBase {
+        if (rec.permissiontype == 'SSH') {
+            return new SSHLoginPermission().fromJSON(rec);
+        } else if (rec.permissiontype == 'IP USAGE') {
+            return new IPResourcePermission().fromJSON(rec);
+        } else if (rec.permissiontype == 'RDP') {
+            return new RemoteDesktopLoginPermission().fromJSON(rec);
+        } else if (rec.permissiontype == 'KEY USAGE') {
+            return new KeyPermission().fromJSON(rec);
+        } else if (Object.values(DB_PERMISSION).includes(rec.permissiontype)) {
+            return new DatasourcePermission().permission(rec.permissiontype).fromJSON(rec);
+        } else if (Object.values(MAMORI_PERMISSION).includes(rec.permissiontype)) {
+            return new MamoriPermission([rec.permissiontype]).fromJSON(rec);
+        } else {
+            console.log("**** Permission.factory MISSING TYPE : %s", rec.permissiontype)
+            return new PermissionBase();
+        }
+        //
+        //"UNAUTHENTICATED IP USAGE"
+        //
+        //""
+        //POLICY
+        //
+
+    }
+}
+
+export class PermissionBase implements ISerializable {
 
     private recipient?: string;
     private validType?: VALID_RANGE_TYPE;
@@ -139,6 +184,10 @@ class PermissionBase implements ISerializable {
      * @returns
      */
     fromJSON(record: any) {
+        if (record.grantee) {
+            this.grantee(record.grantee);
+        }
+
         for (let prop in this) {
             if (record.hasOwnProperty(prop)) {
                 this[prop] = record[prop];
@@ -322,7 +371,7 @@ class PermissionBase implements ISerializable {
     public list(api: MamoriService, filter?: any): Promise<any> {
 
         let filters = filter;
-        if (filter && filter.length > 1) {
+        if (filter && Array.isArray(filter)) {
             let ndx = 0;
             filters = {};
             filter.forEach((element: any) => {
@@ -361,6 +410,7 @@ export class DatasourcePermission extends PermissionBase {
      * @returns
      */
     fromJSON(record: any) {
+        super.fromJSON(record);
         for (let prop in this) {
             if (record.hasOwnProperty(prop)) {
                 if (prop === "permissions") {
@@ -516,6 +566,7 @@ export class PolicyPermission extends PermissionBase {
      * @returns
      */
     fromJSON(record: any) {
+        super.fromJSON(record);
         for (let prop in this) {
             if (prop == "policies") {
                 this.items = record["policies"].split(",");
@@ -596,8 +647,9 @@ export class KeyPermission extends PermissionBase {
      * @returns
      */
     fromJSON(record: any) {
+        super.fromJSON(record);
         for (let prop in this) {
-            if (prop == "items") {
+            if (prop == "items" && record.hasOwnProperty("permissions")) {
                 this.items = record["permissions"].split(",");
             } else if (record.hasOwnProperty(prop)) {
                 this[prop] = record[prop];
@@ -639,6 +691,7 @@ export class RolePermission extends PermissionBase {
      * @returns
      */
     fromJSON(record: any) {
+        super.fromJSON(record);
         for (let prop in this) {
             if (prop == "role") {
                 this.role(record[prop].split(",")[0]);
@@ -690,7 +743,7 @@ export class SSHLoginPermission extends PermissionBase {
     public constructor() {
         super();
         this.sshLoginName = "";
-        this.items = [];
+        this.items = ["SSH"];
     }
 
     /**
@@ -699,7 +752,6 @@ export class SSHLoginPermission extends PermissionBase {
      * @returns  
      */
     public sshLogin(name: string): SSHLoginPermission {
-        this.items = ["SSH"];
         this.sshLoginName = name;
         return this;
     }
@@ -718,8 +770,13 @@ export class SSHLoginPermission extends PermissionBase {
      * @returns
      */
     fromJSON(record: any) {
+        super.fromJSON(record);
+        if (record.key_name && record.key_name != '') {
+            this.sshLogin(record.key_name);
+        }
+
         for (let prop in this) {
-            if (prop == "items") {
+            if (prop == "items" && record.hasOwnProperty("permissions")) {
                 this.items = record["permissions"].split(",");
             } else if (record.hasOwnProperty(prop)) {
                 this[prop] = record[prop];
@@ -781,7 +838,7 @@ export class IPResourcePermission extends PermissionBase {
     public prepare(): any {
         let res = super.prepare();
         this.options.grantables = this.items;
-        this.options.object_name = this.resourceName;
+        this.options.object_name = '"' + this.resourceName + '"';
         return res;
     }
 
@@ -792,8 +849,12 @@ export class IPResourcePermission extends PermissionBase {
      * @returns
      */
     fromJSON(record: any) {
+        super.fromJSON(record);
+        if (record.key_name && record.key_name != '') {
+            this.resourceName = record.key_name;
+        }
         for (let prop in this) {
-            if (prop == "items") {
+            if (prop == "items" && record.hasOwnProperty("permissions")) {
                 this.items = record["permissions"].split(",");
             } else if (prop === "always2fa") {
                 this.always2FA(record[prop] === "true");
@@ -843,6 +904,7 @@ export class MamoriPermission extends PermissionBase {
      * @returns
      */
     fromJSON(record: any) {
+        super.fromJSON(record);
         for (let prop in this) {
             if (prop == "permission") {
                 this.permission(record[prop].split(",")[0]);
@@ -895,7 +957,7 @@ export class RemoteDesktopLoginPermission extends PermissionBase {
     public constructor() {
         super();
         this.RDLoginName = "";
-        this.items = [];
+        this.items = ["RDP"];
     }
 
     /**
@@ -904,7 +966,6 @@ export class RemoteDesktopLoginPermission extends PermissionBase {
      * @returns  
      */
     public name(name: string): RemoteDesktopLoginPermission {
-        this.items = ["RDP"];
         this.RDLoginName = name;
         return this;
     }
@@ -923,8 +984,13 @@ export class RemoteDesktopLoginPermission extends PermissionBase {
      * @returns
      */
     fromJSON(record: any) {
+        super.fromJSON(record);
+        if (record.key_name && record.key_name != '') {
+            this.name(record.key_name);
+        }
+
         for (let prop in this) {
-            if (prop == "items") {
+            if (prop == "items" && record.hasOwnProperty("permissions")) {
                 this.items = record["permissions"].split(",");
             } else if (record.hasOwnProperty(prop)) {
                 this[prop] = record[prop];

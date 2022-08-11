@@ -1898,7 +1898,7 @@ export class MamoriService {
     }
 
     public wireguard_disconnect_peer(peer_public_key: string) {
-        return this.callAPI("DELETE", "/v1/wireguard/" + peer_public_key + "/disconnect");
+        return this.callAPI("DELETE", "/v1/wireguard/" + encodeURIComponent(peer_public_key) + "/disconnect");
     }
 
     public get_wireguard_log() {
