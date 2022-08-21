@@ -1,5 +1,6 @@
 #!/bin/bash
 
+yarn test permissions
 yarn test crud/alert
 yarn test crud/datasource
 yarn test crud/encryption
