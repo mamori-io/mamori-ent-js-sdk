@@ -9,16 +9,62 @@
 import axios from 'axios';
 import { AxiosInstance, Method } from 'axios';
 import { Channel, Socket } from "./phoenix";
-import * as https from 'https';
 import { Datasource } from "./datasource";
-import { Key } from "./key";
+import { Key, KEY_TYPE, SSH_ALGORITHM } from "./key";
 import { Network, IpSecVpn, OpenVPN, SshTunnel } from "./network";
 import { SshLogin } from "./ssh-login";
 import { RoleGrant, Role } from "./role";
 import { Runnable } from './runnable';
 import { decodeMessage } from './utils';
+// namespaces
+import * as io_https from 'https';
+import * as io_alertchannel from './alert-channel';
+import * as io_datasource from "./datasource";
+import * as io_ipresource from './ip-resource';
+import * as io_key from './key';
+import * as io_network from './network';
+import * as io_permission from './permission';
+import * as io_ondemandpolicies from './on-demand-policy';
+import * as io_remotedesktop from './remote-desktop-login';
+import * as io_role from './role';
+import * as io_serversession from './server-session';
+import * as io_serversettings from './server-settings';
+import * as io_sqlmaskingpolicies from './sql-masking-policy';
+import * as io_ssh from './ssh-login';
+import * as io_user from './user';
+import * as io_utils from './utils';
+import * as io_wireguardpeers from './wireguard-peer';
 
-export { Datasource, Key, Network, SshLogin, Role, RoleGrant, IpSecVpn, OpenVPN, SshTunnel, Runnable };
+
+export {
+    Datasource
+    , Key, KEY_TYPE, SSH_ALGORITHM
+    , Network
+    , SshLogin
+    , Role, RoleGrant
+    , IpSecVpn
+    , OpenVPN
+    , SshTunnel
+    , Runnable
+    , io_https
+    , io_alertchannel
+    , io_datasource
+    , io_ipresource
+    , io_key
+    , io_network
+    , io_permission
+    , io_ondemandpolicies
+    , io_remotedesktop
+    , io_role
+    , io_serversession
+    , io_serversettings
+    , io_sqlmaskingpolicies
+    , io_ssh
+    , io_user
+    , io_utils
+    , io_wireguardpeers
+};
+
 
 type ApiCacheEntry = { deferred: Promise<any>, resolved: boolean, value?: any }
 
@@ -170,7 +216,7 @@ export class MamoriService {
 
     username?: string;
 
-    constructor(base: string, httpsAgent?: https.Agent, websocketOptions?: any) {
+    constructor(base: string, httpsAgent?: io_https.Agent, websocketOptions?: any) {
         this._base = base;
         this._http = axios.create({
             baseURL: base,

@@ -17,7 +17,7 @@ export class ServerSession {
         }).catch(e => {
             let payload = { sql: SQL, error: e };
             fs.writeFileSync('./error.json', JSON.stringify(payload));
-            console.log("******* ERROR setPassthrough");
+            console.log("******* ERROR setPassthrough %o", e.message);
             return { errors: true, result: e };
         });
     }

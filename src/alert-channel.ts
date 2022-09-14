@@ -29,7 +29,7 @@ export enum HTTP_OPERATION {
     DELETE = "DELETE"
 }
 
-enum NOTIFICATION_TYPE {
+export enum NOTIFICATION_TYPE {
     MESSAGE = "Message",
     PUSH = "PushMessage"
 }

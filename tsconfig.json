@@ -18,7 +18,8 @@
         "./node_modules/@types/node/index.d.ts"
     ],
     "include": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "src/__utility__/test-helper.ts"
     ],
     "exclude": [
         "node_modules",

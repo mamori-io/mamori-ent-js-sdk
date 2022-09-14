@@ -11,12 +11,22 @@ import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 
 
+export enum PERMISSION_TYPE {
+    MAMORI = "mamori",
+    DATASOURCE = "datasource",
+    POLICY = "policy",
+    KEY = "encryptionkey",
+    ROLE = "role",
+    SSH = "ssh",
+    REMOTE_DESKTOP = "remotedesktop",
+    IP_RESOURCE = "ip_resource"
+}
+
 export enum TIME_UNIT {
     SECONDS = "seconds",
     MINUTES = "minutes",
     HOURS = "hours"
 }
-
 
 export enum VALID_RANGE_TYPE {
     ALWAYS = "always",
@@ -41,7 +51,9 @@ export enum DB_PERMISSION {
     DROP_SCHEMA = "DROP SCHEMA",
     PASSTHROUGH = "PASSTHROUGH",
     MASKED = "MASKED PASSTHROUGH",
-    PROTECTED = "PROTECTED PASSTHROUGH"
+    PROTECTED = "PROTECTED PASSTHROUGH",
+    CALL = "CALL",
+    EXECUTE_SQL_BLOCK = "EXECUTE SQL BLOCK"
 }
 
 /*
@@ -139,6 +151,27 @@ export class Permissions {
         //POLICY
         //
 
+    }
+
+    public static make(type: PERMISSION_TYPE): PermissionBase {
+        switch (type) {
+            case PERMISSION_TYPE.DATASOURCE:
+                return new DatasourcePermission();
+            case PERMISSION_TYPE.IP_RESOURCE:
+                return new IPResourcePermission();
+            case PERMISSION_TYPE.KEY:
+                return new KeyPermission();
+            case PERMISSION_TYPE.MAMORI:
+                return new MamoriPermission();
+            case PERMISSION_TYPE.POLICY:
+                return new PolicyPermission();
+            case PERMISSION_TYPE.REMOTE_DESKTOP:
+                return new RemoteDesktopLoginPermission();
+            case PERMISSION_TYPE.ROLE:
+                return new RolePermission();
+            case PERMISSION_TYPE.SSH:
+                return new SSHLoginPermission();
+        }
     }
 }
 
@@ -386,7 +419,6 @@ export class PermissionBase implements ISerializable {
         return api.callAPI("PUT", path, payload);
     }
 }
-
 
 export class DatasourcePermission extends PermissionBase {
     private items?: DB_PERMISSION[];
@@ -884,7 +916,6 @@ export class IPResourcePermission extends PermissionBase {
         return res;
     }
 }
-
 
 /**
      * Class to grant mamori server permissions
