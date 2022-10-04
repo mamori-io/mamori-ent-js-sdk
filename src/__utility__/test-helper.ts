@@ -88,7 +88,7 @@ export class DBHelper {
             expect(q8.errors).toBe(false);
         }
         let q9 = await io_utils.noThrow(o.listColumnRules(api));
-        expect(q9.totalCount).toBe(rules.length.toString());
+        expect(q9.totalCount).toBe(rules.length);
         return o;
     }
 

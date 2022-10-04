@@ -287,12 +287,12 @@ describe("datasource permission tests", () => {
         //let p = await noThrow(new RolePermission().role("DB_CREDS").grantee(grantee).grant(api));
         //console.log("****1 %o", p);
         let obj = new DatasourcePermission()
-            .on("ss2016", "mamori", "dev", "customer_pii")
+            .on("ss2016", "*", "dev", "customer_pii")
             .permission(DB_PERMISSION.SELECT)
             .grantee(grantee);
 
         let obj2 = new DatasourcePermission()
-            .on("Ss2016", "Mamori", "Dev", "CUSTOMER_pii")
+            .on("Ss2016", "*", "Dev", "CUSTOMER_pii")
             .permission(DB_PERMISSION.SELECT)
             .grantee(grantee);
 
@@ -301,6 +301,7 @@ describe("datasource permission tests", () => {
         await ignoreError(obj2.revoke(api));
 
         let r1 = await noThrow(obj.grant(api));
+        console.log("**** %o", r1);
         expect(r1.errors).toBe(false);
         let r2 = await noThrow(obj2.grant(api));
         expect(r2.errors).toBe(true);

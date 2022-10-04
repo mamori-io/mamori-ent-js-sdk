@@ -114,7 +114,7 @@ describe("sql-masking-policy crud tests", () => {
         expect(x.error).toBe(false);
 
         let r = await noThrow(SQLMaskingPolicy.list(api, 0, 10, [["name", FILTER_OPERATION.EQUALS_STRING, o.name]]));
-        expect(r.totalCount).toBe("1");
+        expect(r.totalCount).toBe(1);
         let x3 = await noThrow(SQLMaskingPolicy.get(api, name));
         expect(x3).toBeDefined();
 
@@ -145,7 +145,7 @@ describe("sql-masking-policy crud tests", () => {
         let d0 = await noThrow(o.delete(api));
         expect(d0.error).toBe(false);
         let d2 = await noThrow(SQLMaskingPolicy.list(api, 0, 10, [["name", FILTER_OPERATION.EQUALS_STRING, o.name]]));
-        expect(d2.totalCount).toBe("0");
+        expect(d2.totalCount).toBe(0);
         //Check permissions gone
         let res4 = await new PolicyPermission().grantee(grantee).list(api, filter);
         expect(res4.totalCount).toBe(0);
@@ -182,7 +182,7 @@ describe("sql-masking-policy crud tests", () => {
                 let q8 = await noThrow(o.addColumnRule(api, dsName + ".mamorisys." + schemaName + ".tab1", "col1", "masked by full()"));
                 expect(q8.errors).toBe(false);
                 let q9 = await noThrow(o.listColumnRules(api));
-                expect(q9.totalCount).toBe("1");
+                expect(q9.totalCount).toBe(1);
 
                 let q5 = await noThrow(apiAsAdmin.simple_query("select * from " + schemaName + ".TAB1"));
                 expect(q5[0].col1).toBe("value1");

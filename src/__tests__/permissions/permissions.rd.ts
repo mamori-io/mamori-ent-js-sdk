@@ -285,7 +285,7 @@ describe("rdp permission tests", () => {
         expect(x4.error).toBe(false);
         //Check RD
         let res3a = await noThrow(RemoteDesktopLogin.list(api, 0, 100, [["name", FILTER_OPERATION.EQUALS_STRING, name2]]));
-        expect(res3a.totalCount).toBe("1");
+        expect(res3a.totalCount).toBe(1);
         //Check Grant
         let res3 = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter1);
         expect(res3.totalCount).toBe(0);

@@ -49,7 +49,7 @@ describe("alert channel tests", () => {
         };
         k.addHTTPAlert(HTTP_OPERATION.POST
             , ""
-            , "https://hooks.slack.com/services/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"
+            , "https://hooks.slack.com/services/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"
             , JSON.stringify(body)
             , "application/json")
         k.addPushNotificationAlert("{{applicant}}", "Test Message");
