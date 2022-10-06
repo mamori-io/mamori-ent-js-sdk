@@ -600,7 +600,9 @@ export class MamoriService {
                 this._csrf = body.split(/[<>]/)
                     .filter((s: string) => s.match(/csrf-token/))
                     .map((s: string) => s.replace(/^.*content="/, "").replace(/".*$/, ""))[0];
-                this._cookies = root.headers['set-cookie'].map((s: string) => {
+
+
+                this._cookies = (root.headers['set-cookie'] || []).map((s: string) => {
                     let parts = s.split(";");
                     return parts[0];
                 });
