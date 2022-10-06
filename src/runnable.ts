@@ -7,13 +7,10 @@
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
 // allow for self signed certs
-process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 import minimist = require('minimist');
 import { ParsedArgs } from 'minimist';
-
 import { MamoriService } from './api';
-
 /**
  * Base class for runnable script snippets. Sublass and implement the run method.
  */
