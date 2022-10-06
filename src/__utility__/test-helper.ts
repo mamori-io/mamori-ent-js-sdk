@@ -9,7 +9,7 @@ export class DBHelper {
         let res: any = {};
         let ndx = 1;
         for (let sql of statements) {
-            let o = await io_utils.noThrow(api.simple_query(sql));
+            let o = await io_utils.noThrow(api.select(sql));
             res["query_" + ndx] = o;
             res["query_" + ndx].sql = sql;
             ndx++;

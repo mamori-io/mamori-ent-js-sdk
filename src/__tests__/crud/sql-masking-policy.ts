@@ -167,10 +167,10 @@ describe("sql-masking-policy crud tests", () => {
             try {
                 //Create the schema, table and insert data         
 
-                let q1 = await noThrow(apiAsAdmin.simple_query("DROP SCHEMA " + schemaName + " CASCADE"));
-                let q2 = await noThrow(apiAsAdmin.simple_query("CREATE SCHEMA " + schemaName));
-                let q3 = await noThrow(apiAsAdmin.simple_query("CREATE TABLE " + schemaName + ".TAB1 (col1 varchar(50),col2 varchar(50))"));
-                let q4 = await noThrow(apiAsAdmin.simple_query("INSERT INTO " + schemaName + ".TAB1 (col1,col2) values ('value1','value2')"));
+                let q1 = await noThrow(apiAsAdmin.select("DROP SCHEMA " + schemaName + " CASCADE"));
+                let q2 = await noThrow(apiAsAdmin.select("CREATE SCHEMA " + schemaName));
+                let q3 = await noThrow(apiAsAdmin.select("CREATE TABLE " + schemaName + ".TAB1 (col1 varchar(50),col2 varchar(50))"));
+                let q4 = await noThrow(apiAsAdmin.select("INSERT INTO " + schemaName + ".TAB1 (col1,col2) values ('value1','value2')"));
 
 
                 //Create masking policy & masking rule
@@ -184,22 +184,22 @@ describe("sql-masking-policy crud tests", () => {
                 let q9 = await noThrow(o.listColumnRules(api));
                 expect(q9.totalCount).toBe(1);
 
-                let q5 = await noThrow(apiAsAdmin.simple_query("select * from " + schemaName + ".TAB1"));
+                let q5 = await noThrow(apiAsAdmin.select("select * from " + schemaName + ".TAB1"));
                 expect(q5[0].col1).toBe("value1");
-                let q13 = await noThrow(apiAsAPIUser.simple_query("select * from " + schemaName + ".TAB1"));
+                let q13 = await noThrow(apiAsAPIUser.select("select * from " + schemaName + ".TAB1"));
                 expect(q13[0].col1).toBe("value1");
 
                 let q11 = await noThrow(o.grantTo(api, testRole));
                 expect(q11.errors).toBe(false);
-                let q12 = await noThrow(apiAsAdmin.simple_query("select * from " + schemaName + ".TAB1"));
+                let q12 = await noThrow(apiAsAdmin.select("select * from " + schemaName + ".TAB1"));
                 expect(q12[0].col1).toBe("XXXXXX");
-                let q14 = await noThrow(apiAsAPIUser.simple_query("select * from " + schemaName + ".TAB1"));
+                let q14 = await noThrow(apiAsAPIUser.select("select * from " + schemaName + ".TAB1"));
                 expect(q14[0].col1).toBe("XXXXXX");
 
             }
             finally {
                 //DROP TEST SCHEMA
-                let q6 = await noThrow(apiAsAdmin.simple_query("DROP SCHEMA " + schemaName + " CASCADE"));
+                let q6 = await noThrow(apiAsAdmin.select("DROP SCHEMA " + schemaName + " CASCADE"));
                 await apiAsAPIUser.logout();
                 await apiAsAdmin.logout();
             }

@@ -69,7 +69,7 @@ class UserBase implements ISerializable {
     public static clearMFARequests(api: MamoriService, username: string, peer_public_key?: string): Promise<any> {
         return new Promise((resolve, reject) => {
             let sql = "CALL CLEAR_AUTHENTICATION_REQUESTS(':USERNAME')".replace(":USERNAME", username);
-            api.simple_query(sql).then(() => {
+            api.select(sql).then(() => {
                 if (peer_public_key) {
                     return api.wireguard_disconnect_peer(peer_public_key).then(() => {
                         resolve({ success: true, message: "User multi-factor cache and requests cleared." });

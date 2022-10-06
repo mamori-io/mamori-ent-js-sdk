@@ -39,7 +39,7 @@ class GrantReveal extends Runnable {
         let table_to_reveal = `\"${ds}\".\"${db}\".\"${schema}\".\"${table}\"`;
         let sql = `GRANT REVEAL * on ${table_to_reveal} to ${user_or_role}`;
         console.info(`Granting reveal on all columns for  ${table_to_reveal} to user/role ${user_or_role} ...`);
-        await dm.query(sql);
+        await dm.select(sql);
 
         let cred = JSON.stringify(await dm.get_role_credentials(user_or_role));
         console.info(`${user_or_role} has ${cred}`);

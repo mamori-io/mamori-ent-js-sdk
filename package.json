@@ -38,8 +38,10 @@
         "axios": "^0.21.1",
         "moment-timezone": "0.5.13",
         "sexp": "github:dparnell/sexp",
-        "typedoc": "^0.20.36",
-        "ws": "^8.6.0"
+        "typedoc": "^0.20.36"
+    },
+    "engines": {
+        "node": ">=14"
     },
     "jest": {
         "testTimeout": 25000,

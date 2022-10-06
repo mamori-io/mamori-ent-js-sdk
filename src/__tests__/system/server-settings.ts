@@ -84,21 +84,12 @@ describe("Server Settings - bootstrap user", () => {
                 expect(loginresult.session_id).toBeDefined();
                 let ss = new ServerSettings(apiUser);
                 let pw = "J{J'vpKs827-n\/a@C+W6(6A,4_vdQ'}D";
-                try {
-                    let r = await ss.setBootstrapAccount(true, pw);
-                    expect(r).toBeUndefined();
-                } catch (e) {
-                    console.log("Expected SQL Exception %o", e.response.data);
-                    expect(e.response.data.status).toBe("error");
-                }
-
-                try {
-                    let r = await ss.setBootstrapAccount(false);
-                    expect(r).toBeUndefined();
-                } catch (e) {
-                    console.log("Expected SQL Exception %o", e.response.data);
-                    expect(e.response.data.status).toBe("error");
-                }
+                let r = await noThrow(ss.setBootstrapAccount(true, pw));
+                expect(r.errors).toBe(true);
+                expect(r.response.status).toBe(403);
+                let r2 = await noThrow(ss.setBootstrapAccount(false));
+                expect(r2.errors).toBe(true);
+                expect(r2.response.status).toBe(403);
             } finally {
                 apiUser.logout();
             }

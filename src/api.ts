@@ -8,7 +8,6 @@
  */
 import axios from 'axios';
 import { AxiosInstance, Method } from 'axios';
-import { Channel, Socket } from "./phoenix";
 import { Datasource } from "./datasource";
 import { Key, KEY_TYPE, SSH_ALGORITHM } from "./key";
 import { Network, IpSecVpn, OpenVPN, SshTunnel } from "./network";
@@ -34,6 +33,8 @@ import * as io_ssh from './ssh-login';
 import * as io_user from './user';
 import * as io_utils from './utils';
 import * as io_wireguardpeers from './wireguard-peer';
+//import { Channel, Socket } from "./phoenix";
+
 
 
 export {
@@ -203,16 +204,17 @@ export class MamoriService {
     private _cookies: string[] = [];
     private _claims: any;
     private _session_id: Nullable<string> = null;
-    private _ws_token: Nullable<string> = null;
     private _handlers: StringIndexed<EventCallbacks> = {};
-    private _socket: Nullable<Socket> = null;
-    private _channels: StringIndexed<Channel> = {};
-    private channelRouteChangeCallbacks: any = {};
-    private _to_join: any = {};
-    private _queries: StringIndexed<PromiseHolder> = {};
+    //private _ws_token: Nullable<string> = null;
+    //private _socket: Nullable<Socket> = null;
+    //private _channels: StringIndexed<Channel> = {};
+    //private channelRouteChangeCallbacks: any = {};
+    //private _to_join: any = {};
+    //private _queries: StringIndexed<PromiseHolder> = {};
+    //private _wsOptions: Nullable<any> = null;
+
     private _lastAccess: Nullable<number> = null;
     private _authorization: Nullable<string> = null;
-    private _wsOptions: Nullable<any> = null;
 
     username?: string;
 
@@ -222,7 +224,7 @@ export class MamoriService {
             baseURL: base,
             httpsAgent: httpsAgent
         });
-        this._wsOptions = websocketOptions;
+        //this._wsOptions = websocketOptions;
     }
 
     public on(name: string, handler: EventCallback): void {
@@ -258,7 +260,7 @@ export class MamoriService {
         this._session_id = null;
         this._lastAccess = null;
 
-        this.disconnectSocket();
+        //this.disconnectSocket();
 
         this._authorization = newValue;
         this.trigger("authorization", this);
@@ -289,6 +291,7 @@ export class MamoriService {
         return this._session_id;
     }
 
+    /* WS_CLEANUP
     get token(): Nullable<string> {
         let c = this.claims;
         if (c) {
@@ -297,6 +300,7 @@ export class MamoriService {
 
         return this._ws_token;
     }
+    */
 
     get restricted(): boolean {
         let c = this.claims;
@@ -322,22 +326,19 @@ export class MamoriService {
 
     logout(): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.disconnectSocket().then(() => {
-                if (this.claims) {
-                    this._http.request({ method: 'DELETE', url: '/sessions/logout' })
-                        .then(() => {
-                            this.username = undefined;
-                            this.authorization = null;
-                            resolve();
-                        }).catch(reject);
-                }
-                else {
-                    this.username = undefined;
-                    this.authorization = null;
-                    resolve();
-                }
-
-            }).catch(reject);
+            if (this.claims) {
+                this._http.request({ method: 'DELETE', url: '/sessions/logout' })
+                    .then(() => {
+                        this.username = undefined;
+                        this.authorization = null;
+                        resolve();
+                    }).catch(reject);
+            }
+            else {
+                this.username = undefined;
+                this.authorization = null;
+                resolve();
+            }
         });
     }
 
@@ -346,7 +347,7 @@ export class MamoriService {
     }
 
     // websocket stuff
-
+    /*
     private resetSocket(_reason: string) {
         if (this._socket && this._socket.reconnectTimer) {
             this._socket.reconnectTimer.callback = () => console.log("nop");
@@ -439,7 +440,9 @@ export class MamoriService {
             });
         });
     }
+    */
 
+    /* WS-CLEANUP
     public join(name: string, params: any, routeChangeCallback?: (channel: any) => any): Promise<Channel> {
         let deferred = this._to_join[name];
 
@@ -483,7 +486,6 @@ export class MamoriService {
 
         return deferred;
     }
-
     processRouteChangeCallbacks() {
         for (let name of Object.keys(this._channels)) {
             if (this.channelRouteChangeCallbacks[name]) {
@@ -491,10 +493,11 @@ export class MamoriService {
             }
         }
     }
-
     public onRouteChanged() {
         this.processRouteChangeCallbacks();
     }
+    */
+
 
     private calculate_cache_key(url: string, params: any = null): string {
         return url + "::" + JSON.stringify(params);
@@ -586,8 +589,7 @@ export class MamoriService {
     }
 
     public login(username: string, password: string, otp_password?: string): Promise<LoginResponse> {
-        this.disconnectSocket();
-
+        //this.disconnectSocket();
         // fetch the root document to get a session cookie and the CSRF token for the session
         return this._http.request({
             method: "GET",
@@ -699,6 +701,7 @@ export class MamoriService {
         return this.callAPI("POST", "/v1/smtp/test", options);
     }
 
+    /*
     private query_response_handler(message: any, channel: Channel) {
         if (message.task) {
             let promised = this._queries[message.task.id];
@@ -846,7 +849,7 @@ export class MamoriService {
             });
         });
     }
-
+    */
     //
     // Administration
     //
@@ -882,7 +885,7 @@ export class MamoriService {
     // public get_session_info(ssid: string) {
     //     return this.callAPI("GET", "/v1/session/info/" + ssid);
     // }
-
+    /* WS_CLEANUP
     public active_sessions(show_root: boolean) {
         return new Promise((resolve, reject) => {
             this.new_query_job()
@@ -909,7 +912,7 @@ export class MamoriService {
                 .catch((e) => reject(e));
         });
     }
-
+    */
     public ssh_session_log(ssid: string, options: any = null) {
         return this.callAPI("GET", "/v1/ssh/" + ssid, options);
     }
@@ -1994,6 +1997,7 @@ export class MamoriService {
 
     public get_remote_desktop_download_link(token: string, onprogress?: (message: string, percentage?: number) => void): Promise<any> {
         return new Promise((resolve, reject) => {
+            /*
             let ws = new this._socket!.transport("wss://" + document.location.host + "/rdp/tunnel?" + token);
             ws.onmessage = (e: any) => {
                 let msg = decodeMessage(e.data);
@@ -2011,6 +2015,8 @@ export class MamoriService {
                     reject(msg.params[0]);
                 }
             };
+            */
+            reject("socket not implemented");
         });
     }
 

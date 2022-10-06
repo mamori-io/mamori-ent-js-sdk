@@ -62,6 +62,7 @@ describe("masking policy tests", () => {
 
     test('masking oracle CH1711', async done => {
         //admin passthrough session to db
+
         let testID = "orach1711";
         let dsname = "oracle193";
         let dbname = "orcl";
@@ -71,6 +72,7 @@ describe("masking policy tests", () => {
         //Create the object
         let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(host, username, password, dsname);
         try {
+
             let prep = await io_utils.noThrow(helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName));
             //console.log("DML %o", prep);
             //create the masking policy
@@ -79,23 +81,26 @@ describe("masking policy tests", () => {
             await io_utils.noThrow(mpolicy.grantTo(api, user.username));
             let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
             try {
+
                 //ISSUE ORACLE QUERY AND CONFIRM DATA IS MASKED
-                let x1 = await io_utils.noThrow(apiUser.simple_query("select * from " + schemaName + ".tab1"));
+                let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
                 expect(x1.length).toBeGreaterThan(0);
-                expect(x1[0].COL1).toContain("XXXX");
+                expect(x1[0].col1).toContain("XXXX");
                 //GRANT TO USER
                 let permission = new io_permission.MamoriPermission().permission(io_permission.MAMORI_PERMISSION.ALL_PRIVILEGES).grantee(user.username);
                 let x2 = await io_utils.noThrow(permission.grant(api));
                 expect(x2.errors).toBe(false);
-                let x3 = await io_utils.noThrow(apiUser.simple_query("select * from " + schemaName + ".tab1"));
+                let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
                 expect(x3.length).toBeGreaterThan(0);
-                expect(x3[0].COL1).toContain("XXXX");
+                expect(x3[0].col1).toContain("XXXX");
                 let x4 = await io_utils.noThrow(permission.revoke(api));
                 expect(x4.errors).toBe(false);
+
             } finally {
                 await apiUser.logout();
                 await io_utils.noThrow(mpolicy.delete(api));
             }
+
         } finally {
             await io_utils.noThrow(helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName));
             apiAdminPassthrough.logout();
@@ -123,14 +128,14 @@ describe("masking policy tests", () => {
             let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
             try {
                 //ISSUE  QUERY AND CONFIRM DATA IS MASKED
-                let x1 = await io_utils.noThrow(apiUser.simple_query("select * from " + schemaName + ".tab1"));
+                let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
                 expect(x1.length).toBeGreaterThan(0);
                 expect(x1[0].col1).toContain("XXXX");
                 //GRANT TO USER
                 let permission = new io_permission.MamoriPermission().permission(io_permission.MAMORI_PERMISSION.ALL_PRIVILEGES).grantee(user.username);
                 let x2 = await io_utils.noThrow(permission.grant(api));
                 expect(x2.errors).toBe(false);
-                let x3 = await io_utils.noThrow(apiUser.simple_query("select * from " + schemaName + ".tab1"));
+                let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
                 expect(x3.length).toBeGreaterThan(0);
                 expect(x3[0].col1).toContain("XXXX");
                 let x4 = await io_utils.noThrow(permission.revoke(api));

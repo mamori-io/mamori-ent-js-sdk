@@ -51,10 +51,13 @@ describe("masking policy tests", () => {
 
     test('set passthrough', async done => {
         let apiUser: MamoriService = new MamoriService(host, INSECURE);
+
         try {
             await apiUser.login(user.username, granteepw);
+
             //SET PASSTHROUGH Should fail since user does not have DB creds for DB
             let x = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiUser, "oracle193"));
+
             expect(x.errors).toBe(true);
             //Grant roles with db permissions
             let p = await io_utils.noThrow(new io_permission.RolePermission().role("db_creds").grantee(grantee).grant(api));
@@ -63,9 +66,11 @@ describe("masking policy tests", () => {
             expect(p2.errors).toBe(false);
             let x2 = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiUser, "oracle193"));
             expect(x2.errors).toBe(false);
+
         } finally {
             await apiUser.logout();
         }
+
         done();
     });
 
