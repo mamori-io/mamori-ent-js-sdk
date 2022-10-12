@@ -2049,9 +2049,9 @@ semver@^7.3.5:
   dependencies:
     lru-cache "^6.0.0"
 
-"sexp@github:dparnell/sexp":
+"sexp@https://github.com/dparnell/sexp.git":
   version "0.1.5"
-  resolved "https://codeload.github.com/dparnell/sexp/tar.gz/52e32d2c5652287dee5311f9ce77b28cb4b9cc37"
+  resolved "https://github.com/dparnell/sexp.git#52e32d2c5652287dee5311f9ce77b28cb4b9cc37"
 
 shebang-command@^2.0.0:
   version "2.0.0"

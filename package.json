@@ -39,7 +39,7 @@
     "dependencies": {
         "axios": "^0.21.1",
         "moment-timezone": "0.5.13",
-        "sexp": "github:dparnell/sexp"
+        "sexp": "https://github.com/dparnell/sexp.git"
     },
     "engines": {
         "node": ">=14"
