@@ -43,7 +43,7 @@ describe("remote desktop login tests", () => {
         await api.logout();
     });
 
-    test('rmd-rdp login 01', async done => {
+    test('rmd-rdp login 01', async () => {
         let o = new RemoteDesktopLogin("test_rdp_login" + testbatch, REMOTE_DESKTOP_PROTOCOL.RDP);
         await ignoreError(o.delete(api));
         o.at("host", "port").withLoginMode(LOGIN_PROMPT_MODE.MAMORI_PROMPT);
@@ -82,7 +82,6 @@ describe("remote desktop login tests", () => {
 
         expect(x9.error).toBe(false);
         //
-        done();
     });
 
 

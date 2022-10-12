@@ -41,7 +41,7 @@ if (dbPassword) {
         });
 
 
-        test('datasource 001', async done => {
+        test('datasource 001', async () => {
             let dsName = "test_local_pg" + testbatch;
             let ds = new io_datasource.Datasource(dsName);
             await io_utils.ignoreError(ds.delete(api));
@@ -63,12 +63,11 @@ if (dbPassword) {
             let resDel = await io_utils.noThrow(ds.delete(api));
             expect(resDel.error).toBe(false);
 
-            done();
         });
 
 
 
-        test('datasource 002 - postgres password policy', async done => {
+        test('datasource 002 - postgres password policy', async () => {
 
             //Create DS
             let dsHost = "localhost";
@@ -153,10 +152,9 @@ if (dbPassword) {
                 await io_utils.ignoreError(ds.delete(api));
                 await io_utils.ignoreError(api.delete_user(uName));
             }
-            done();
         });
 
-        test('datasource 003 - delete cred on disabled ds', async done => {
+        test('datasource 003 - delete cred on disabled ds', async () => {
 
             //Create DS
             let dsHost = "localhost";
@@ -197,7 +195,6 @@ if (dbPassword) {
             //CLEAN UP
             await io_utils.ignoreError(ds.delete(api));
             await io_utils.ignoreError(api.delete_user(uName));
-            done();
         });
     });
 }

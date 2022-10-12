@@ -25,7 +25,7 @@ describe("IP resource CRUD tests", () => {
         await api.logout();
     });
 
-    test('ip create 01', async done => {
+    test('ip create 01', async () => {
         let cidr = "10.0.200.0/24";
         let ports = "443,80";
         let baseR = new IpResource(resourceName).withCIDR(cidr).withPorts(ports);
@@ -48,7 +48,6 @@ describe("IP resource CRUD tests", () => {
 
         let r4 = await noThrow(IpResource.list(api, 0, 100, [["name", "=", resourceName]]));
         expect(r4.data.length).toBe(0);
-        done();
 
     });
 

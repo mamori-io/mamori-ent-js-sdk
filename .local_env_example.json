@@ -1,0 +1,8 @@
+{
+    "MAMORI_SERVER": "https://localhost",
+    "MAMORI_USERNAME": "testadmin",
+    "MAMORI_PASSWORD": "password",
+    "MAMORI_DB_PASSWORD": "password",
+    "MAMORI_TEST_BATCH": "test"
+}
+

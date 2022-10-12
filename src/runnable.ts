@@ -66,7 +66,7 @@ export abstract class Runnable {
 
             await this.run(api, this.args);
         }
-        catch (e) {
+        catch (e: any) {
             console.error(e.response == undefined ? e : e.response.status + " " + e.response.statusText + " - " + JSON.stringify(e.response.data));
             process.exitCode = -1;
             if (e.response && e.response.status) {

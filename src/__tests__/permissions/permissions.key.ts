@@ -48,7 +48,7 @@ describe("key permission tests", () => {
         await api.logout();
     });
 
-    test('revoke 01', async done => {
+    test('revoke 01', async () => {
         let resp = await noThrow(new KeyPermission()
             .key(key)
             .grantee(grantee)
@@ -61,11 +61,10 @@ describe("key permission tests", () => {
         ["key_name", FILTER_OPERATION.EQUALS_STRING, key]];
         let res = await new KeyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
-        done();
 
     });
 
-    test('grant 01', async done => {
+    test('grant 01', async () => {
 
         let obj = new KeyPermission()
             .key(key)
@@ -98,10 +97,9 @@ describe("key permission tests", () => {
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-        done();
     });
 
-    test('grant 02', async done => {
+    test('grant 02', async () => {
 
         let resp = await noThrow(new KeyPermission()
             .key(key)
@@ -124,10 +122,9 @@ describe("key permission tests", () => {
         res = await new KeyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
-        done();
     });
 
-    test('grant 03', async done => {
+    test('grant 03', async () => {
 
         let dt = new Date();
         let year = dt.getFullYear();
@@ -171,10 +168,9 @@ describe("key permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
-        done();
     });
 
-    test('grant 04 - mixed case', async done => {
+    test('grant 04 - mixed case', async () => {
         let name = "CAPS" + key;
         let objMixedCase = new KeyPermission()
             .key(name)
@@ -207,10 +203,9 @@ describe("key permission tests", () => {
         let r5 = await noThrow(new KeyPermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
         //
-        done();
     });
 
-    test('test 05 role grant', async done => {
+    test('test 05 role grant', async () => {
         let roleName = "test_permission_key_." + testbatch;
         let role = new Role(roleName);
         await ignoreError(role.delete(api));
@@ -254,8 +249,6 @@ describe("key permission tests", () => {
         //Delete role
         let d = await noThrow(role.delete(api));
         expect(d.error).toBe(false);
-
-        done();
     });
 
 });

@@ -53,7 +53,7 @@ describe("ssh login tests", () => {
         await api.logout();
     });
 
-    test('ssh login 01', async done => {
+    test('ssh login 01', async () => {
         let k = new SshLogin("test_ssh_login_to_local" + testbatch);
         await ignoreError(k.delete(api));
         //Create
@@ -91,7 +91,6 @@ describe("ssh login tests", () => {
         let resDel = await noThrow(k.delete(api));
         expect(resDel.status).toBe("ok");
 
-        done();
     });
 
 

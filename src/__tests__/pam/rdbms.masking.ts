@@ -60,7 +60,7 @@ describe("masking policy tests", () => {
         await api.logout();
     });
 
-    test('masking oracle CH1711', async done => {
+    test('masking oracle CH1711', async () => {
         //admin passthrough session to db
 
         let testID = "orach1711";
@@ -104,12 +104,11 @@ describe("masking policy tests", () => {
         } finally {
             await io_utils.noThrow(helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName));
             apiAdminPassthrough.logout();
-            done();
         }
     });
 
 
-    test('masking MSSQL CH1711', async done => {
+    test('masking MSSQL CH1711', async () => {
         //admin passthrough session to db
         let testID = "ssch1711";
         let dsname = "ss2014";
@@ -147,7 +146,6 @@ describe("masking policy tests", () => {
         } finally {
             await io_utils.noThrow(helper.DBHelper.cleanUpSchemaSS(apiAdminPassthrough, schemaName));
             apiAdminPassthrough.logout();
-            done();
         }
     });
 

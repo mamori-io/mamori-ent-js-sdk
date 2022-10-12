@@ -53,7 +53,7 @@ describe("ip resource permission tests", () => {
 
     });
 
-    test('grant 01', async done => {
+    test('grant 01', async () => {
         let obj = new IPResourcePermission()
             .resource(resource)
             .grantee(grantee);
@@ -84,10 +84,9 @@ describe("ip resource permission tests", () => {
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-        done();
     });
 
-    test('grant 02', async done => {
+    test('grant 02', async () => {
         let r1 = await new IPResourcePermission()
             .resource(resource)
             .grantee(grantee)
@@ -110,11 +109,10 @@ describe("ip resource permission tests", () => {
 
         res = await new IPResourcePermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
-        done();
 
     });
 
-    test('grant 03 - grant between', async done => {
+    test('grant 03 - grant between', async () => {
 
         let dt = new Date();
         let year = dt.getFullYear();
@@ -157,11 +155,10 @@ describe("ip resource permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
-        done();
 
     });
 
-    test('grant 04 - mixed case', async done => {
+    test('grant 04 - mixed case', async () => {
         let name = "CAPS" + resource;
         let objMixedCase = new IPResourcePermission()
             .resource(name)
@@ -193,10 +190,9 @@ describe("ip resource permission tests", () => {
         //console.log(r4);
         //expect(r4.errors).toBe(false);
         //
-        done();
     });
 
-    test.skip('test 05 role grant', async done => {
+    test.skip('test 05 role grant', async () => {
 
         //create the wg peer for the grantee
         let peer = "test_peer_" + testbatch;
@@ -268,8 +264,6 @@ describe("ip resource permission tests", () => {
         //Delete role
         let d = await noThrow(role.delete(api));
         expect(d.error).toBe(false);
-
-        done();
     });
 
 });

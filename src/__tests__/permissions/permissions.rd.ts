@@ -40,7 +40,7 @@ describe("rdp permission tests", () => {
         await api.logout();
     });
 
-    test('revoke 01', async done => {
+    test('revoke 01', async () => {
 
         let resp = await new RemoteDesktopLoginPermission()
             .name(rdpLogin)
@@ -54,11 +54,9 @@ describe("rdp permission tests", () => {
         ["key_name", FILTER_OPERATION.EQUALS_STRING, rdpLogin]];
         let res = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
-        done();
-
     });
 
-    test('grant 01', async done => {
+    test('grant 01', async () => {
 
         let obj = new RemoteDesktopLoginPermission()
             .name(rdpLogin)
@@ -93,13 +91,9 @@ describe("rdp permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
-
-
-        done();
-
     });
 
-    test('grant 02', async done => {
+    test('grant 02', async () => {
 
         let resp = await noThrow(new RemoteDesktopLoginPermission()
             .name(rdpLogin)
@@ -121,12 +115,9 @@ describe("rdp permission tests", () => {
 
         res = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
-
-        done();
-
     });
 
-    test('grant 03', async done => {
+    test('grant 03', async () => {
         let dt = new Date();
         let year = dt.getFullYear();
         let month = (dt.getMonth() + 1).toString().padStart(2, '0');
@@ -168,11 +159,9 @@ describe("rdp permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
-        done();
-
     });
 
-    test('grant 04 - mixed case', async done => {
+    test('grant 04 - mixed case', async () => {
         let name = "CAPS" + rdpLogin;
         let objMixedCase = new RemoteDesktopLoginPermission()
             .name(name)
@@ -200,11 +189,9 @@ describe("rdp permission tests", () => {
         let r5 = await noThrow(new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
 
-        //
-        done();
     });
 
-    test('test 05 role grant', async done => {
+    test('test 05 role grant', async () => {
         let roleName = "test_permission_rd_." + testbatch;
         let role = new Role(roleName);
         await ignoreError(role.delete(api));
@@ -247,11 +234,9 @@ describe("rdp permission tests", () => {
         //Delete role
         let d = await noThrow(role.delete(api));
         expect(d.error).toBe(false);
-
-        done();
     });
 
-    test('grant 06 - rename with grants', async done => {
+    test('grant 06 - rename with grants', async () => {
         let name = rdpLogin;
         let name2 = rdpLogin + " EdiTed";
         //Clear prior RD
@@ -297,8 +282,6 @@ describe("rdp permission tests", () => {
 
         let res5 = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter2);
         expect(res5.totalCount).toBe(0);
-        //
-        done();
     });
 
 

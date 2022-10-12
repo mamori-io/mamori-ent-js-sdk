@@ -44,7 +44,7 @@ describe("wireguard peer tests", () => {
         await api.logout();
     });
 
-    test('peer 01', async done => {
+    test('peer 01', async () => {
 
         let name = "testlaptop";
         let k = new WireGuardPeer(grantee, name);
@@ -76,6 +76,5 @@ describe("wireguard peer tests", () => {
         let x5 = await noThrow(k.delete(api));
         expect(x5.status).toBe("ok");
         //
-        done();
     });
 });

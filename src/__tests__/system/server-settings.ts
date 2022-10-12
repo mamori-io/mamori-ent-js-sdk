@@ -39,67 +39,48 @@ describe("Server Settings - bootstrap user", () => {
         await api.logout();
     });
 
-    test('disable bootstrap', async done => {
-        try {
+    test('disable bootstrap', async () => {
+        let ss = new ServerSettings(api);
+        let result = await ss.setBootstrapAccount(false);
+        expect(result.error).toBe(false);
+    });
 
-            let ss = new ServerSettings(api);
-            let result = await ss.setBootstrapAccount(false);
-            expect(result.error).toBe(false);
-            done();
-        } catch (e) {
-            done(e);
+    test('enable bootstrap', async () => {
+        let ss = new ServerSettings(api);
+        let pw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D";
+        let result = await ss.setBootstrapAccount(true, pw);
+        expect(result.error).toBe(false);
+
+        let api2 = new MamoriService(host, INSECURE);
+        try {
+            result = await api2.login("root", pw);
+            expect(result.session_id).toBeDefined();
+        } finally {
+            api2.logout();
+        }
+        result = await ss.setBootstrapAccount(false);
+        expect(result.error).toBe(false);
+    });
+
+    test('non-admin user bootstrap', async () => {
+        let apiUser = new MamoriService(host, INSECURE);
+        try {
+            let loginresult = await apiUser.login(apiuser, apiuserpw);
+            expect(loginresult.session_id).toBeDefined();
+            let ss = new ServerSettings(apiUser);
+            let pw = "J{J'vpKs827-n\/a@C+W6(6A,4_vdQ'}D";
+            let r = await noThrow(ss.setBootstrapAccount(true, pw));
+            expect(r.errors).toBe(true);
+            expect(r.response.status).toBe(403);
+            let r2 = await noThrow(ss.setBootstrapAccount(false));
+            expect(r2.errors).toBe(true);
+            expect(r2.response.status).toBe(403);
+        } finally {
+            apiUser.logout();
         }
     });
 
-    test('enable bootstrap', async done => {
-        try {
-
-            let ss = new ServerSettings(api);
-            let pw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D";
-            let result = await ss.setBootstrapAccount(true, pw);
-            expect(result.error).toBe(false);
-
-            let api2 = new MamoriService(host, INSECURE);
-            try {
-                result = await api2.login("root", pw);
-                expect(result.session_id).toBeDefined();
-            } finally {
-                api2.logout();
-            }
-            result = await ss.setBootstrapAccount(false);
-            expect(result.error).toBe(false);
-
-            done();
-        } catch (e) {
-            done(e);
-        }
-    });
-
-    test('non-admin user bootstrap', async done => {
-        try {
-
-            let apiUser = new MamoriService(host, INSECURE);
-            try {
-                let loginresult = await apiUser.login(apiuser, apiuserpw);
-                expect(loginresult.session_id).toBeDefined();
-                let ss = new ServerSettings(apiUser);
-                let pw = "J{J'vpKs827-n\/a@C+W6(6A,4_vdQ'}D";
-                let r = await noThrow(ss.setBootstrapAccount(true, pw));
-                expect(r.errors).toBe(true);
-                expect(r.response.status).toBe(403);
-                let r2 = await noThrow(ss.setBootstrapAccount(false));
-                expect(r2.errors).toBe(true);
-                expect(r2.response.status).toBe(403);
-            } finally {
-                apiUser.logout();
-            }
-            done();
-        } catch (e) {
-            done(e);
-        }
-    });
-
-    test.skip('set server domain', async done => {
+    test.skip('set server domain', async () => {
         try {
             //let this.get_smtp_cfg().then((smtpSettings: any)
             let o = new ServerSettings(api);
@@ -125,7 +106,6 @@ describe("Server Settings - bootstrap user", () => {
                 expect(r2[4].error).toBe(false);
             }
         }
-        done();
     });
 
 

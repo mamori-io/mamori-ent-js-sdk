@@ -45,7 +45,7 @@ describe("role tests", () => {
         await api.logout();
     });
 
-    test('role 01', async done => {
+    test('role 01', async () => {
 
         let name = "test_automated_role" + testbatch;
         let k = new Role(name);
@@ -80,11 +80,10 @@ describe("role tests", () => {
         let resDel = await noThrow(k.delete(api));
         expect(resDel.error).toBe(false);
 
-        done();
     });
 
 
-    test('role 02', async done => {
+    test('role 02', async () => {
 
         let name = "test_2_automated_role" + testbatch;
         let k = new Role(name);
@@ -111,14 +110,13 @@ describe("role tests", () => {
         let resDel = await noThrow(k.delete(api));
         expect(resDel.error).toBe(false);
 
-        done();
     });
 
 
     /*
     * [ch4247] - "SYS"."USER_PERMISSIONS" incorrectly showing user permissions via roles that the user created but not granted to themselves
     */
-    test('role ch4247', async done => {
+    test('role ch4247', async () => {
         let roleName = "test_ch4247_role" + testbatch;
         let k = new Role(roleName);
         await ignoreError(k.delete(api));
@@ -144,7 +142,6 @@ describe("role tests", () => {
         //CONFIRM ROLE NO LONGER HAS THE PERMISSION
         let r2 = await grant.list(api, filter0);
         expect(r2.totalCount).toBe(0);
-        done();
     });
 
 });

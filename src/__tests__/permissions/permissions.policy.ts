@@ -40,7 +40,7 @@ describe("policy permission tests", () => {
         await api.logout();
     });
 
-    test('grant 01', async done => {
+    test('grant 01', async () => {
         let obj = new PolicyPermission()
             .policy(policy)
             .grantee(grantee);
@@ -72,11 +72,9 @@ describe("policy permission tests", () => {
         resp = await noThrow(obj.all(false).revoke(api));
         expect(resp.errors).toBe(false);
 
-        done();
-
     });
 
-    test('grant 02', async done => {
+    test('grant 02', async () => {
 
         let resp = await noThrow(new PolicyPermission()
             .policy(policy)
@@ -99,11 +97,9 @@ describe("policy permission tests", () => {
         res = await new PolicyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
-        done();
-
     });
 
-    test('grant 03', async done => {
+    test('grant 03', async () => {
 
         let dt = new Date();
         let year = dt.getFullYear();
@@ -146,11 +142,9 @@ describe("policy permission tests", () => {
 
         resp = await noThrow(obj.all(false).revoke(api));
         expect(resp.errors).toBe(false);
-        done();
-
     });
 
-    test('grant 04 - mixed case', async done => {
+    test('grant 04 - mixed case', async () => {
         let name = "CAPS" + policy;
         let objMixedCase = new PolicyPermission()
             .policy(name)
@@ -178,10 +172,9 @@ describe("policy permission tests", () => {
         let r5 = await noThrow(new PolicyPermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
         //
-        done();
     });
 
-    test('test 05 role grant', async done => {
+    test('test 05 role grant', async () => {
         let roleName = "test_permission_policy_." + testbatch;
         let role = new Role(roleName);
         await ignoreError(role.delete(api));
@@ -225,8 +218,6 @@ describe("policy permission tests", () => {
         //Delete role
         let d = await noThrow(role.delete(api));
         expect(d.error).toBe(false);
-
-        done();
     });
 
 

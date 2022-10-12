@@ -37,7 +37,7 @@ describe("datasource permission tests", () => {
         await api.logout();
     });
 
-    test('grant 01', async done => {
+    test('grant 01', async () => {
         let obj = new io_permission.DatasourcePermission()
             .on("*", "*", "*", "*")
             .permission(io_permission.DB_PERMISSION.SELECT)
@@ -69,10 +69,9 @@ describe("datasource permission tests", () => {
         resp = await io_utils.noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-        done();
     });
 
-    test('grant 01.01 Schema level', async done => {
+    test('grant 01.01 Schema level', async () => {
         let obj = new io_permission.DatasourcePermission()
             .on("*", "*", "*", "")
             .permission(io_permission.DB_PERMISSION.CREATE_TABLE)
@@ -104,10 +103,9 @@ describe("datasource permission tests", () => {
         resp = await io_utils.noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-        done();
     });
 
-    test('grant 01.02 Database level', async done => {
+    test('grant 01.02 Database level', async () => {
         let obj = new io_permission.DatasourcePermission()
             .on("*", "*", "", "")
             .permission(io_permission.DB_PERMISSION.CREATE_SCHEMA)
@@ -139,10 +137,9 @@ describe("datasource permission tests", () => {
         resp = await io_utils.noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-        done();
     });
 
-    test('grant 01.03 Datasource level', async done => {
+    test('grant 01.03 Datasource level', async () => {
         let obj = new io_permission.DatasourcePermission()
             .on("*", "", "", "")
             .permission(io_permission.DB_PERMISSION.MASKED)
@@ -174,10 +171,9 @@ describe("datasource permission tests", () => {
         resp = await io_utils.noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-        done();
     });
 
-    test('grant 02', async done => {
+    test('grant 02', async () => {
         let resp = await io_utils.noThrow(new io_permission.DatasourcePermission()
             .on("*", "*", "*", "*")
             .permission(io_permission.DB_PERMISSION.SELECT)
@@ -199,11 +195,9 @@ describe("datasource permission tests", () => {
         res = await new io_permission.DatasourcePermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
-        done();
-
     });
 
-    test('grant 03.01 past date range', async done => {
+    test('grant 03.01 past date range', async () => {
         let obj = new io_permission.DatasourcePermission()
             .on("*", "*", "*", "*")
             .permission(io_permission.DB_PERMISSION.SELECT)
@@ -216,10 +210,9 @@ describe("datasource permission tests", () => {
         expect(resp.errors).toBe(true);
 
         await io_utils.ignoreError(obj.revoke(api));
-        done();
     });
 
-    test('grant 03 - valid between', async done => {
+    test('grant 03 - valid between', async () => {
 
         let dt = new Date();
         let year = dt.getFullYear();
@@ -256,10 +249,9 @@ describe("datasource permission tests", () => {
         let res2 = await new io_permission.DatasourcePermission().grantee(grantee).list(api, filter);
         expect(res2.totalCount).toBe(0);
 
-        done();
     });
 
-    test('grant 01.01', async done => {
+    test('grant 01.01', async () => {
         let obj = new io_permission.DatasourcePermission()
             .on("ss2016", "mamoritest", "dbo", "customer_pii")
             .permission(io_permission.DB_PERMISSION.SELECT)
@@ -269,10 +261,9 @@ describe("datasource permission tests", () => {
         // Test to check the query is working correctly
         let res = await io_utils.noThrow(api.grantee_object_grants(grantee, io_permission.DB_PERMISSION.SELECT, "ss2016.mamoritest.dbo.customer_pii"));
         expect(res.length).toBe(0);
-        done();
     });
 
-    test('test 04.01 grant mix case', async done => {
+    test('test 04.01 grant mix case', async () => {
 
         //Ensure main admin also has db creds to be able to grant
         await io_utils.ignoreError(new io_permission.RolePermission().role("DB_CREDS").grantee(username).grant(api));
@@ -305,10 +296,9 @@ describe("datasource permission tests", () => {
         await io_utils.ignoreError(obj.revoke(api));
         await io_utils.ignoreError(obj2.revoke(api));
 
-        done();
     });
 
-    test('test 05 role grant', async done => {
+    test('test 05 role grant', async () => {
         let roleName = "test_permission_ds_." + testbatch;
         let role = new io_role.Role(roleName);
         await io_utils.ignoreError(role.delete(api));
@@ -349,11 +339,10 @@ describe("datasource permission tests", () => {
         let d = await io_utils.noThrow(role.delete(api));
         expect(d.error).toBe(false);
 
-        done();
     });
 
 
-    test.skip('test 06 select limit', async done => {
+    test.skip('test 06 select limit', async () => {
         //Create object with 5 rows
         //Grant select 
         if (dbPassword) {
@@ -413,8 +402,6 @@ describe("datasource permission tests", () => {
 
         }
 
-
-        done();
     });
 
 

@@ -49,7 +49,7 @@ describe("masking policy tests", () => {
         await api.logout();
     });
 
-    test('set passthrough', async done => {
+    test('set passthrough', async () => {
         let apiUser: MamoriService = new MamoriService(host, INSECURE);
 
         try {
@@ -70,8 +70,6 @@ describe("masking policy tests", () => {
         } finally {
             await apiUser.logout();
         }
-
-        done();
     });
 
 });

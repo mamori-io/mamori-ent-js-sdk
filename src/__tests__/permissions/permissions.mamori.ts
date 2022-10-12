@@ -39,7 +39,7 @@ describe("mamori permission tests", () => {
         await api.logout();
     });
 
-    test('revoke 01', async done => {
+    test('revoke 01', async () => {
 
         let resp = await noThrow(new MamoriPermission()
             .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
@@ -52,10 +52,9 @@ describe("mamori permission tests", () => {
         ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let res = await new MamoriPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
-        done();
     });
 
-    test('grant 01', async done => {
+    test('grant 01', async () => {
         let obj = new MamoriPermission()
             .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
             .grantee(grantee);
@@ -86,10 +85,9 @@ describe("mamori permission tests", () => {
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-        done();
     });
 
-    test('grant 02', async done => {
+    test('grant 02', async () => {
 
         let resp = await noThrow(new MamoriPermission()
             .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
@@ -111,10 +109,9 @@ describe("mamori permission tests", () => {
         res = await new MamoriPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
 
-        done();
     });
 
-    test('grant 03', async done => {
+    test('grant 03', async () => {
 
         let dt = new Date();
         let year = dt.getFullYear();
@@ -156,11 +153,10 @@ describe("mamori permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
-        done();
 
     });
 
-    test('test 05 role grant', async done => {
+    test('test 05 role grant', async () => {
         let roleName = "test_permission_mamori_." + testbatch;
         let role = new Role(roleName);
         await ignoreError(role.delete(api));
@@ -199,13 +195,10 @@ describe("mamori permission tests", () => {
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-
-
         //Delete role
         let d = await noThrow(role.delete(api));
         expect(d.error).toBe(false);
 
-        done();
     });
 
 });

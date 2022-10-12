@@ -94,7 +94,7 @@ describe("on-demand policy crud tests", () => {
         await api.logout();
     });
 
-    test('policy 01', async done => {
+    test('policy 01', async () => {
         let name = "test_auto_policy_" + testbatch;
         let k = new OnDemandPolicy(name);
         k.request_role = requestRole;
@@ -114,7 +114,6 @@ describe("on-demand policy crud tests", () => {
         let x2 = await noThrow(k.delete(api));
         expect(x2.error).toBe(false);
 
-        done();
     });
 
 

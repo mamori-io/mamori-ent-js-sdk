@@ -54,7 +54,7 @@ describe("network ssh tunnel tests", () => {
         await api.logout();
     });
 
-    test('ssh tunnel 01', async done => {
+    test('ssh tunnel 01', async () => {
         let k = new SshTunnel("test_ssh_tunnel_to_local" + testbatch);
         k.at("localhost", 22);
         k.withCredentials("root", sshKeyName);
@@ -67,7 +67,6 @@ describe("network ssh tunnel tests", () => {
         expect(x.type).toBe("ssh");
         let resDel = await noThrow(k.delete(api));
         expect(resDel).toBe("ok");
-        done();
 
         //expect(x.private_key_name).toBe(sshKeyName);
         /*

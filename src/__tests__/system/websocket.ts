@@ -45,13 +45,12 @@ describe("mamori catalog tests", () => {
         await api.logout();
     });
 
-    test('catalog via ws 01', async done => {
+    test('catalog via ws 01', async () => {
         //Select from the connection log
         let sql = "select * from SYS.CONNECTIONS where login_username !='" + grantee + "' limit 10";
 
         let r = await noThrow(api.select(sql));
         expect(r.length).toBeGreaterThan(0);
-        done();
     });
 
 });

@@ -10,17 +10,12 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
 describe("server based tests", () => {
 
-    test('login should succeed', async done => {
-        try {
-            console.log("%s %s", host, username);
-            let api = new MamoriService(host, INSECURE);
-            let response = await api.login(username, password);
-            expect(response.username).toBe(username);
+    test('login should succeed', async () => {
+        console.log("%s %s", host, username);
+        let api = new MamoriService(host, INSECURE);
+        let response = await api.login(username, password);
+        expect(response.username).toBe(username);
 
-            await api.logout();
-            done();
-        } catch (e) {
-            done(e);
-        }
+        await api.logout();
     });
 });

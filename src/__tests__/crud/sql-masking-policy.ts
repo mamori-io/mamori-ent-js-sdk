@@ -105,7 +105,7 @@ describe("sql-masking-policy crud tests", () => {
         await api.logout();
     });
 
-    test('masking policy 001', async done => {
+    test('masking policy 001', async () => {
         let name = "test_sql-masking.policy._" + testbatch;
         let o = new SQLMaskingPolicy(name);
         o.priority = 100;
@@ -149,10 +149,9 @@ describe("sql-masking-policy crud tests", () => {
         //Check permissions gone
         let res4 = await new PolicyPermission().grantee(grantee).list(api, filter);
         expect(res4.totalCount).toBe(0);
-        done();
     });
 
-    test('masking policy 002', async done => {
+    test('masking policy 002', async () => {
         if (dbPassword) {
             let apiAsAdmin = new MamoriService(host, INSECURE);
             await apiAsAdmin.login(admin, adminpw);
@@ -205,7 +204,6 @@ describe("sql-masking-policy crud tests", () => {
             }
         }
 
-        done();
     });
 
 

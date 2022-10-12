@@ -45,7 +45,7 @@ describe("mamori catalog tests", () => {
         await api.logout();
     });
 
-    test('catalog 01', async done => {
+    test('catalog 01', async () => {
         //Select from the connection log
         let sql = "select * from SYS.CONNECTIONS where login_username !='" + grantee + "' limit 10";
         let r = await noThrow(apiAsAPIUser.select(sql));
@@ -62,10 +62,9 @@ describe("mamori catalog tests", () => {
         expect(r2.length).toBeGreaterThan(0);
 
         await noThrow(perm.revoke(api));
-        done();
     });
 
-    test('catalog 02', async done => {
+    test('catalog 02', async () => {
         //Select from the connection log
         let sql = "select * from SYS.QUERIES where userid !='" + grantee + "' limit 10";
         let r = await noThrow(apiAsAPIUser.select(sql));
@@ -82,11 +81,9 @@ describe("mamori catalog tests", () => {
         expect(r2.length).toBeGreaterThan(0);
 
         await noThrow(perm.revoke(api));
-
-        done();
     });
 
-    test('catalog 03', async done => {
+    test('catalog 03', async () => {
         //Select from the connection log
         let sql = "select b.* from SYS.QUERIES a join SYS.QUERY_PLANS b on a.ssid = b.ssid and a.query_id = b.query_id and a.userid !='" + grantee + "' limit 10";
         let r = await noThrow(apiAsAPIUser.select(sql));
@@ -102,10 +99,9 @@ describe("mamori catalog tests", () => {
         expect(r2.length).toBeGreaterThan(0);
 
         await noThrow(perm.revoke(api));
-        done();
     });
 
-    test('catalog 04', async done => {
+    test('catalog 04', async () => {
         let sql = "select a.*  from sys.TCP_CONNECTION_LOG a join SYS.CONNECTIONS b on a.connection_id = b.id" +
             " and b.login_username !='" + grantee + "' limit 10";
         let r = await noThrow(apiAsAPIUser.select(sql));
@@ -122,6 +118,5 @@ describe("mamori catalog tests", () => {
         let r2 = await noThrow(apiAsAPIUser.select(sql));
         expect(r2.length).toBe(r1.length);
         await noThrow(perm.revoke(api));
-        done();
     });
 });

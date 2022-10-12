@@ -39,7 +39,7 @@ describe("ssh permission tests", () => {
         await api.logout();
     });
 
-    test('revoke 01', async done => {
+    test('revoke 01', async () => {
 
         let resp = await new SSHLoginPermission()
             .sshLogin(sshLogin)
@@ -53,11 +53,9 @@ describe("ssh permission tests", () => {
         ["key_name", FILTER_OPERATION.EQUALS_STRING, sshLogin]];
         let res = await new SSHLoginPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
-        done();
-
     });
 
-    test('grant 01', async done => {
+    test('grant 01', async () => {
 
 
         let obj = new SSHLoginPermission()
@@ -90,13 +88,9 @@ describe("ssh permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
-
-
-        done();
-
     });
 
-    test('grant 02', async done => {
+    test('grant 02', async () => {
 
         let resp = await noThrow(new SSHLoginPermission()
             .sshLogin(sshLogin)
@@ -118,12 +112,9 @@ describe("ssh permission tests", () => {
 
         res = await new SSHLoginPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
-
-        done();
-
     });
 
-    test('grant 03', async done => {
+    test('grant 03', async () => {
 
         let dt = new Date();
         let year = dt.getFullYear();
@@ -167,11 +158,9 @@ describe("ssh permission tests", () => {
 
         resp = await noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
-        done();
-
     });
 
-    test('grant 04 - mixed case', async done => {
+    test('grant 04 - mixed case', async () => {
         let name = "CAPS" + sshLogin;
         let objMixedCase = new SSHLoginPermission()
             .sshLogin(name)
@@ -197,11 +186,9 @@ describe("ssh permission tests", () => {
         ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let r5 = await noThrow(new SSHLoginPermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
-        //
-        done();
     });
 
-    test('test 05 role grant', async done => {
+    test('test 05 role grant', async () => {
         let roleName = "test_permission_ssh_." + testbatch;
         let role = new Role(roleName);
         await ignoreError(role.delete(api));
@@ -245,8 +232,6 @@ describe("ssh permission tests", () => {
         //Delete role
         let d = await noThrow(role.delete(api));
         expect(d.error).toBe(false);
-
-        done();
     });
 
 

@@ -47,7 +47,7 @@ describe("encryption key tests", () => {
     });
 
 
-    test('aes 01', async done => {
+    test('aes 01', async () => {
         let k = new Key("test_aes_key" + testbatch);
 
         await ignoreError(k.delete(api));
@@ -88,11 +88,9 @@ describe("encryption key tests", () => {
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
         expect(resDel.error).toBe(false);
-
-        done();
     });
 
-    test('rsa pair as admin', async done => {
+    test('rsa pair as admin', async () => {
         let name = "test_rsa_key" + testbatch;
         let k = new Key(name);
 
@@ -146,11 +144,9 @@ describe("encryption key tests", () => {
         expect(resDel.error).toBe(false);
         let resDel2 = await noThrow(kpriv.delete(api));
         expect(resDel2.error).toBe(false);
-
-        done();
     });
 
-    test('ssh rsa 01', async done => {
+    test('ssh rsa 01', async () => {
         let publicKeyTest = "ssh-rsa"
         let name = "test_ssh_key" + testbatch;
         let k = new Key(name);
@@ -192,10 +188,9 @@ describe("encryption key tests", () => {
         let resDel = await noThrow(k.delete(api));
         expect(resDel.error).toBe(false);
 
-        done();
     });
 
-    test('ssh dsa 01', async done => {
+    test('ssh dsa 01', async () => {
         let publicKeyTest = "ssh-dss"
         let name = "test_ssh_key" + testbatch;
         let k = new Key(name);
@@ -236,11 +231,9 @@ describe("encryption key tests", () => {
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
         expect(resDel.error).toBe(false);
-
-        done();
     });
 
-    test('ssh ecdsa 01', async done => {
+    test('ssh ecdsa 01', async () => {
         let publicKeyTest = "ecdsa-sha2-nistp384"
         let name = "test_ssh_key" + testbatch;
         let k = new Key(name);
@@ -284,11 +277,9 @@ describe("encryption key tests", () => {
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
         expect(resDel.error).toBe(false);
-
-        done();
     });
 
-    test('ssh ed25519 01', async done => {
+    test('ssh ed25519 01', async () => {
         let publicKeyTest = "ssh-ed25519"
         let name = "test_ssh_key" + testbatch;
         let k = new Key(name);
@@ -329,12 +320,10 @@ describe("encryption key tests", () => {
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
         expect(resDel.error).toBe(false);
-
-        done();
     });
 
 
-    test('aes 01', async done => {
+    test('aes 01', async () => {
         let k = new Key("test_aes_key" + testbatch);
         await ignoreError(k.delete(api));
 
@@ -375,10 +364,9 @@ describe("encryption key tests", () => {
         let resDel = await noThrow(k.delete(api));
         expect(resDel.error).toBe(false);
 
-        done();
     });
 
-    test.skip('rsa pair as non-admin', async done => {
+    test.skip('rsa pair as non-admin', async () => {
         let name = "test_rsa_key2" + testbatch;
         let k = new Key(name);
 
@@ -409,7 +397,6 @@ describe("encryption key tests", () => {
         let x2 = (await noThrow(Key.getAll(api))).filter((key: any) => key.name.includes(k.name));
         expect(x2.length).toBe(0);
 
-        done();
     });
 
 
