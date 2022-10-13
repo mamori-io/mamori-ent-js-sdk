@@ -109,7 +109,7 @@ describe("sql-masking-policy crud tests", () => {
         let name = "test_sql-masking.policy._" + testbatch;
         let o = new SQLMaskingPolicy(name);
         o.priority = 100;
-        await ignoreError(o.delete(api));
+        await noThrow(o.delete(api));
         let x = await noThrow(o.create(api));
         expect(x.error).toBe(false);
 
@@ -134,9 +134,7 @@ describe("sql-masking-policy crud tests", () => {
         let res3 = await new PolicyPermission().grantee(grantee).list(api, filter);
         expect(res3.totalCount).toBe(0);
 
-
         //Add masking rules
-
         //GRANT AGAIN - to test delete removes permissions
         let x6 = await noThrow(o.grantTo(api, grantee));
         expect(x6.errors).toBe(false);
