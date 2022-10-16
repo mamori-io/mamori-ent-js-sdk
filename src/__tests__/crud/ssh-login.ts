@@ -59,6 +59,7 @@ describe("ssh login tests", () => {
         //Create
         k.at("localhost", "22");
         k.withCredentials("root", sshKeyName);
+        k = k.fromJSON(k.toJSON())
         let res = await noThrow(k.create(api));
         expect(res.status).toBe("ok");
 
@@ -94,7 +95,91 @@ describe("ssh login tests", () => {
     });
 
 
+    test('ssh login 02', async () => {
+        let name = "test_ssh_pw_to_local" + testbatch
+        let k = new SshLogin(name);
+        await ignoreError(k.delete(api));
+        //Create
+        k.at("localhost", "2200");
+        k = k.fromJSON(k.toJSON())
+        let res = await noThrow(k.create(api));
+        expect(res.status).toBe("ok");
 
+        //Ensure item returned properly
+        let x = (await noThrow(SshLogin.getAll(api))).filter((o: any) => o.name == k.name)[0];
+        console.log("**** %o", x);
+        expect(x.name).toBe(name);
+        expect(x.login_mode).toBe("mamori");
+
+        //Ensure non-admins can't see any rows
+        let x2 = (await noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
+        expect(x2.length).toBe(0);
+
+        //Grant to User
+        let x3 = await noThrow(k.grantTo(api, grantee));
+        expect(x3.errors).toBe(false);
+        //Ensure user can see the object
+        let x4 = (await noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
+        expect(x4.length).toBe(1);
+
+        //Ensure user can't delete a key
+        let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
+        expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
+
+        let x5 = await noThrow(k.revokeFrom(api, grantee));
+        expect(x5.errors).toBe(false);
+        //Ensure the key was revoked
+        let x6 = (await noThrow(SshLogin.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
+        expect(x6.length).toBe(0);
+
+
+        let resDel = await noThrow(k.delete(api));
+        expect(resDel.status).toBe("ok");
+
+    });
+
+    test('ssh login 03', async () => {
+        let name = "test_ssh_cred_to_local" + testbatch
+        let k = new SshLogin(name);
+        await ignoreError(k.delete(api));
+        //Create
+        k.at("localhost", "22");
+        k.withCredentials("testuser", "", "dummypw");
+        k = k.fromJSON(k.toJSON())
+        let res = await noThrow(k.create(api));
+        expect(res.status).toBe("ok");
+
+        //Ensure item returned properly
+        let x = (await noThrow(SshLogin.getAll(api))).filter((o: any) => o.name == k.name)[0];
+        expect(x.name).toBe(name);
+        expect(x.login_mode).toBe("cred");
+
+        //Ensure non-admins can't see any rows
+        let x2 = (await noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
+        expect(x2.length).toBe(0);
+
+        //Grant to User
+        let x3 = await noThrow(k.grantTo(api, grantee));
+        expect(x3.errors).toBe(false);
+        //Ensure user can see the object
+        let x4 = (await noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
+        expect(x4.length).toBe(1);
+
+        //Ensure user can't delete a key
+        let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
+        expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
+
+        let x5 = await noThrow(k.revokeFrom(api, grantee));
+        expect(x5.errors).toBe(false);
+        //Ensure the key was revoked
+        let x6 = (await noThrow(SshLogin.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
+        expect(x6.length).toBe(0);
+
+
+        let resDel = await noThrow(k.delete(api));
+        expect(resDel.status).toBe("ok");
+
+    });
 
 
 

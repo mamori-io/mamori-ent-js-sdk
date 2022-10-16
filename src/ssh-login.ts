@@ -35,6 +35,8 @@ import { SSHLoginPermission } from './permission';
  * }).create(api)
  * ```
  */
+
+
 export class SshLogin implements ISerializable {
 
     public static getAll(api: MamoriService): Promise<any> {
@@ -88,15 +90,34 @@ export class SshLogin implements ISerializable {
 
             }
         }
-        if (record.uri) {
-            let token = record.uri.split("@");
-            this.user = token[0].replace("ssh://", "");
-            let hostToken = token[1].split(":");
-            this.host = hostToken[0];
-            this.port = 22;
-            if (hostToken.length > 1) {
-                this.port = hostToken[1];
+
+        function getTokens(part: string) {
+            let user = "";
+            let host = "";
+            let port = "22";
+
+            if (part.includes("@")) {
+                user = part.split("@")[0];
+                let y = part.split("@")[1];
+                if (y.includes(":")) {
+                    host = y.split(":")[0];
+                    port = y.split(":")[1];
+                }
+            } else {
+                if (part.includes(":")) {
+                    host = part.split(":")[0];
+                    port = part.split(":")[1];
+                }
             }
+            return { user: user, host: host, port: port };
+        };
+
+        if (record.uri) {
+            let u = record.uri.replace("ssh://", "");
+            let tokens = getTokens(u);
+            this.user = tokens.user;
+            this.port = Number.parseInt(tokens.port);
+            this.host = tokens.host;
         }
         return this;
     }
@@ -121,8 +142,12 @@ export class SshLogin implements ISerializable {
      * @returns 
      */
     public create(api: MamoriService): Promise<any> {
-        let uri = "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port);
-        let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" + sqlEscape(uri) + "', '" + this.private_key_name + "', '" + sqlEscape(this.password || "") + "')";
+        let uri = (this.user && this.user != '') ? "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port) :
+            "ssh://" + this.host + (this.port == 22 ? "" : ":" + this.port);
+        let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" +
+            sqlEscape(uri) + "', '" +
+            this.private_key_name + "', '" +
+            sqlEscape(this.password || "") + "')";
         return api.select(query).then((res: any) => {
             return res[0];
         });
