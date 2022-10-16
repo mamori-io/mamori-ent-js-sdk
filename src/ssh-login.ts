@@ -111,7 +111,9 @@ export class SshLogin implements ISerializable {
                     port = part.split(":")[1];
                 }
             }
-            return { user: user, host: host, port: port };
+            let payload = { user: user, host: host, port: port };
+            console.log("**** %o", payload);
+            return payload;
         };
 
         if (record.uri) {
@@ -144,7 +146,7 @@ export class SshLogin implements ISerializable {
      * @returns 
      */
     public create(api: MamoriService): Promise<any> {
-        let uri = (this.user && this.user != '') ? "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port) :
+        let uri = (this.user && this.user.length > 0) ? "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port) :
             "ssh://" + this.host + (this.port == 22 ? "" : ":" + this.port);
         let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" +
             sqlEscape(uri) + "', '" +
@@ -167,7 +169,8 @@ export class SshLogin implements ISerializable {
     }
 
     public update(api: MamoriService): Promise<any> {
-        let uri = "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port);
+        let uri = (this.user && this.user.length > 0) ? "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port) :
+            "ssh://" + this.host + (this.port == 22 ? "" : ":" + this.port);
         return api.select("call update_ssh_login(" +
             sqlEscape(this.id) +
             ", '" +
