@@ -9,7 +9,7 @@
 import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 import { base64_decode, base64_encode } from './utils';
-const sexp = require('sexp');
+import { sexp } from './sexp';
 
 export enum POLICY_TYPES {
     POLICY = "policy",
