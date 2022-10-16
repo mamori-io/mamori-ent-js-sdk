@@ -99,11 +99,13 @@ export class SshLogin implements ISerializable {
             if (part.includes("@")) {
                 user = part.split("@")[0];
                 let y = part.split("@")[1];
+                host = y;
                 if (y.includes(":")) {
                     host = y.split(":")[0];
                     port = y.split(":")[1];
                 }
             } else {
+                host = part;
                 if (part.includes(":")) {
                     host = part.split(":")[0];
                     port = part.split(":")[1];

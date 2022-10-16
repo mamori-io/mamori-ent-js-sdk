@@ -107,7 +107,6 @@ describe("ssh login tests", () => {
 
         //Ensure item returned properly
         let x = (await noThrow(SshLogin.getAll(api))).filter((o: any) => o.name == k.name)[0];
-        console.log("**** %o", x);
         expect(x.name).toBe(name);
         expect(x.login_mode).toBe("mamori");
 
