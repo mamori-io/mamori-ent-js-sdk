@@ -45,10 +45,8 @@ describe("IP resource CRUD tests", () => {
 
         let r3 = await noThrow(r.delete(api));
         expect(r3.error).toBe(false);
-
         let r4 = await noThrow(IpResource.list(api, 0, 100, [["name", "=", resourceName]]));
         expect(r4.data.length).toBe(0);
-
     });
 
 

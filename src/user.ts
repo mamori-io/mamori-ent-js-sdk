@@ -195,6 +195,32 @@ export class User extends UserBase {
   * A Mamori Directory User
   */
 export class DirectoryUser extends UserBase {
+
+    /**
+    * Searches remote logins
+    * NOTE: Non-admins will only be able to see their granted peers
+    * @param api 
+    * @param filter a filter in the format [["column1","=","value"],["column2","contains","value2"]]
+    * @returns users
+   */
+    public static list(api: MamoriService, from: number, to: number, filter?: any): Promise<any> {
+        let filters = prepareFilter(filter);
+        let payload = filter ? { skip: from, take: to, filter: filters } : { skip: from, take: to };
+        return api.callAPI("PUT", "/v1/search/directory_users", payload);
+    }
+
+    /**
+     * @param api  A logged-in MamoriService instance
+     * @returns This User configuration
+     */
+    public static get(api: MamoriService, username: string): Promise<User> {
+        return api.user(username).then(result => {
+            let u = new User(username).withEmail(result.email).withFullName(result.fullname);
+            return u;
+        });
+    }
+
+
     /**
      * @param user fields as json
      * @returns 

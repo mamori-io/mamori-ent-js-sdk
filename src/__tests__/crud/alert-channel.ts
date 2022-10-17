@@ -27,7 +27,7 @@ describe("alert channel tests", () => {
     });
 
     test('alert 01', async () => {
-        let name = "alerttest01" + testbatch;
+        let name = "alerttest01_" + testbatch;
         let k = new AlertChannel(name);
         //Delete old one
         let r2 = await noThrow(AlertChannel.get(api, name));
@@ -57,8 +57,6 @@ describe("alert channel tests", () => {
         let r = await noThrow(k.create(api));
         expect(r.id).toBeDefined();
         k.id = r.id;
-        //await ignoreError(k.delete(api));
-        //let r3 = await noThrow(AlertChannel.get(api, name));
-        //expect(r3).toBeNull();
+        await ignoreError(k.delete(api));
     });
 });
