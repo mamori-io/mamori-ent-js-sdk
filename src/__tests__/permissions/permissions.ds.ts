@@ -203,6 +203,7 @@ describe("datasource permission tests", () => {
             .permission(io_permission.DB_PERMISSION.SELECT)
             .grantee(grantee)
             .withValidBetween("2022-01-01 00:00", "2022-01-15 00:00");
+            
 
         await io_utils.ignoreError(obj.revoke(api));
 
@@ -212,9 +213,11 @@ describe("datasource permission tests", () => {
         await io_utils.ignoreError(obj.revoke(api));
     });
 
+    // Needs to handle more date formats. 
     test('grant 03 - valid between', async () => {
-
+        let tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
         let dt = new Date();
+        // get UTC date america/u/
         let year = dt.getFullYear();
         let month = (dt.getMonth() + 1).toString().padStart(2, '0');
         let day = dt.getDate().toString().padStart(2, '0');
@@ -225,7 +228,7 @@ describe("datasource permission tests", () => {
             .on("*", "*", "*", "*")
             .permission(io_permission.DB_PERMISSION.SELECT)
             .grantee(grantee)
-            .withValidBetween(fromD, toD);
+            .withValidBetween(fromD + " " + tz, toD + " " +tz);
 
         await io_utils.ignoreError(obj.revoke(api));
         let resp = await io_utils.noThrow(obj.grant(api));
