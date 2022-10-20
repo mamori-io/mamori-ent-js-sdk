@@ -3,6 +3,7 @@ import * as https from 'https';
 import { PolicyPermission, TIME_UNIT } from '../../permission';
 import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
+import { DBHelper } from '../../__utility__/test-helper';
 
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -100,19 +101,14 @@ describe("policy permission tests", () => {
     });
 
     test('grant 03', async () => {
+        let dr = DBHelper.dateRange();
 
-        let dt = new Date();
-        let year = dt.getFullYear();
-        let month = (dt.getMonth() + 1).toString().padStart(2, '0');
-        let day = dt.getDate().toString().padStart(2, '0');
-        let today = year + "-" + month + "-" + day;
-        let fromD = today + " 00:00";
-        let toD = today + " 23:59:59";
+    
 
         let obj = await new PolicyPermission()
             .policy(policy)
             .grantee(grantee)
-            .withValidBetween(fromD, toD);
+            .withValidBetween(dr.fromDtz, dr.toDtz);
 
         await ignoreError(obj.revoke(api));
 
@@ -122,8 +118,8 @@ describe("policy permission tests", () => {
         let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, "POLICY"],
         ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
         ["policy", FILTER_OPERATION.EQUALS_STRING, policy],
-        ["valid_from", "=", (new Date(fromD)).toISOString()],
-        ["valid_until", "=", (new Date(toD)).toISOString()]
+        ["valid_from", "=", (new Date(dr.fromD)).toISOString()],
+        ["valid_until", "=", (new Date(dr.toD)).toISOString()]
         ];
         let res = await new PolicyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(1);
