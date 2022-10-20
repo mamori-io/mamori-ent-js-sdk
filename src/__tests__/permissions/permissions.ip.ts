@@ -6,6 +6,7 @@ import { Role } from '../../role';
 import { WireGuardPeer } from '../../wireguard-peer';
 import { assert } from 'console';
 import { IpResource } from '../../ip-resource';
+import { DBHelper } from '../../__utility__/test-helper';
 
 
 
@@ -113,19 +114,13 @@ describe("ip resource permission tests", () => {
     });
 
     test('grant 03 - grant between', async () => {
-
-        let dt = new Date();
-        let year = dt.getFullYear();
-        let month = (dt.getMonth() + 1).toString().padStart(2, '0');
-        let day = dt.getDate().toString().padStart(2, '0');
-        let today = year + "-" + month + "-" + day;
-        let fromD = today + " 00:00";
-        let toD = today + " 23:59:59";
+        let dr = DBHelper.dateRange();
+        
 
         let obj = await new IPResourcePermission()
             .resource(resource)
             .grantee(grantee)
-            .withValidBetween(fromD, toD);
+            .withValidBetween(dr.fromDtz, dr.toDtz);
 
         await ignoreError(obj.revoke(api));
         let resp = await noThrow(obj.grant(api));
@@ -134,8 +129,8 @@ describe("ip resource permission tests", () => {
         let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
         ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
         ["key_name", FILTER_OPERATION.EQUALS_STRING, resource],
-        ["valid_from", "=", (new Date(fromD)).toISOString()],
-        ["valid_until", "=", (new Date(toD)).toISOString()]
+        ["valid_from", "=", (new Date(dr.fromD)).toISOString()],
+        ["valid_until", "=", (new Date(dr.toD)).toISOString()]
         ];
 
         let res = await new IPResourcePermission().grantee(grantee).list(api, filter);

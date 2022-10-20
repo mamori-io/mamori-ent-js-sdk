@@ -4,6 +4,7 @@ import { KeyPermission, TIME_UNIT } from '../../permission';
 import { Key, KEY_TYPE } from '../../key';
 import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
+import { DBHelper } from '../../__utility__/test-helper';
 
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -65,10 +66,10 @@ describe("key permission tests", () => {
     });
 
     test('grant 01', async () => {
-
         let obj = new KeyPermission()
             .key(key)
             .grantee(grantee);
+            
 
         //make sure no exist
         await ignoreError(obj.revoke(api));
@@ -125,19 +126,13 @@ describe("key permission tests", () => {
     });
 
     test('grant 03', async () => {
+        let dr = DBHelper.dateRange();
 
-        let dt = new Date();
-        let year = dt.getFullYear();
-        let month = (dt.getMonth() + 1).toString().padStart(2, '0');
-        let day = dt.getDate().toString().padStart(2, '0');
-        let today = year + "-" + month + "-" + day;
-        let fromD = today + " 00:00";
-        let toD = today + " 23:59:59";
 
         let obj = await new KeyPermission()
             .key(key)
             .grantee(grantee)
-            .withValidBetween(fromD, toD);
+            .withValidBetween(dr.fromDtz, dr.toDtz);
 
         await ignoreError(obj.revoke(api));
 
@@ -148,8 +143,8 @@ describe("key permission tests", () => {
         let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
         ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
         ["key_name", FILTER_OPERATION.EQUALS_STRING, key],
-        ["valid_from", FILTER_OPERATION.EQUALS, (new Date(fromD)).toISOString()],
-        ["valid_until", FILTER_OPERATION.EQUALS, (new Date(toD)).toISOString()]
+        ["valid_from", FILTER_OPERATION.EQUALS, (new Date(dr.fromD)).toISOString()],
+        ["valid_until", FILTER_OPERATION.EQUALS, (new Date(dr.toD)).toISOString()]
         ];
         let res = await new KeyPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(1);

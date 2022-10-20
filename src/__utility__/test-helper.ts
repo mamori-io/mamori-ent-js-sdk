@@ -5,6 +5,28 @@ import { io_utils, io_https } from "../api";
 
 export class DBHelper {
 
+
+static dateRange (){
+    let tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    let dt = new Date();
+    // get UTC date america/u/
+    let year = dt.getFullYear();
+    let month = (dt.getMonth() + 1).toString().padStart(2, '0');
+    let day = dt.getDate().toString().padStart(2, '0');
+    let today = year + "-" + month + "-" + day;
+    let fromD = today + " 00:00";
+    let toD = today + " 23:59:59";
+    
+    return {
+        fromD: fromD,
+        fromDtz: fromD + " " +tz,
+        toD: toD,
+        toDtz: toD + " " +tz,
+        tz: tz,
+    }
+}
+
+
     static async runSQLStatements(api: MamoriService, statements: any[]): Promise<any> {
         let res: any = {};
         let ndx = 1;
