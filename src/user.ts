@@ -262,4 +262,14 @@ export class DirectoryUser extends UserBase {
     public delete(api: MamoriService): Promise<any> {
         return api.delete_external_user(this.username);
     }
+
+    public lock(api: MamoriService): Promise<any> {
+        return api.disable_user(this.username);
+    }
+
+    public unlock(api: MamoriService): Promise<any> {
+        return api.unlock_user(this.username);
+    }
+
+
 }
