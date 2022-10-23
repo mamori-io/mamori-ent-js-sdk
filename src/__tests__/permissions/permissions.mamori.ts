@@ -3,6 +3,7 @@ import * as https from 'https';
 import { MamoriPermission, MAMORI_PERMISSION, TIME_UNIT } from '../../permission';
 import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
+import { DBHelper } from '../../__utility__/test-helper';
 
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -112,19 +113,12 @@ describe("mamori permission tests", () => {
     });
 
     test('grant 03', async () => {
-
-        let dt = new Date();
-        let year = dt.getFullYear();
-        let month = (dt.getMonth() + 1).toString().padStart(2, '0');
-        let day = dt.getDate().toString().padStart(2, '0');
-        let today = year + "-" + month + "-" + day;
-        let fromD = today + " 00:00";
-        let toD = today + " 23:59:59";
+        let dr = DBHelper.dateRange();
 
         let obj = await new MamoriPermission()
             .permission(MAMORI_PERMISSION.VIEW_ALL_USER_LOGS)
             .grantee(grantee)
-            .withValidBetween(fromD, toD);
+            .withValidBetween(dr.fromDtz, dr.toDtz);
 
         await ignoreError(obj.revoke(api));
 
@@ -133,8 +127,8 @@ describe("mamori permission tests", () => {
 
         let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, MAMORI_PERMISSION.VIEW_ALL_USER_LOGS],
         ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
-        ["valid_from", "=", (new Date(fromD)).toISOString()],
-        ["valid_until", "=", (new Date(toD)).toISOString()]
+        ["valid_from", "=", (new Date(dr.fromD)).toISOString()],
+        ["valid_until", "=", (new Date(dr.toD)).toISOString()]
         ];
         let res = await new MamoriPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(1);
