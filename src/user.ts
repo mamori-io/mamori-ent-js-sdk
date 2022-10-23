@@ -15,6 +15,11 @@ class UserBase implements ISerializable {
     public constructor() {
     }
 
+    username: string = "";
+    email: string = "";
+    fullname: string = "";
+
+
     /**
       * Initialize the object from JSON.
       * Call toJSON to see the expected record.
@@ -84,6 +89,14 @@ class UserBase implements ISerializable {
             });
         });
     }
+
+    public lock(api: MamoriService): Promise<any> {
+        return api.disable_user(this.username);
+    }
+
+    public unlock(api: MamoriService): Promise<any> {
+        return api.unlock_user(this.username);
+    }
 }
 
 
@@ -125,9 +138,6 @@ export class User extends UserBase {
         return result;
     }
 
-    username: string;
-    email: string;
-    fullname: string;
     /**
      * @param roleid  Unique Role name
      */
@@ -230,10 +240,7 @@ export class DirectoryUser extends UserBase {
         return result;
     }
 
-    username: string;
     provider: string;
-    fullname: string;
-    email: string;
     /**
      * @param roleid  Unique Role name
      */
@@ -263,13 +270,7 @@ export class DirectoryUser extends UserBase {
         return api.delete_external_user(this.username);
     }
 
-    public lock(api: MamoriService): Promise<any> {
-        return api.disable_user(this.username);
-    }
 
-    public unlock(api: MamoriService): Promise<any> {
-        return api.unlock_user(this.username);
-    }
 
 
 }
