@@ -125,7 +125,7 @@ export class OnDemandPolicy implements ISerializable {
     endorse_alert: string;
     endorse_default_message: string;
     endorse_agent_count: string;
-    execute_on_endorse: boolean;
+    execute_on_endorse: string;
     execute_alert: string;
     deny_alert: string;
     parameters: any[];
@@ -144,7 +144,7 @@ export class OnDemandPolicy implements ISerializable {
         this.endorse_alert = "";
         this.endorse_default_message = "";
         this.endorse_agent_count = "1";
-        this.execute_on_endorse = false;
+        this.execute_on_endorse = 'false';
         this.execute_alert = "";
         this.deny_alert = "";
         this.parameters = [];
@@ -196,7 +196,7 @@ export class OnDemandPolicy implements ISerializable {
             this.endorse_default_message,
             this.endorse_agent_count,
             this.deny_alert,
-            this.execute_on_endorse ? "true" : "false",
+            this.execute_on_endorse == 'true' ? "true" : "false",
             this.execute_alert,
             this.approval_expiry,
             this.sqlText);
