@@ -33,6 +33,7 @@ import * as io_ssh from './ssh-login';
 import * as io_user from './user';
 import * as io_utils from './utils';
 import * as io_wireguardpeers from './wireguard-peer';
+import * as io_policy from './policy';
 //import { Channel, Socket } from "./phoenix";
 
 
@@ -64,6 +65,7 @@ export {
     , io_user
     , io_utils
     , io_wireguardpeers
+    , io_policy
 };
 
 
@@ -1007,16 +1009,12 @@ export class MamoriService {
         return this.callAPI("POST", "/v1/access_rules", rec);
     }
 
-    public get_current_access_rules() {
-        return this.callAPI("GET", "/v1/access_rules?current=Y");
-    }
 
-    public get_access_rules(url_query: string) {
-        return this.callAPI("GET", "/v1/access_rules?" + url_query);
-    }
-
-    public get_access_rule_log(options: any) {
-        return this.callAPI("GET", "/v1/access_rule_log", options);
+    public get_current_access_rules(filter: any) {
+        filter = filter || {};
+        filter.current = "Y";
+        console.log("**** get_current_access_rules %o", filter)
+        return this.callAPI("GET", "/v1/access_rules", filter);
     }
 
     //
