@@ -1013,7 +1013,6 @@ export class MamoriService {
     public get_current_access_rules(filter: any) {
         filter = filter || {};
         filter.current = "Y";
-        console.log("**** get_current_access_rules %o", filter)
         return this.callAPI("GET", "/v1/access_rules", filter);
     }
 
@@ -2023,7 +2022,6 @@ export class MamoriService {
     public setServerDomain(domain: string) {
         //get smtp settings
         return this.get_smtp_cfg().then((smtpSettings: any) => {
-            //console.log("**** %o", smtpSettings);
             let url = "https://" + domain + "/";
             let calls = [];
             //Set SMTP

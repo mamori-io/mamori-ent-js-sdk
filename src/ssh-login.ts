@@ -112,7 +112,6 @@ export class SshLogin implements ISerializable {
                 }
             }
             let payload = { user: user, host: host, port: port };
-            console.log("**** %o", payload);
             return payload;
         };
 

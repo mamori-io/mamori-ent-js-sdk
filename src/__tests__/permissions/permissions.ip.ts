@@ -115,7 +115,7 @@ describe("ip resource permission tests", () => {
 
     test('grant 03 - grant between', async () => {
         let dr = DBHelper.dateRange();
-        
+
 
         let obj = await new IPResourcePermission()
             .resource(resource)
@@ -238,7 +238,6 @@ describe("ip resource permission tests", () => {
         await new Promise(resolve => setTimeout(resolve, 10000));
         let r9 = await noThrow(api.get_wireguard_status());
         let r10 = r9.filter((o: any) => o.public_key === pPublicKey);
-        console.log("**** 222 %o", r10);
         //expect(r10.length).toBe(0);
         //expect(r10[0].allowed_dst_ip.length).toBe(1)
 

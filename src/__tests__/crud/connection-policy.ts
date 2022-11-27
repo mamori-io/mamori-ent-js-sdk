@@ -77,7 +77,50 @@ describe("on-demand policy crud tests", () => {
 
     });
 
+    test('policy 02', async () => {
+        let name = "test_s_policy_" + testbatch;
+        //
+        let cleanit = await io_utils.noThrow(io_policy.StatementPolicy.list(api, { description: name }));
+        if (cleanit.length > 0) {
+            let p2 = io_policy.ConnectionPolicy.build(cleanit[0]);
+            await io_utils.noThrow(p2.delete(api));
+        }
 
+        let policy = new io_policy.StatementPolicy(name);
+        policy.withEnabled(false)
+            .withPosition(20)
+            .withEnabled(false)
+            .withAction(io_policy.POLICY_ACTIONS.ALLOW)
+            .withRuleType(io_policy.POLICY_RULE_TYPE.WHEN)
+            .withRuleSEXP("(REFERENCES-TABLE 'mamori')")
+            .withAlert(requestAlert.name);
+        let x = await io_utils.noThrow(policy.create(api));
+        expect(x.error).toBe(false);
 
+        //Test select
+        let x2 = await io_utils.noThrow(io_policy.StatementPolicy.list(api, { description: name }));
+        expect(x2.length).toBe(1);
+
+        //Text get by ID
+        let x3 = await io_utils.noThrow(io_policy.StatementPolicy.get(api, x2[0].id));
+        expect(x3.length).toBe(1);
+        let x4 = x3[0];
+
+        //Test delete
+        policy.id = x4.id;
+        let x5 = await io_utils.noThrow(policy.delete(api));
+        expect(x5.error).toBe(false);
+
+        //Test FROM JSON
+        let p2 = io_policy.StatementPolicy.build(x4);
+        let x6 = await io_utils.noThrow(p2.create(api));
+        expect(x6.error).toBe(false);
+        let x7 = await io_utils.noThrow(io_policy.StatementPolicy.list(api, { description: name }));
+        expect(x7.length).toBe(1);
+
+        let p3 = io_policy.StatementPolicy.build(x7[0]);
+        let x8 = await io_utils.noThrow(p3.delete(api));
+        expect(x8.error).toBe(false);
+    });
 
 });

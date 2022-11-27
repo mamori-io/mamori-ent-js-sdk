@@ -14,7 +14,7 @@ import { sexp } from './sexp';
 export enum POLICY_TYPES {
     BEFORE_CONNECTION = 'BEFORE CONNECTION',
     AFTER_CONNECTION = 'AFTER CONNECTION',
-    STATEMENT = 'STATEMENT'
+    BEFORE_EXECUTE = 'BEFORE EXECUTE'
 }
 
 export enum POLICY_ACTIONS {
@@ -31,32 +31,8 @@ export enum POLICY_RULE_TYPE {
 
 //        return api.get_current_access_rules({ rule_type: POLICY_TYPES.CONNECTION })
 
-export class ConnectionPolicy implements ISerializable {
+export class PolicyBase implements ISerializable {
 
-
-    /**
-     * Search before connection policies
-     * NOTE: Non-admins will only be able to see their granted peers
-     * @param api 
-     * @returns users
-    */
-    public static listBefore(api: MamoriService, filter?: any): Promise<any> {
-        let payload: any = filter ? filter : {};
-        payload.rule_type = POLICY_TYPES.BEFORE_CONNECTION;
-        return api.get_current_access_rules(payload);
-    }
-
-    /**
-     * Search after connection policies
-     * NOTE: Non-admins will only be able to see their granted peers
-     * @param api 
-     * @returns users
-    */
-    public static listAfter(api: MamoriService, filter?: any): Promise<any> {
-        let payload: any = filter ? filter : {};
-        payload.rule_type = POLICY_TYPES.AFTER_CONNECTION;
-        return api.get_current_access_rules(payload);
-    }
 
     public static get(api: MamoriService, id: Number): Promise<any> {
         let payload: any = { id: id }
@@ -126,7 +102,7 @@ export class ConnectionPolicy implements ISerializable {
      * @param action
      * @returns 
      */
-    public withAction(action: POLICY_ACTIONS): ConnectionPolicy {
+    public withAction(action: POLICY_ACTIONS): PolicyBase {
         this.action = action;
         return this;
     }
@@ -136,7 +112,7 @@ export class ConnectionPolicy implements ISerializable {
      * @param type
      * @returns 
      */
-    public withRuleType(type: POLICY_RULE_TYPE): ConnectionPolicy {
+    public withRuleType(type: POLICY_RULE_TYPE): PolicyBase {
         this.rule_type = type;
         return this;
     }
@@ -146,26 +122,26 @@ export class ConnectionPolicy implements ISerializable {
      * @param position
      * @returns 
      */
-    public withPosition(position: number): ConnectionPolicy {
+    public withPosition(position: number): PolicyBase {
         this.position = position.toString();
         return this;
     }
 
-    public withRuleSEXP(rule: string): ConnectionPolicy {
+    public withRuleSEXP(rule: string): PolicyBase {
         this.rule_sexp = rule;
         return this;
     }
-    public withRuleJSON(rule: any): ConnectionPolicy {
+    public withRuleJSON(rule: any): PolicyBase {
         this.rule_json = rule;
         return this;
     }
 
-    public withAlert(alert: string): ConnectionPolicy {
+    public withAlert(alert: string): PolicyBase {
         this.alert = alert;
         return this;
     }
 
-    public withEnabled(enabled: boolean): ConnectionPolicy {
+    public withEnabled(enabled: boolean): PolicyBase {
         this.enabled = enabled ? 'true' : 'false';
         return this;
     }
@@ -202,4 +178,48 @@ export class ConnectionPolicy implements ISerializable {
 
 
 
+}
+
+export class ConnectionPolicy extends PolicyBase {
+    /**
+    * Search before connection policies
+    * NOTE: Non-admins will only be able to see their granted peers
+    * @param api 
+    * @returns users
+   */
+    public static listBefore(api: MamoriService, filter?: any): Promise<any> {
+        let payload: any = filter ? filter : {};
+        payload.rule_type = POLICY_TYPES.BEFORE_CONNECTION;
+        return api.get_current_access_rules(payload);
+    }
+
+    /**
+     * Search after connection policies
+     * NOTE: Non-admins will only be able to see their granted peers
+     * @param api 
+     * @returns users
+    */
+    public static listAfter(api: MamoriService, filter?: any): Promise<any> {
+        let payload: any = filter ? filter : {};
+        payload.rule_type = POLICY_TYPES.AFTER_CONNECTION;
+        return api.get_current_access_rules(payload);
+    }
+}
+
+export class StatementPolicy extends PolicyBase {
+    /**
+    * Search before execute policies
+    * NOTE: Non-admins will only be able to see their granted peers
+    * @param api 
+    * @returns users
+   */
+    public static list(api: MamoriService, filter?: any): Promise<any> {
+        let payload: any = filter ? filter : {};
+        payload.rule_type = POLICY_TYPES.BEFORE_EXECUTE;
+        return api.get_current_access_rules(payload);
+    }
+
+    public constructor(description: string) {
+        super(POLICY_TYPES.BEFORE_EXECUTE, description);
+    }
 }
