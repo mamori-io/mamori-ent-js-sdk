@@ -12,9 +12,10 @@ import { sqlEscape, prepareFilter } from './utils';
 import { SecretPermission } from './permission';
 
 export enum SECRET_TYPE {
-    AES = "AES",
-    RSA = "RSA",
-    SSH = "SSH"
+    GENERIC = "",
+    RDP = "rdp",
+    SSH = "ssh",
+    DB = "db"
 }
 
 export class Secret implements ISerializable {
