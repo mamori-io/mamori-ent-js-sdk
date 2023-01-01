@@ -11,7 +11,7 @@ import { ISerializable } from "./i-serializable";
 import { sqlEscape, prepareFilter } from './utils';
 import { SecretPermission } from './permission';
 
-export enum SECRET_TYPE {
+export enum SECRET_PROTOCOL {
     GENERIC = "",
     RDP = "rdp",
     SSH = "ssh",
@@ -50,14 +50,53 @@ export class Secret implements ISerializable {
         return api.callAPI("PUT", "/v1/search/secrets", payload);
     }
 
+    /**
+     * Searches secrets
+     * NOTE: Non-admins will only be able to see their granted peers
+     * @param api 
+     * @param filter a filter in the format [["column1","=","value"],["column2","contains","value2"]]
+     * @returns users
+    */
+    public static getByName(api: MamoriService, name: string): Promise<any> {
+        let filters = prepareFilter([["name", "=", name]]);
+        let payload = { skip: 0, take: 100, filter: filters };
+        return api.callAPI("PUT", "/v1/search/secrets", payload).then(data => {
+            if (data.data.length > 0) {
+                let s = Secret.build(data.data[0]);
+                return s;
+            }
+            return null;
+        });
+    }
 
-    id?: number;
-    type?: SECRET_TYPE;
+    public static deleteByName(api: MamoriService, name: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            Secret.getByName(api, name).then(res => {
+                if (res) {
+                    (res as Secret).delete(api).then(r => {
+                        resolve({ error: false, item: res });
+                    });
+                } else {
+                    resolve({ error: true, item: null, message: "secret not found" });
+                }
+            }).catch(e => {
+                reject({ error: true, exception: e });
+            })
+        });
+    }
+
+
+    id?: string;
+    protocol?: SECRET_PROTOCOL;
     secret?: string;
     name: string;
     username?: string;
-    host?: string;
+    hostname?: string;
     description?: string;
+    updated_at?: string;
+    created_at?: string;
+    active_access?: string;
+
     /**
          * Initialize the object from JSON.
          * Call toJSON to see the expected record.
@@ -90,10 +129,16 @@ export class Secret implements ISerializable {
     /**
      * @param name  Unique Key name
      */
-    public constructor(type: SECRET_TYPE, name: string) {
-        this.type = type;
+    public constructor(protocol: SECRET_PROTOCOL, name: string) {
+        this.protocol = protocol;
         this.name = name;
-
+        this.hostname = '';
+        this.username = '';
+        this.description = '';
+        this.id = '';
+        this.updated_at = '';
+        this.created_at = '';
+        this.active_access = '';
     }
 
     /**
@@ -139,9 +184,9 @@ export class Secret implements ISerializable {
             "', '" +
             sqlEscape(this.username || "") +
             "', '" +
-            sqlEscape(this.host || "") +
+            sqlEscape(this.hostname || "") +
             "', '" +
-            sqlEscape(this.type || "") +
+            sqlEscape(this.protocol || "") +
             "'"
         );
     }
@@ -174,11 +219,11 @@ export class Secret implements ISerializable {
     }
 
     /**
-     * @param host  The host
+     * @param host  The host name or IP
      * @returns 
      */
     public withHost(host: string): Secret {
-        this.host = host;
+        this.hostname = host;
         return this;
     }
 
