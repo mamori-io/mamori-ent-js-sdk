@@ -26,10 +26,10 @@ describe("Secret CRUD tests", () => {
     test('secret create 01', async () => {
 
         let baseR = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, resourceName)
+            .withSecret("#(*7322323!!!jnsas@^0001")
             .withUsername("testUser")
             .withHost("10.123.0.100")
             .withDescription("The Desc");
-
 
         // Test to and from JSON
         let r = io_secret.Secret.build(baseR.toJSON());

@@ -139,6 +139,7 @@ export class Secret implements ISerializable {
         this.updated_at = '';
         this.created_at = '';
         this.active_access = '';
+        this.secret = '';
     }
 
     /**
