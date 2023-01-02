@@ -1,9 +1,7 @@
 
 import { MamoriService } from '../../api';
 import { io_https, io_utils, io_permission, io_role, io_secret } from '../../api';
-import { assert } from 'console';
 import { DBHelper } from '../../__utility__/test-helper';
-import { Secret } from '../../secret';
 
 
 
@@ -41,28 +39,28 @@ describe("secret permission tests", () => {
             fail(io_utils.handleAPIException(e));
         })
 
-
-        //Create the IP Resource
-        //let cidr = "10.0.0.0/16";
-        //let ports = "7777";
         let newS = new io_secret.Secret(io_secret.SECRET_PROTOCOL.RDP, resource)
             .withUsername("uname")
-            .withHost("10.123.0.1")
+            .withHost("10.100.100.100")
             .withDescription("Udesc");
-        let baseR = await io_utils.ignoreError(newS.create(api));
+        await io_utils.ignoreError(newS.create(api));
+
+        let newCapS = new io_secret.Secret(io_secret.SECRET_PROTOCOL.RDP, "CAPS" + resource)
+            .withUsername("uname")
+            .withHost("10.100.100.100")
+            .withDescription("Udesc");
+        await io_utils.ignoreError(newCapS.create(api));
     });
 
     afterAll(async () => {
-        //await ignoreError(io_secret.Secret.d  (api));
-        await api.delete_user(grantee);
+        await io_utils.ignoreError(io_secret.Secret.deleteByName(api, "CAPS" + resource));
+        await io_utils.ignoreError(io_secret.Secret.deleteByName(api, resource));
+        await io_utils.ignoreError(api.delete_user(grantee));
         await api.logout();
 
     });
 
     test('grant 01', async () => {
-        //let x = await io_utils.noThrow(io_secret.Secret.getByName(api, "mysecret1"));
-        //console.log("**** %o", x);
-
         let obj = new io_permission.SecretPermission()
             .name(resource)
             .grantee(grantee);
@@ -93,182 +91,149 @@ describe("secret permission tests", () => {
         expect(resp.errors).toBe(false);
     });
 
-    test.skip('grant 02', async () => {
-        /*
-        let r1 = await new IPResourcePermission()
-            .resource(resource)
+    test('grant 02', async () => {
+
+        let r1 = await new io_permission.SecretPermission()
+            .name(resource)
             .grantee(grantee)
-            .withValidFor(60, TIME_UNIT.MINUTES)
+            .withValidFor(60, io_permission.TIME_UNIT.MINUTES)
             .grant(api);
 
         expect(r1.errors).toBe(false);
 
-        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
-        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
-        ["key_name", FILTER_OPERATION.EQUALS_STRING, resource],
+        let filter = [["permissiontype", io_utils.FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", io_utils.FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", io_utils.FILTER_OPERATION.EQUALS_STRING, resource],
         ["time_left", ">", 3500]
         ];
 
-        let res = await new IPResourcePermission().grantee(grantee).list(api, filter);
+        let res = await new io_permission.SecretPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(1);
         let id = res.data[0].id;
-        let r2 = await noThrow(new IPResourcePermission().revokeByID(api, id));
+        let r2 = await io_utils.noThrow(new io_permission.SecretPermission().revokeByID(api, id));
         expect(r2.error).toBe(false);
 
-        res = await new IPResourcePermission().grantee(grantee).list(api, filter);
+        res = await new io_permission.SecretPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(0);
-        */
+
 
     });
 
-    test.skip('grant 03 - grant between', async () => {
-        /*
+    test('grant 03 - grant between', async () => {
+
         let dr = DBHelper.dateRange();
-        let obj = await new IPResourcePermission()
-            .resource(resource)
+        let obj = await new io_permission.SecretPermission()
+            .name(resource)
             .grantee(grantee)
             .withValidBetween(dr.fromDtz, dr.toDtz);
 
-        await ignoreError(obj.revoke(api));
-        let resp = await noThrow(obj.grant(api));
+        await io_utils.ignoreError(obj.revoke(api));
+        let resp = await io_utils.noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);
 
-        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
-        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee],
-        ["key_name", FILTER_OPERATION.EQUALS_STRING, resource],
+        let filter = [["permissiontype", io_utils.FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", io_utils.FILTER_OPERATION.EQUALS_STRING, grantee],
+        ["key_name", io_utils.FILTER_OPERATION.EQUALS_STRING, resource],
         ["valid_from", "=", (new Date(dr.fromD)).toISOString()],
         ["valid_until", "=", (new Date(dr.toD)).toISOString()]
         ];
 
-        let res = await new IPResourcePermission().grantee(grantee).list(api, filter);
+        let res = await new io_permission.SecretPermission().grantee(grantee).list(api, filter);
         expect(res.totalCount).toBe(1);
 
-        let resp2 = await ignoreError(obj.grant(api));
+        let resp2 = await io_utils.ignoreError(obj.grant(api));
         expect(resp2.errors).toBe(true);
 
-        resp = await noThrow(obj.revoke(api));
+        resp = await io_utils.noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-        let res2 = await new IPResourcePermission().grantee(grantee).list(api, filter);
+        let res2 = await new io_permission.SecretPermission().grantee(grantee).list(api, filter);
         expect(res2.totalCount).toBe(0);
 
-        resp = await noThrow(obj.grant(api));
+        resp = await io_utils.noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);
 
-        resp = await noThrow(obj.revoke(api));
+        resp = await io_utils.noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
-        */
-
     });
 
-    test.skip('grant 04 - mixed case', async () => {
-        /*
+    test('grant 04 - mixed case', async () => {
+
         let name = "CAPS" + resource;
-        let objMixedCase = new IPResourcePermission()
-            .resource(name)
+        let objMixedCase = new io_permission.SecretPermission()
+            .name(name)
             .grantee(grantee);
-        let objLower = new IPResourcePermission()
-            .resource(name.toLowerCase())
+        let objLower = new io_permission.SecretPermission()
+            .name(name.toLowerCase())
             .grantee(grantee);
 
         //make sure no exist
-        await ignoreError(objLower.revoke(api));
-        await ignoreError(objMixedCase.revoke(api));
+        await io_utils.ignoreError(objLower.revoke(api));
+        await io_utils.ignoreError(objMixedCase.revoke(api));
 
         //grant 1
-        let r1 = await noThrow(objMixedCase.grant(api));
+        let r1 = await io_utils.noThrow(objMixedCase.grant(api));
         expect(r1.errors).toBe(false);
         //Grant 2
-        let r2 = await noThrow(objLower.grant(api));
+        let r2 = await io_utils.noThrow(objLower.grant(api));
         expect(r2.errors).toBe(true);
         //Revoke 1
-        let r3 = await noThrow(objMixedCase.revoke(api));
+        let r3 = await io_utils.noThrow(objMixedCase.revoke(api));
         expect(r3.errors).toBe(false);
 
-        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
-        ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
-        let r5 = await noThrow(new IPResourcePermission().grantee(grantee).list(api, filter));
+        let filter = [["permissiontype", io_utils.FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", io_utils.FILTER_OPERATION.EQUALS_STRING, grantee]];
+        let r5 = await io_utils.noThrow(new io_permission.SecretPermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
-        //revoke 2
-        //let r4 = await noThrow(objLower.revoke(api));
-        //console.log(r4);
-        //expect(r4.errors).toBe(false);
-        //
-        */
     });
 
-    test.skip('test 05 role grant', async () => {
-        /*
-        //create the wg peer for the grantee
-        let peer = "test_peer_" + testbatch;
-        let k = new WireGuardPeer(grantee, peer);
-        await noThrow(k.create(api));
-        let payload = {};
-        addFilterToDxGridOptions(payload, "userid", FILTER_OPERATION.EQUALS_STRING, grantee);
-        let r6 = await noThrow(api.search_wireguard_peers(payload));
-        expect(r6.data.length).toBeGreaterThan(0);
-        let pPublicKey = r6.data[0].public_key;
-        //
-        let roleName = "test_permission_ip_." + testbatch;
-        let role = new Role(roleName);
-        await ignoreError(role.delete(api));
-        let x = await noThrow(role.create(api));
+    test('test 05 role grant', async () => {
+        //Create role
+        let roleName = "test_permission_secret_." + testbatch;
+        let role = new io_role.Role(roleName);
+        await io_utils.ignoreError(role.delete(api));
+        let x = await io_utils.noThrow(role.create(api));
         expect(x.error).toBe(false);
 
         //
         // GRANT
         //
-        let obj = new IPResourcePermission()
-            .resource(resource)
+        let obj = await new io_permission.SecretPermission()
+            .name(resource)
             .grantee(roleName);
-        //make sure no exist
-        await ignoreError(obj.revoke(api));
-        //check list
-        let filter = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, permType],
-        ["grantee", FILTER_OPERATION.EQUALS_STRING, roleName]];
-        let res = await new IPResourcePermission().grantee(roleName).list(api, filter);
+        await io_utils.ignoreError(obj.revoke(api));
+
+        let f = [["permissiontype", io_utils.FILTER_OPERATION.EQUALS_STRING, permType],
+        ["grantee", io_utils.FILTER_OPERATION.EQUALS_STRING, roleName],
+        ["key_name", io_utils.FILTER_OPERATION.EQUALS_STRING, resource]
+        ];
+        //make sure no exist        
+        let res = await new io_permission.SecretPermission().grantee(roleName).list(api, f);
         expect(res.totalCount).toBe(0);
-        //grant
-        let resp = await noThrow(obj.grant(api));
+
+        let resp = await io_utils.noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);
-        //check list
-        res = await new IPResourcePermission().grantee(roleName).list(api, filter);
+
+        res = await new io_permission.SecretPermission().grantee(roleName).list(api, f);
         expect(res.totalCount).toBe(1);
-        //Grant role to grantee
-        await noThrow(role.grantTo(api, grantee, false));
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        //let r10 = await noThrow(new IPResourcePermission().resource(resource).grantee(grantee).grant(api));
-        let r7 = await noThrow(api.get_wireguard_status());
-        let r8 = r7.filter((o: any) => o.public_key === pPublicKey);
-        //console.log("**** 111 %o", r8);
-        expect(r8.length).toBeGreaterThan(0);
-        expect(r8[0].allowed_dst_ip.length).toBe(2);
-        //
-        await noThrow(role.revokeFrom(api, grantee));
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        let r9 = await noThrow(api.get_wireguard_status());
-        let r10 = r9.filter((o: any) => o.public_key === pPublicKey);
-        //expect(r10.length).toBe(0);
-        //expect(r10[0].allowed_dst_ip.length).toBe(1)
 
-        //try re-grant
-        let resp2 = await ignoreError(obj.grant(api));
+        let resp2 = await io_utils.ignoreError(obj.grant(api));
         expect(resp2.errors).toBe(true);
-        //revoke
-        resp = await noThrow(obj.revoke(api));
-        expect(resp.errors).toBe(false);
-        //
-        resp = await noThrow(obj.grant(api));
+
+        resp = await io_utils.noThrow(obj.revoke(api));
         expect(resp.errors).toBe(false);
 
-        resp = await noThrow(obj.revoke(api));
+        resp = await io_utils.noThrow(obj.grant(api));
         expect(resp.errors).toBe(false);
 
-        await noThrow(role.revokeFrom(api, grantee));
+        resp = await io_utils.noThrow(obj.revoke(api));
+        expect(resp.errors).toBe(false);
         //Delete role
-        let d = await noThrow(role.delete(api));
+        let d = await io_utils.noThrow(role.delete(api));
         expect(d.error).toBe(false);
-        */
+
     });
+
+
 
 });

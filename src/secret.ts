@@ -77,7 +77,7 @@ export class Secret implements ISerializable {
                         resolve({ error: false, item: res });
                     });
                 } else {
-                    resolve({ error: true, item: null, message: "secret not found" });
+                    resolve({ error: false, item: null, message: "secret not found" });
                 }
             }).catch(e => {
                 reject({ error: true, exception: e });
