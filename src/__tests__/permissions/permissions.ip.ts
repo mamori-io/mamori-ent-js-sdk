@@ -155,6 +155,13 @@ describe("ip resource permission tests", () => {
 
     test('grant 04 - mixed case', async () => {
         let name = "CAPS" + resource;
+
+        await ignoreError(new IpResource(name).delete(api));
+        let cidr = "10.0.0.0/16";
+        let ports = "7777";
+        let baseR = await ignoreError(new IpResource(name).withCIDR(cidr).withPorts(ports).create(api));
+
+
         let objMixedCase = new IPResourcePermission()
             .resource(name)
             .grantee(grantee);
@@ -180,11 +187,8 @@ describe("ip resource permission tests", () => {
         ["grantee", FILTER_OPERATION.EQUALS_STRING, grantee]];
         let r5 = await noThrow(new IPResourcePermission().grantee(grantee).list(api, filter));
         expect(r5.totalCount).toBe(0);
-        //revoke 2
-        //let r4 = await noThrow(objLower.revoke(api));
-        //console.log(r4);
-        //expect(r4.errors).toBe(false);
-        //
+
+        await ignoreError(new IpResource(name).delete(api));
     });
 
     test.skip('test 05 role grant', async () => {
