@@ -1050,6 +1050,74 @@ export class RemoteDesktopLoginPermission extends PermissionBase {
     }
 }
 
+export class SecretPermission extends PermissionBase {
+    private items?: string[];
+    private secretName?: string;
+
+    public constructor() {
+        super();
+        this.secretName = "";
+        this.items = ["REVEAL SECRET"];
+    }
+
+    /**
+    * Set the name to grant
+    * @param name The name of the resource
+    * @returns  
+    */
+    public name(name: string): SecretPermission {
+        this.secretName = name;
+        return this;
+    }
+
+
+    public prepare(): any {
+        let res = super.prepare();
+        this.options.grantables = this.items;
+        this.options.object_name = '"' + this.secretName + '"';
+        return res;
+    }
+
+    /**
+     * Initialize the object from JSON.
+     * Call toJSON to see the expected record.
+     * @param record JSON record
+     * @returns
+     */
+    fromJSON(record: any) {
+        super.fromJSON(record);
+        if (record.key_name && record.key_name != '') {
+            this.secretName = record.key_name;
+        }
+        for (let prop in this) {
+            if (prop == "items" && record.hasOwnProperty("permissions")) {
+                this.items = record["permissions"].split(",");
+            } else if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+    /**
+    * Serialize the object to JSON
+    * @param
+    * @returns JSON 
+    */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            if (prop != "options") {
+                if (prop == "items") {
+                    res["permissions"] = this.items?.join(",");
+                } else {
+                    res[prop] = this[prop];
+                }
+            }
+        }
+        return res;
+    }
+}
+
 
 
 
