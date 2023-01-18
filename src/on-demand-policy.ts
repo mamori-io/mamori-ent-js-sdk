@@ -12,7 +12,8 @@ import { prepareFilter } from './utils';
 
 export enum POLICY_TYPES {
     POLICY = "policy",
-    OTHER = "other"
+    OTHER = "other",
+    RESOURCE = "resource"
 }
 
 
@@ -131,13 +132,13 @@ export class OnDemandPolicy implements ISerializable {
     parameters: any[];
     approval_expiry: string;
 
-    public constructor(name: string) {
+    public constructor(name: string, type?: POLICY_TYPES) {
 
         this.name = name;
         this.description = "";
         this.sqlText = "";
         this.requires = "";
-        this.type = POLICY_TYPES.POLICY;
+        this.type = type ? type : POLICY_TYPES.POLICY;
         this.request_role = "";
         this.request_alert = "";
         this.request_default_message = "";
