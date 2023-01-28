@@ -19,7 +19,9 @@ export enum PERMISSION_TYPE {
     ROLE = "role",
     SSH = "ssh",
     REMOTE_DESKTOP = "remotedesktop",
-    IP_RESOURCE = "ip_resource"
+    IP_RESOURCE = "ip_resource",
+    HTTP_RESOURCE = "http_resource",
+    SECRET = "secret"
 }
 
 export enum TIME_UNIT {
@@ -136,6 +138,10 @@ export class Permissions {
             return new RemoteDesktopLoginPermission().fromJSON(rec);
         } else if (rec.permissiontype == 'KEY USAGE') {
             return new KeyPermission().fromJSON(rec);
+        } else if (rec.permissiontype == 'REVEAL SECRET') {
+            return new SecretPermission().fromJSON(rec);
+        } else if (rec.permissiontype == 'HTTP ACCESS') {
+            return new HTTPResourcePermission().fromJSON(rec);
         } else if (Object.values(DB_PERMISSION).includes(rec.permissiontype)) {
             return new DatasourcePermission().permission(rec.permissiontype).fromJSON(rec);
         } else if (Object.values(MAMORI_PERMISSION).includes(rec.permissiontype)) {
@@ -150,7 +156,6 @@ export class Permissions {
         //""
         //POLICY
         //
-
     }
 
     public static make(type: PERMISSION_TYPE): PermissionBase {
@@ -171,6 +176,10 @@ export class Permissions {
                 return new RolePermission();
             case PERMISSION_TYPE.SSH:
                 return new SSHLoginPermission();
+            case PERMISSION_TYPE.HTTP_RESOURCE:
+                return new HTTPResourcePermission();
+            case PERMISSION_TYPE.SECRET:
+                return new SecretPermission();
         }
     }
 }
@@ -1088,6 +1097,74 @@ export class SecretPermission extends PermissionBase {
         super.fromJSON(record);
         if (record.key_name && record.key_name != '') {
             this.secretName = record.key_name;
+        }
+        for (let prop in this) {
+            if (prop == "items" && record.hasOwnProperty("permissions")) {
+                this.items = record["permissions"].split(",");
+            } else if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+    /**
+    * Serialize the object to JSON
+    * @param
+    * @returns JSON 
+    */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            if (prop != "options") {
+                if (prop == "items") {
+                    res["permissions"] = this.items?.join(",");
+                } else {
+                    res[prop] = this[prop];
+                }
+            }
+        }
+        return res;
+    }
+}
+
+export class HTTPResourcePermission extends PermissionBase {
+    private items?: string[];
+    private itemName?: string;
+
+    public constructor() {
+        super();
+        this.itemName = "";
+        this.items = ["HTTP ACCESS"];
+    }
+
+    /**
+    * Set the name to grant
+    * @param name The name of the resource
+    * @returns  
+    */
+    public name(name: string): HTTPResourcePermission {
+        this.itemName = name;
+        return this;
+    }
+
+
+    public prepare(): any {
+        let res = super.prepare();
+        this.options.grantables = this.items;
+        this.options.object_name = '"' + this.itemName + '"';
+        return res;
+    }
+
+    /**
+     * Initialize the object from JSON.
+     * Call toJSON to see the expected record.
+     * @param record JSON record
+     * @returns
+     */
+    fromJSON(record: any) {
+        super.fromJSON(record);
+        if (record.key_name && record.key_name != '') {
+            this.itemName = record.key_name;
         }
         for (let prop in this) {
             if (prop == "items" && record.hasOwnProperty("permissions")) {

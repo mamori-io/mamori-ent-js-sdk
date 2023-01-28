@@ -35,6 +35,7 @@ import * as io_utils from './utils';
 import * as io_wireguardpeers from './wireguard-peer';
 import * as io_policy from './policy';
 import * as io_secret from './secret';
+import * as io_http_resource from './http-resource';
 //import { Channel, Socket } from "./phoenix";
 
 
@@ -68,6 +69,7 @@ export {
     , io_wireguardpeers
     , io_policy
     , io_secret
+    , io_http_resource
 };
 
 
