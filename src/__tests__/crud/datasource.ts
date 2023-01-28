@@ -7,6 +7,8 @@ const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
 const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
+const dbHost = process.env.MAMORI_DB_HOST || 'localhost';
+const dbPort = process.env.MAMORI_DB_PORT || '5432';
 
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 
@@ -47,7 +49,7 @@ if (dbPassword) {
             await io_utils.ignoreError(ds.delete(api));
 
             ds.ofType("POSTGRESQL", 'postgres')
-                .at("localhost", 54321)
+                .at(dbHost, Number(dbPort))
                 .withCredentials('postgres', dbPassword)
                 .withDatabase('mamorisys')
                 .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
@@ -70,8 +72,8 @@ if (dbPassword) {
         test('datasource 002 - postgres password policy', async () => {
 
             //Create DS
-            let dsHost = "localhost";
-            let dsport = "54321";
+            let dsHost = dbHost;
+            let dsport = dbPort;
             let dsUser = "postgres";
             let dsDBPW = dbPassword;
             let dsDB = "mamorisys";
@@ -157,8 +159,8 @@ if (dbPassword) {
         test('datasource 003 - delete cred on disabled ds', async () => {
 
             //Create DS
-            let dsHost = "localhost";
-            let dsport = "54321";
+            let dsHost = dbHost;
+            let dsport = dbPort;
             let dsUser = "postgres";
             let dsDBPW = dbPassword;
             let dsDB = "mamorisys";

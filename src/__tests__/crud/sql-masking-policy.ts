@@ -13,6 +13,8 @@ const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
 const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
+const dbHost = process.env.MAMORI_DB_HOST || 'localhost';
+const dbPort = process.env.MAMORI_DB_PORT || '5432';
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
@@ -53,7 +55,7 @@ describe("sql-masking-policy crud tests", () => {
         if (dbPassword) {
             let ds = new Datasource(dsName);
             ds.ofType("POSTGRESQL", 'postgres')
-                .at("localhost", 54321)
+                .at(dbHost, Number(dbPort))
                 .withCredentials('postgres', dbPassword)
                 .withDatabase('mamorisys')
                 .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
