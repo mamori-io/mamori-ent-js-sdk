@@ -1,30 +1,30 @@
 import { assert } from "console";
-import { io_permission, io_serversession, io_sqlmaskingpolicies, MamoriService } from "../api";
+import { io_permission, io_serversession, io_sqlmaskingpolicies, MamoriService, io_role, io_ondemandpolicies } from "../api";
 import { io_utils, io_https } from "../api";
 
 
 export class DBHelper {
 
 
-static dateRange (){
-    let tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    let dt = new Date();
-    // get UTC date america/u/
-    let year = dt.getFullYear();
-    let month = (dt.getMonth() + 1).toString().padStart(2, '0');
-    let day = dt.getDate().toString().padStart(2, '0');
-    let today = year + "-" + month + "-" + day;
-    let fromD = today + " 00:00";
-    let toD = today + " 23:59:59";
-    
-    return {
-        fromD: fromD,
-        fromDtz: fromD + " " +tz,
-        toD: toD,
-        toDtz: toD + " " +tz,
-        tz: tz,
+    static dateRange() {
+        let tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        let dt = new Date();
+        // get UTC date america/u/
+        let year = dt.getFullYear();
+        let month = (dt.getMonth() + 1).toString().padStart(2, '0');
+        let day = dt.getDate().toString().padStart(2, '0');
+        let today = year + "-" + month + "-" + day;
+        let fromD = today + " 00:00";
+        let toD = today + " 23:59:59";
+
+        return {
+            fromD: fromD,
+            fromDtz: fromD + " " + tz,
+            toD: toD,
+            toDtz: toD + " " + tz,
+            tz: tz,
+        }
     }
-}
 
 
     static async runSQLStatements(api: MamoriService, statements: any[]): Promise<any> {
@@ -114,4 +114,23 @@ static dateRange (){
         return o;
     }
 
+
+
+
+}
+
+export class Policy {
+    static async setupResourcePolicy(api: MamoriService, roleName: string, policyName: string): Promise<any> {
+        await io_utils.ignoreError(new io_role.Role(roleName).delete(api));
+        await io_utils.ignoreError(new io_role.Role(roleName).create(api));
+        // POLICY
+        let policy = new io_ondemandpolicies.OnDemandPolicy(policyName, io_ondemandpolicies.POLICY_TYPES.RESOURCE);
+        policy.requires = roleName;
+        policy.addParameter("time", "number of minutes", "15");
+        policy.withScript(["GRANT :privileges ON :resource_name TO :applicant VALID for :time minutes;"]);
+        await io_utils.noThrow(policy.delete(api));
+        let r = await io_utils.noThrow(policy.create(api));
+        expect(r.error).toBe(false);
+        return policy;
+    }
 }

@@ -1,6 +1,6 @@
 import { MamoriService } from '../../api';
-import { io_https, io_utils, io_secret } from '../../api';
-import { Secret } from '../../secret';
+import { io_https, io_utils, io_secret, io_requestable_resource, io_role } from '../../api';
+import * as helper from '../../__utility__/test-helper';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -13,14 +13,28 @@ describe("Secret CRUD tests", () => {
 
     let api: MamoriService;
     let resourceName: string = "test_Secret_" + testbatch;
+    let grantee = "test_apiuser_rmdlogin" + testbatch;
+    let granteepw = "J{J'vpKs!$nW6(6A,4!3#$4#12_vdQ'}D";
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
+
+        await io_utils.ignoreError(api.delete_user(grantee));
+        await api.create_user({
+            username: grantee,
+            password: granteepw,
+            fullname: grantee,
+            identified_by: "password",
+            email: "test@test.test"
+        }).catch(e => {
+            fail(io_utils.handleAPIException(e));
+        })
     });
 
     afterAll(async () => {
+        await api.delete_user(grantee);
         await api.logout();
     });
 
@@ -49,7 +63,7 @@ describe("Secret CRUD tests", () => {
 
         let w = await io_utils.noThrow(io_secret.Secret.getByName(api, resourceName));
         if (w) {
-            let w1 = (w as Secret).withHost("100.100.100.100").withDescription("NewDesc");
+            let w1 = (w as io_secret.Secret).withHost("100.100.100.100").withDescription("NewDesc");
             let w2 = await io_utils.noThrow(w1.update(api));
             expect(w2.status).toBe('OK');
             let w3 = (await io_utils.noThrow(io_secret.Secret.getByName(api, resourceName)) as io_secret.Secret);
@@ -62,6 +76,44 @@ describe("Secret CRUD tests", () => {
         expect(r.error).toBe(false);
         let r4 = await io_utils.noThrow(io_secret.Secret.list(api, 0, 100, [["name", "=", resourceName]]));
         expect(r4.data.length).toBe(0);
+    });
+
+    test('secret requestable', async () => {
+        let resource = "test_req_secret" + testbatch;
+        let s = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, resource)
+            .withSecret("#(*7322323!!!jnsas@^0001")
+            .withUsername("testUser")
+            .withHost("10.123.0.100")
+            .withDescription("The Desc");
+        // Test to and from JSON
+        let s1 = await io_utils.noThrow(s.create(api));
+        expect(s1.status).toBe('OK');
+
+        // ROLE
+        let policyName = "test_secret_rsc_policy_" + testbatch;
+        let endorsementRole = "test_role_for_" + policyName;
+        let policy = await helper.Policy.setupResourcePolicy(api, endorsementRole, policyName);
+
+        //REQUESTABLE
+        let requestable = new io_requestable_resource.RequestableResource(io_requestable_resource.REQUEST_RESOURCE_TYPE.SECRET)
+            .withResource(resource)
+            .withGrantee(grantee)
+            .withPolicy(policyName);
+        await io_utils.noThrow(io_requestable_resource.RequestableResource.deleteByName(api,
+            requestable.resource_type, grantee, resource, policyName));
+        //
+        let r1 = await io_utils.noThrow(requestable.create(api));
+        expect(r1.error).toBe(false);
+
+        let r2 = await io_utils.noThrow(io_requestable_resource.RequestableResource.getByName(api,
+            requestable.resource_type, grantee, resource, policyName));
+        expect(r2.id).toBeDefined();
+
+        await io_utils.noThrow(r2.delete(api));
+        await io_utils.noThrow(policy.delete(api));
+        await io_utils.ignoreError(new io_role.Role(endorsementRole).delete(api));
+        let r = await io_utils.noThrow(io_secret.Secret.deleteByName(api, resource));
+        expect(r.error).toBe(false);
     });
 
 
