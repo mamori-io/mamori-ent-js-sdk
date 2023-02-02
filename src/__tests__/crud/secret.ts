@@ -71,7 +71,13 @@ describe("Secret CRUD tests", () => {
             expect(w3.hostname).toBe("100.100.100.100");
         }
 
-
+        //Export
+        let xx = await io_utils.noThrow(io_secret.Secret.exportByName(api, resourceName));
+        expect(xx.id).toBeDefined();
+        await io_utils.noThrow(io_secret.Secret.deleteByName(api, resourceName));
+        let xx1 = await io_utils.noThrow(xx.restore(api));
+        expect(xx1.status).toBe('OK');
+        //
         let r = await io_utils.noThrow(io_secret.Secret.deleteByName(api, resourceName));
         expect(r.error).toBe(false);
         let r4 = await io_utils.noThrow(io_secret.Secret.list(api, 0, 100, [["name", "=", resourceName]]));

@@ -80,6 +80,21 @@ export class Secret implements ISerializable {
         });
     }
 
+    public static exportByName(api: MamoriService, name: string): Promise<any> {
+        let filters = prepareFilter([["name", "=", name]]);
+        let payload = { skip: 0, take: 100, filter: filters };
+        return api.callAPI("PUT", "/v1/search/secrets", payload).then(data => {
+            if (data.data.length > 0) {
+                let s = Secret.build(data.data[0]);
+                return s.exportSecret(api).then((parts: any) => {
+                    s.secret = parts;
+                    return s;
+                });
+            }
+            return null;
+        });
+    }
+
     public static deleteByName(api: MamoriService, name: string): Promise<any> {
         return new Promise((resolve, reject) => {
             Secret.getByName(api, name).then(res => {
@@ -160,13 +175,21 @@ export class Secret implements ISerializable {
      * @returns 
      */
     public create(api: MamoriService): Promise<any> {
-
         let isMultiSecret = this.type == SECRET_TYPE.MULTI_SECRET;
         let query = "call CREATE_SECRET(" + this.toQueryParams() + "," + isMultiSecret + ")";
         return api.select(query).then((res: any) => {
             return res[0];
         });
     }
+
+    public restore(api: MamoriService): Promise<any> {
+        let isMultiSecret = this.type == SECRET_TYPE.MULTI_SECRET;
+        let query = "call restore_secret(" + this.toQueryParams(true) + "," + isMultiSecret + ")";
+        return api.select(query).then((res: any) => {
+            return res[0];
+        });
+    }
+
 
     public delete(api: MamoriService): Promise<any> {
         let query = "call DELETE_SECRET(" + this.id + ")";
@@ -189,8 +212,11 @@ export class Secret implements ISerializable {
         });
     }
 
-    private toQueryParams() {
+    private toQueryParams(isRestore?: boolean) {
         let secret = this.type == SECRET_TYPE.MULTI_SECRET ? JSON.stringify(this.secret) : sqlEscape(this.secret || "");
+        if (isRestore) {
+            secret = sqlEscape(this.secret || "");
+        }
         return (
             "'" +
             sqlEscape(this.name) +
@@ -204,6 +230,17 @@ export class Secret implements ISerializable {
             sqlEscape(this.protocol || "") +
             "' "
         );
+    }
+
+    public exportSecret(api: MamoriService) {
+        return api.select("call export_secret('" + sqlEscape(this.name) + "')")
+            .then((result: any) => {
+                if (result && result.length > 0 && result[0].value) {
+                    return result[0].value;
+                } else {
+                    return null;
+                }
+            });
     }
 
     public getMultiSecretParts(api: MamoriService) {
