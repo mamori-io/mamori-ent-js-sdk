@@ -18,6 +18,11 @@ export enum SECRET_PROTOCOL {
     DB = "db"
 }
 
+export enum SECRET_TYPE {
+    SECRET = "SECRET",
+    MULTI_SECRET = "MULTI-SECRET"
+}
+
 export class Secret implements ISerializable {
 
     /**
@@ -63,6 +68,12 @@ export class Secret implements ISerializable {
         return api.callAPI("PUT", "/v1/search/secrets", payload).then(data => {
             if (data.data.length > 0) {
                 let s = Secret.build(data.data[0]);
+                if (s.type == SECRET_TYPE.MULTI_SECRET) {
+                    return s.getMultiSecretParts(api).then((parts: any) => {
+                        s.secret = parts;
+                        return s;
+                    });
+                }
                 return s;
             }
             return null;
@@ -87,8 +98,9 @@ export class Secret implements ISerializable {
 
 
     id?: string;
+    type?: SECRET_TYPE;
     protocol?: SECRET_PROTOCOL;
-    secret?: string;
+    secret?: any;
     name: string;
     username?: string;
     hostname?: string;
@@ -131,6 +143,7 @@ export class Secret implements ISerializable {
      */
     public constructor(protocol: SECRET_PROTOCOL, name: string) {
         this.protocol = protocol;
+        this.type = SECRET_TYPE.SECRET;
         this.name = name;
         this.hostname = '';
         this.username = '';
@@ -147,7 +160,9 @@ export class Secret implements ISerializable {
      * @returns 
      */
     public create(api: MamoriService): Promise<any> {
-        let query = "call CREATE_SECRET(" + this.toQueryParams() + ")";
+
+        let isMultiSecret = this.type == SECRET_TYPE.MULTI_SECRET;
+        let query = "call CREATE_SECRET(" + this.toQueryParams() + "," + isMultiSecret + ")";
         return api.select(query).then((res: any) => {
             return res[0];
         });
@@ -175,12 +190,11 @@ export class Secret implements ISerializable {
     }
 
     private toQueryParams() {
+        let secret = this.type == SECRET_TYPE.MULTI_SECRET ? JSON.stringify(this.secret) : sqlEscape(this.secret || "");
         return (
             "'" +
             sqlEscape(this.name) +
-            "', '" +
-            sqlEscape(this.secret || "") +
-            "', '" +
+            "', '" + secret + "', '" +
             sqlEscape(this.description || "") +
             "', '" +
             sqlEscape(this.username || "") +
@@ -188,8 +202,19 @@ export class Secret implements ISerializable {
             sqlEscape(this.hostname || "") +
             "', '" +
             sqlEscape(this.protocol || "") +
-            "'"
+            "' "
         );
+    }
+
+    public getMultiSecretParts(api: MamoriService) {
+        return api.select("call get_secret_parts(" + this.id + ")")
+            .then((result: any) => {
+                if (result && result.length > 0 && result[0].parts) {
+                    return JSON.parse(result[0].parts);
+                } else {
+                    return [];
+                }
+            });
     }
 
 
@@ -201,11 +226,15 @@ export class Secret implements ISerializable {
         return new SecretPermission().name(this.name).grantee(grantee).revoke(api);
     }
 
+    public withType(value: SECRET_TYPE): Secret {
+        this.type = value;
+        return this;
+    }
     /**
      * @param secret  The secret text
      * @returns 
      */
-    public withSecret(secret: string): Secret {
+    public withSecret(secret: any): Secret {
         this.secret = secret;
         return this;
     }

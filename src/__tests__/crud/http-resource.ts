@@ -14,7 +14,7 @@ describe("HTTP Resource CRUD tests", () => {
 
     let api: MamoriService;
     let resourceName: string = "test_http_r_" + testbatch;
-    let grantee = "test_apiuser_rmdlogin" + testbatch;
+    let grantee = "test_apiuser_httprsc" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!3#$4#12_vdQ'}D";
 
     beforeAll(async () => {

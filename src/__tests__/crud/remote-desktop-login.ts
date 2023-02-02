@@ -9,12 +9,18 @@ const password = process.env.MAMORI_PASSWORD || '';
 
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 
+function fail(reason = "fail was called in a test.") {
+    throw new Error(reason);
+}
+
 describe("remote desktop login tests", () => {
 
     let api: MamoriService;
     let apiAsAPIUser: MamoriService;
     let grantee = "test_apiuser_rmdlogin" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!3#$4#12_vdQ'}D";
+
+
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);

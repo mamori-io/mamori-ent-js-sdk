@@ -15,7 +15,7 @@ describe("IP resource CRUD tests", () => {
 
     let api: MamoriService;
     let resourceName: string = "testIPResource" + testbatch;
-    let grantee = "test_apiuser_rmdlogin" + testbatch;
+    let grantee = "test_apiuser_iprsc" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!3#$4#12_vdQ'}D";
 
     beforeAll(async () => {

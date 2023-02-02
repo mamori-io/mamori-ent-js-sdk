@@ -34,20 +34,13 @@ export class RequestableResource implements ISerializable {
         return result;
     }
 
-    public static revealWithID(api: MamoriService, id: string): Promise<any> {
-        let query = "call REVEAL_SECRET(" + id + ")";
-        return api.select(query).then((res: any) => {
-            return res[0];
-        });
-    }
-
     public static list(api: MamoriService, from: number, to: number, filter?: any): Promise<any> {
         let filters = prepareFilter(filter);
         let payload = filter ? { skip: from, take: to, filter: filters } : { skip: from, take: to };
         return api.callAPI("GET", "/v1/requestable_resources", payload);
     }
 
-    public static listFor(api: MamoriService, from: number, to: number, type: any, grantee: any, resource: any, policy: any): Promise<any> {
+    public static listFor(api: MamoriService, from: number, to: number, type: any, grantee: any, resource: any, policy: any, login?: any): Promise<any> {
         let options = { skip: from, take: to };
 
         if (type) {
@@ -86,12 +79,21 @@ export class RequestableResource implements ISerializable {
             );
         }
 
+        if (login) {
+            addFilterToDxGridOptions(
+                options,
+                "resource_login",
+                "equals",
+                login
+            );
+        }
+
         return api.callAPI("GET", "/v1/requestable_resources", options);
     }
 
 
-    public static getByName(api: MamoriService, type: any, grantee: any, resource: any, policy: any): Promise<any> {
-        return RequestableResource.listFor(api, 0, 5, type, grantee, resource, policy).then(data => {
+    public static getByName(api: MamoriService, type: any, grantee: any, resource: any, policy: any, login?: any): Promise<any> {
+        return RequestableResource.listFor(api, 0, 5, type, grantee, resource, policy, login).then(data => {
             if (data.data.length > 0) {
                 let s = RequestableResource.build(data.data[0]);
                 return s;
@@ -100,9 +102,9 @@ export class RequestableResource implements ISerializable {
         });
     }
 
-    public static deleteByName(api: MamoriService, type: any, grantee: any, resource: any, policy: any): Promise<any> {
+    public static deleteByName(api: MamoriService, type: any, grantee: any, resource: any, policy: any, login?: any): Promise<any> {
         return new Promise((resolve, reject) => {
-            RequestableResource.getByName(api, type, grantee, resource, policy).then(res => {
+            RequestableResource.getByName(api, type, grantee, resource, policy, login).then(res => {
                 if (res) {
                     (res as RequestableResource).delete(api).then(r => {
                         resolve({ error: false, item: res });

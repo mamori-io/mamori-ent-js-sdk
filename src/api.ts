@@ -37,6 +37,7 @@ import * as io_policy from './policy';
 import * as io_secret from './secret';
 import * as io_http_resource from './http-resource';
 import * as io_requestable_resource from './requestable_resource';
+import * as io_db_credential from "./db-credential";
 //import { Channel, Socket } from "./phoenix";
 
 
@@ -72,6 +73,7 @@ export {
     , io_secret
     , io_http_resource
     , io_requestable_resource
+    , io_db_credential
 };
 
 

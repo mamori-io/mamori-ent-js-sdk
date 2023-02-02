@@ -13,7 +13,7 @@ describe("Secret CRUD tests", () => {
 
     let api: MamoriService;
     let resourceName: string = "test_Secret_" + testbatch;
-    let grantee = "test_apiuser_rmdlogin" + testbatch;
+    let grantee = "test_apiuser_secret" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!3#$4#12_vdQ'}D";
 
     beforeAll(async () => {
@@ -80,6 +80,7 @@ describe("Secret CRUD tests", () => {
 
     test('secret requestable', async () => {
         let resource = "test_req_secret" + testbatch;
+        await io_utils.noThrow(io_secret.Secret.deleteByName(api, resource));
         let s = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, resource)
             .withSecret("#(*7322323!!!jnsas@^0001")
             .withUsername("testUser")
@@ -114,6 +115,47 @@ describe("Secret CRUD tests", () => {
         await io_utils.ignoreError(new io_role.Role(endorsementRole).delete(api));
         let r = await io_utils.noThrow(io_secret.Secret.deleteByName(api, resource));
         expect(r.error).toBe(false);
+    });
+
+
+    test('secret multi-part 01', async () => {
+        //Clean up old data
+        let part1 = 'TEST_secret_part1' + testbatch;
+        let part2 = 'TEST_secret_part2' + testbatch;
+        let multiSecret = 'TEST_secret_combined' + testbatch;
+
+        await io_utils.noThrow(io_secret.Secret.deleteByName(api, part1));
+        await io_utils.noThrow(io_secret.Secret.deleteByName(api, part2));
+        await io_utils.noThrow(io_secret.Secret.deleteByName(api, multiSecret));
+
+        let p1 = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, part1)
+            .withSecret("11111")
+            .withUsername("testUser")
+            .withHost("10.123.0.100")
+            .withDescription("The Desc");
+        let r1 = await io_utils.noThrow(p1.create(api));
+        expect(r1.status).toBe('OK');
+
+        let p2 = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, part2)
+            .withSecret("2222")
+            .withUsername("testUser")
+            .withHost("10.123.0.100")
+            .withDescription("The Desc");
+        let r2 = await io_utils.noThrow(p2.create(api));
+        expect(r2.status).toBe('OK');
+
+        let sec = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, multiSecret)
+            .withType(io_secret.SECRET_TYPE.MULTI_SECRET)
+            .withSecret([part1, part2]);
+        let r3 = await io_utils.noThrow(sec.create(api));
+        expect(r3.status).toBe('OK');
+
+        let r4 = await io_utils.noThrow(io_secret.Secret.getByName(api, multiSecret));
+        expect(r4.type).toBe(io_secret.SECRET_TYPE.MULTI_SECRET);
+
+        await io_utils.noThrow(io_secret.Secret.deleteByName(api, part1));
+        await io_utils.noThrow(io_secret.Secret.deleteByName(api, part2));
+        await io_utils.noThrow(io_secret.Secret.deleteByName(api, multiSecret));
     });
 
 

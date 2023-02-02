@@ -14,7 +14,7 @@ const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
 const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
 const dbHost = process.env.MAMORI_DB_HOST || 'localhost';
-const dbPort = process.env.MAMORI_DB_PORT || '5432';
+const dbPort = process.env.MAMORI_DB_PORT || '54321';
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
