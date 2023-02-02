@@ -134,6 +134,8 @@ export class Permissions {
     public static factory(rec: any): PermissionBase {
         if (rec.permissiontype == 'SSH') {
             return new SSHLoginPermission().fromJSON(rec);
+        } else if (rec.permissiontype == 'SFTP') {
+            return new SFTPLoginPermission().fromJSON(rec);
         } else if (rec.permissiontype == 'IP USAGE') {
             return new IPResourcePermission().fromJSON(rec);
         } else if (rec.permissiontype == 'RDP') {
@@ -795,6 +797,74 @@ export class SSHLoginPermission extends PermissionBase {
      * @returns  
      */
     public sshLogin(name: string): SSHLoginPermission {
+        this.sshLoginName = name;
+        return this;
+    }
+
+    public prepare(): any {
+        let res = super.prepare();
+        this.options.grantables = this.items;
+        this.options.object_name = this.sshLoginName;
+        return res;
+    }
+
+    /**
+     * Initialize the object from JSON.
+     * Call toJSON to see the expected record.
+     * @param record JSON record
+     * @returns
+     */
+    fromJSON(record: any) {
+        super.fromJSON(record);
+        if (record.key_name && record.key_name != '') {
+            this.sshLogin(record.key_name);
+        }
+
+        for (let prop in this) {
+            if (prop == "items" && record.hasOwnProperty("permissions")) {
+                this.items = record["permissions"].split(",");
+            } else if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+    /**
+    * Serialize the object to JSON
+    * @param
+    * @returns JSON 
+    */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            if (prop != "options") {
+                if (prop == "items") {
+                    res["permissions"] = this.items?.join(",");
+                } else {
+                    res[prop] = this[prop];
+                }
+
+            }
+        }
+        return res;
+    }
+}
+
+export class SFTPLoginPermission extends PermissionBase {
+    private items?: string[];
+    private sshLoginName?: string;
+    public constructor() {
+        super();
+        this.sshLoginName = "";
+        this.items = ["SFTP"];
+    }
+
+    /**
+     * Set the SSH login to grant
+     * @param name The name of the SSH Login
+     * @returns  
+     */
+    public sshLogin(name: string): SFTPLoginPermission {
         this.sshLoginName = name;
         return this;
     }
