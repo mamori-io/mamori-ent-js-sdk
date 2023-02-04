@@ -203,7 +203,7 @@ describe("datasource permission tests", () => {
             .permission(io_permission.DB_PERMISSION.SELECT)
             .grantee(grantee)
             .withValidBetween("2022-01-01 00:00", "2022-01-15 00:00");
-            
+
 
         await io_utils.ignoreError(obj.revoke(api));
 
@@ -228,7 +228,7 @@ describe("datasource permission tests", () => {
             .on("*", "*", "*", "*")
             .permission(io_permission.DB_PERMISSION.SELECT)
             .grantee(grantee)
-            .withValidBetween(fromD + " " + tz, toD + " " +tz);
+            .withValidBetween(fromD + " " + tz, toD + " " + tz);
 
         await io_utils.ignoreError(obj.revoke(api));
         let resp = await io_utils.noThrow(obj.grant(api));
@@ -275,7 +275,6 @@ describe("datasource permission tests", () => {
         await io_utils.noThrow(rp.grant(api));
 
         //let p = await io_utils.noThrow(new RolePermission().role("DB_CREDS").grantee(grantee).grant(api));
-        //console.log("****1 %o", p);
         let obj = new io_permission.DatasourcePermission()
             .on("ss2016", "*", "dev", "customer_pii")
             .permission(io_permission.DB_PERMISSION.SELECT)

@@ -19,7 +19,7 @@ describe("DB Credential CRUD tests", () => {
     let api: MamoriService;
     let grantee = "test_apiuser_credential" + testbatch;
     let granteepw = "J{J'vpKs!$nW6(6A,4!3#$4#12_vdQ'}D";
-    let dsName = "test_cred_local_pg" + testbatch;
+    let dsName = "test_ds_cred_local_pg" + testbatch;
 
     beforeAll(async () => {
         console.log("login %s %s", host, username);
@@ -58,22 +58,31 @@ describe("DB Credential CRUD tests", () => {
 
     test('credential create 01', async () => {
 
-
-        await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres"));
+        await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"));
         let c = new io_db_credential.DBCredential().withDatasource(dsName).withUsername("postgres");
         let cred = io_db_credential.DBCredential.build(c.toJSON());
         let r = await io_utils.noThrow(cred.create(api, dbPassword));
         expect(r.error).toBe(false);
 
-        let r2 = await io_utils.noThrow(io_db_credential.DBCredential.getByName(api, dsName, "postgres"));
+        let r2 = await io_utils.noThrow(io_db_credential.DBCredential.getByName(api, dsName, "postgres", "@"));
         expect(r2.auth_id).toBeDefined();
 
+        //EXPORT
+        let keyName = "test_cred_aes_key" + testbatch;
+        await helper.EncryptionKey.setupAESEncryptionKey(api, keyName);
+        let xx = await io_utils.noThrow(io_db_credential.DBCredential.exportByName(api, dsName, "postgres", "@", keyName));
+        expect(xx.password).toBeDefined();
+
+        await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"))
+        let xx1 = await io_utils.noThrow(xx.restore(api, keyName));
+        expect(xx1.error).toBe(false);
+        await helper.EncryptionKey.cleanupAESEncryptionKey(api, keyName);
         let x = await io_utils.noThrow(cred.delete(api));
         expect(x.error).toBe(false);
     });
 
     test('rmd-rdp requestable', async () => {
-        await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres"));
+        await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"));
         let cred = new io_db_credential.DBCredential().withDatasource(dsName).withUsername("postgres");
         let r = await io_utils.noThrow(cred.create(api, dbPassword));
         expect(r.error).toBe(false);
@@ -103,7 +112,7 @@ describe("DB Credential CRUD tests", () => {
 
         await io_utils.noThrow(policy.delete(api));
         await io_utils.ignoreError(new io_role.Role(endorsementRole).delete(api));
-        await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres"));
+        await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"));
     });
 
 

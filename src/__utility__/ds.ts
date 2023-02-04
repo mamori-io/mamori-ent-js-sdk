@@ -18,7 +18,6 @@ export async function createNewPassthroughSession(host: string, username: string
     //CREATE NEW SESSION AND SET TO PASSTHROUGH
     let apiU = new MamoriService(host, INSECURE, SOCKET_OPTIONS);
     let r1 = await io_utils.noThrow(apiU.login(username, password));
-    //console.log("**** %o", r1);
     expect(r1.login_token).toBeDefined();
     let r4 = await io_utils.noThrow(ServerSession.setPassthrough(apiU, datasourceName));
     expect(r4.errors).toBe(false);

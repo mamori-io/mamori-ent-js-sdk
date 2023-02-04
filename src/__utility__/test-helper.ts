@@ -1,5 +1,5 @@
 import { assert } from "console";
-import { io_permission, io_serversession, io_sqlmaskingpolicies, MamoriService, io_role, io_ondemandpolicies } from "../api";
+import { io_permission, io_serversession, io_sqlmaskingpolicies, MamoriService, io_role, io_ondemandpolicies, io_key } from "../api";
 import { io_utils, io_https } from "../api";
 
 
@@ -133,4 +133,22 @@ export class Policy {
         expect(r.error).toBe(false);
         return policy;
     }
+}
+
+export class EncryptionKey {
+    static async setupAESEncryptionKey(api: MamoriService, keyName: string) {
+        let keyValue = '8x/A?D(G+KbPeShVkYp3s6v9y$B&E)H@';
+        let k = new io_key.Key(keyName).ofType(io_key.KEY_TYPE.AES).withKey(keyValue);
+        await io_utils.ignoreError(k.delete(api));
+        let res = await io_utils.noThrow(k.create(api));
+        expect(res.error).toBe(false);
+    }
+
+    static async cleanupAESEncryptionKey(api: MamoriService, keyName: string) {
+        let keyValue = '8x/A?D(G+KbPeShVkYp3s6v9y$B&E)H@';
+        let k = new io_key.Key(keyName).ofType(io_key.KEY_TYPE.AES).withKey(keyValue);
+        await io_utils.ignoreError(k.delete(api));
+    }
+
+
 }

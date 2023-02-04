@@ -45,8 +45,9 @@ describe("Secret CRUD tests", () => {
             await io_utils.ignoreError(d0.delete(api));
         }
 
+        let secretText = "#(*7322323!!!jnsas@^0001";
         let s = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, resourceName)
-            .withSecret("#(*7322323!!!jnsas@^0001")
+            .withSecret(secretText)
             .withUsername("testUser")
             .withHost("10.123.0.100")
             .withDescription("The Desc");
@@ -72,12 +73,20 @@ describe("Secret CRUD tests", () => {
         }
 
         //Export
-        let xx = await io_utils.noThrow(io_secret.Secret.exportByName(api, resourceName));
+        let kName = "test_secret_aes_" + testbatch;
+        await helper.EncryptionKey.setupAESEncryptionKey(api, kName);
+        let xx = await io_utils.noThrow(io_secret.Secret.exportByName(api, resourceName, kName));
         expect(xx.id).toBeDefined();
         await io_utils.noThrow(io_secret.Secret.deleteByName(api, resourceName));
-        let xx1 = await io_utils.noThrow(xx.restore(api));
+        let xx1 = await io_utils.noThrow(xx.restoreWithKey(api, kName));
         expect(xx1.status).toBe('OK');
         //
+        let x2 = await io_utils.noThrow(io_secret.Secret.getByName(api, resourceName));
+        let x3 = await io_utils.noThrow(x2.grantTo(api, username));
+        let x4 = await io_utils.noThrow(x2.reveal(api));
+        expect(x4.secret).toBe(secretText);
+        //
+        await helper.EncryptionKey.cleanupAESEncryptionKey(api, kName);
         let r = await io_utils.noThrow(io_secret.Secret.deleteByName(api, resourceName));
         expect(r.error).toBe(false);
         let r4 = await io_utils.noThrow(io_secret.Secret.list(api, 0, 100, [["name", "=", resourceName]]));

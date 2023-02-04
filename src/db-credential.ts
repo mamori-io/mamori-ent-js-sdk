@@ -10,7 +10,7 @@
  */
 import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
-import { prepareFilter, addFilterToDxGridOptions } from './utils';
+import { prepareFilter, sqlEscape } from './utils';
 
 
 export class DBCredential implements ISerializable {
@@ -36,8 +36,8 @@ export class DBCredential implements ISerializable {
         });
     }
 
-    public static listFor(api: MamoriService, from: number, to: number, datasource: any, username: any): Promise<any> {
-        let filter = [["grantee", "equals", '@']];
+    public static listFor(api: MamoriService, from: number, to: number, datasource: any, username: any, grantee: any): Promise<any> {
+        let filter = grantee ? [["grantee", "equals", grantee]] : [];
         if (datasource) {
             filter.push(["systemname", "equals", datasource]);
         }
@@ -48,8 +48,8 @@ export class DBCredential implements ISerializable {
     }
 
 
-    public static getByName(api: MamoriService, datasource: any, username: any): Promise<any> {
-        return DBCredential.listFor(api, 0, 5, datasource, username).then(data => {
+    public static getByName(api: MamoriService, datasource: any, username: any, grantee: any): Promise<any> {
+        return DBCredential.listFor(api, 0, 5, datasource, username, grantee).then(data => {
             if (data.length > 0) {
                 return data[0];
             }
@@ -57,9 +57,23 @@ export class DBCredential implements ISerializable {
         });
     }
 
-    public static deleteByName(api: MamoriService, datasource: any, username: any): Promise<any> {
+    public static exportByName(api: MamoriService, datasource: any, username: any, grantee: any, keyName: string): Promise<any> {
+        return DBCredential.listFor(api, 0, 5, datasource, username, grantee).then(data => {
+            if (data.length > 0) {
+                let dbCred = (data[0] as DBCredential);
+                return dbCred.exportPassword(api, keyName).then(pw => {
+                    dbCred.password = pw;
+                    return dbCred;
+                })
+            }
+            return null;
+        });
+    }
+
+
+    public static deleteByName(api: MamoriService, datasource: any, username: any, grantee: any): Promise<any> {
         return new Promise((resolve, reject) => {
-            DBCredential.getByName(api, datasource, username).then(res => {
+            DBCredential.getByName(api, datasource, username, grantee).then(res => {
                 if (res) {
                     (res as DBCredential).delete(api).then(r => {
                         resolve({ error: false, item: res });
@@ -109,13 +123,16 @@ export class DBCredential implements ISerializable {
     auth_id: any;
     auth_status: any;
     uid: any;
+    grantee: any;
     granteetype: any;
     accesstype: any;
+    password: any;
 
     /**
      * @param name  Unique Key name
      */
     public constructor() {
+        this.password = null;
         this.systemname = "";
         this.accessname = "";
         this.valid_from = null;
@@ -127,8 +144,14 @@ export class DBCredential implements ISerializable {
         this.auth_id = null;
         this.auth_status = null;
         this.uid = null;
+        this.grantee = '@';
         this.granteetype = null;
         this.accesstype = null;
+    }
+
+    public withGrantee(value: string): DBCredential {
+        this.grantee = value;
+        return this;
     }
 
     public withDatasource(value: string): DBCredential {
@@ -147,17 +170,42 @@ export class DBCredential implements ISerializable {
     }
 
 
+
+
+
     /**
      * @param api 
      * @returns 
      */
     public create(api: MamoriService, password: string): Promise<any> {
-        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent('@') + "/datasource_authorization",
+        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(this.grantee) + "/datasource_authorization",
             { datasource: this.systemname, username: this.accessname, password: password, reset_days: this.credential_reset_days });
     }
 
+    public restore(api: MamoriService, keyName: string): Promise<any> {
+        let payload = { datasource: this.systemname, username: this.accessname, password: this.password, reset_days: this.credential_reset_days, aes_key: keyName };
+        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(this.grantee) + "/datasource_authorization", payload);
+    }
+
     public delete(api: MamoriService): Promise<any> {
-        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent('"@"') + "/datasource_authorization", { datasource: this.systemname, username: this.accessname });
+        let g = this.grantee == '@' ? '"@"' : this.grantee;
+        return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(g) + "/datasource_authorization", { datasource: this.systemname, username: this.accessname });
+    }
+
+    public exportPassword(api: MamoriService, keyName: string): Promise<any> {
+        let sql = "call export_credential('__DATASOURCE__', '__LOGINNAME__', '__GRANTEE__', '__KEY__')"
+            .replace("__DATASOURCE__", this.datasource)
+            .replace("__LOGINNAME__", this.accessname)
+            .replace("__GRANTEE__", this.grantee)
+            .replace("__KEY__", keyName);
+        return api.select(sql)
+            .then((result: any) => {
+                if (result && result.length > 0 && result[0].value) {
+                    return result[0].value;
+                } else {
+                    return null;
+                }
+            });
     }
 
 

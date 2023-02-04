@@ -76,12 +76,10 @@ describe("rdp permission tests", () => {
         expect(resp.errors).toBe(false);
 
         res = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter);
-        //console.log("**** %o", res);
         expect(res.totalCount).toBe(1);
 
         let resp2 = await ignoreError(obj.grant(api));
         //let resp2q = await new RemoteDesktopLoginPermission().grantee(grantee).list(api, filter);
-        //console.log("****2 %o", resp2q);
         expect(resp2.errors).toBe(true);
 
         resp = await noThrow(obj.revoke(api));
@@ -120,7 +118,7 @@ describe("rdp permission tests", () => {
 
     test('grant 03', async () => {
         let dr = DBHelper.dateRange();
-    
+
 
         let obj = await new RemoteDesktopLoginPermission()
             .name(rdpLogin)

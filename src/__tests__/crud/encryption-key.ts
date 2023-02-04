@@ -382,7 +382,6 @@ describe("encryption key tests", () => {
 
         //Ensure key returned properly
         let x = (await noThrow(Key.getAll(apiAsAPIUser))).filter((key: any) => key.name.includes(k.name) && key.usage === 'PUBLIC')[0];
-        //console.log("***** %o", x);
         expect(x.type).toBe(KEY_TYPE.RSA);
         expect(x.public_key).toContain("-----BEGIN PUBLIC KEY-----");
         expect(x.private_key).toBeUndefined();

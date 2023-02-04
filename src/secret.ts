@@ -80,13 +80,13 @@ export class Secret implements ISerializable {
         });
     }
 
-    public static exportByName(api: MamoriService, name: string): Promise<any> {
+    public static exportByName(api: MamoriService, name: string, keyName: string): Promise<any> {
         let filters = prepareFilter([["name", "=", name]]);
         let payload = { skip: 0, take: 100, filter: filters };
         return api.callAPI("PUT", "/v1/search/secrets", payload).then(data => {
             if (data.data.length > 0) {
                 let s = Secret.build(data.data[0]);
-                return s.exportSecret(api).then((parts: any) => {
+                return s.exportSecretWithKey(api, keyName).then((parts: any) => {
                     s.secret = parts;
                     return s;
                 });
@@ -191,6 +191,15 @@ export class Secret implements ISerializable {
     }
 
 
+    public restoreWithKey(api: MamoriService, keyName: string): Promise<any> {
+        let isMultiSecret = this.type == SECRET_TYPE.MULTI_SECRET;
+        let query = "call restore_secret_ex(" + this.toQueryParams(true) + "," + isMultiSecret + ",'" + sqlEscape(keyName) + "')";
+        return api.select(query).then((res: any) => {
+            return res[0];
+        });
+    }
+
+
     public delete(api: MamoriService): Promise<any> {
         let query = "call DELETE_SECRET(" + this.id + ")";
         return api.select(query).then((res: any) => {
@@ -234,6 +243,18 @@ export class Secret implements ISerializable {
 
     public exportSecret(api: MamoriService) {
         return api.select("call export_secret('" + sqlEscape(this.name) + "')")
+            .then((result: any) => {
+                if (result && result.length > 0 && result[0].value) {
+                    return result[0].value;
+                } else {
+                    return null;
+                }
+            });
+    }
+
+    public exportSecretWithKey(api: MamoriService, keyName: string) {
+        let query = "call export_secret_ex('" + sqlEscape(this.name) + "','" + sqlEscape(keyName) + "')";
+        return api.select(query)
             .then((result: any) => {
                 if (result && result.length > 0 && result[0].value) {
                     return result[0].value;

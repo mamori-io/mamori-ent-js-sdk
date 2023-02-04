@@ -10,7 +10,6 @@ export class ServerSession {
         //let connectionName = datasourceName + Date.now();
         let SQL = "set " + DB_PERMISSION.PASSTHROUGH + " '" + datasourceName + "' true";
         return api.select(SQL).then(result => {
-            //console.log("**** sp.1 %o", result);
             return { errors: false, result: result };
         }).catch(e => {
             let payload = { sql: SQL, status: e.response.status, error: e.response.data };
