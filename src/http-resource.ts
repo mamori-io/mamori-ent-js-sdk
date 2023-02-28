@@ -60,6 +60,7 @@ export class HTTPResource implements ISerializable {
     created_at?: string;
     active_access?: string;
     request_via?: any;
+    exclude_from_pac?: string;
 
     /**
          * Initialize the object from JSON.
@@ -103,6 +104,7 @@ export class HTTPResource implements ISerializable {
         this.updated_at = '';
         this.created_at = '';
         this.active_access = '';
+        this.exclude_from_pac = '';
         this.request_via = null;
     }
 
@@ -124,6 +126,11 @@ export class HTTPResource implements ISerializable {
 
     public withDescription(desc: string): HTTPResource {
         this.description = desc;
+        return this;
+    }
+
+    public withExcludeFromPAC(value: string): HTTPResource {
+        this.exclude_from_pac = value;
         return this;
     }
 
@@ -175,7 +182,8 @@ export class HTTPResource implements ISerializable {
             sqlEscape(this.url || "") +
             "', '" +
             sqlEscape(this.description || "") +
-            "'"
+            "', " +
+            (this.exclude_from_pac ? "true" : "false")
         );
     }
 

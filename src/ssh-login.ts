@@ -60,6 +60,7 @@ export class SshLogin implements ISerializable {
     public user?: string;
     public password?: string;
     public private_key_name?: string;
+    public theme_name?: string;
 
     /**
      * @param name  Unique SshLogin name
@@ -72,6 +73,7 @@ export class SshLogin implements ISerializable {
         this.user = '';
         this.private_key_name = '';
         this.password = '';
+        this.theme_name = '';
     }
 
     /**
@@ -150,7 +152,8 @@ export class SshLogin implements ISerializable {
         let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" +
             sqlEscape(uri) + "', '" +
             this.private_key_name + "', '" +
-            sqlEscape(this.password || "") + "')";
+            sqlEscape(this.password || "") + "','" +
+            sqlEscape(this.theme_name || "") + "')";
         return api.select(query).then((res: any) => {
             return res[0];
         });
@@ -180,6 +183,8 @@ export class SshLogin implements ISerializable {
             this.private_key_name +
             "', '" +
             sqlEscape(this.password || "") +
+            "','" +
+            sqlEscape(this.theme_name || "") +
             "')"
         ).then((res: any) => {
             return res[0];
