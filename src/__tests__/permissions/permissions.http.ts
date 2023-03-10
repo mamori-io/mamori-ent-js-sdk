@@ -184,7 +184,7 @@ describe("secret permission tests", () => {
 
     test('test 05 role grant', async () => {
         //Create role
-        let roleName = "test_permission_secret_." + testbatch;
+        let roleName = "test_permission_https_." + testbatch;
         let role = new io_role.Role(roleName);
         await io_utils.ignoreError(role.delete(api));
         let x = await io_utils.noThrow(role.create(api));
@@ -202,7 +202,7 @@ describe("secret permission tests", () => {
         ["grantee", io_utils.FILTER_OPERATION.EQUALS_STRING, roleName],
         ["key_name", io_utils.FILTER_OPERATION.EQUALS_STRING, resource]
         ];
-        //make sure no exist        
+        //make sure no exist
         let res = await new io_permission.HTTPResourcePermission().grantee(roleName).list(api, f);
         expect(res.totalCount).toBe(0);
 
