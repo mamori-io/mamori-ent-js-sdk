@@ -99,7 +99,7 @@ describe("remote desktop login tests", () => {
         expect(res.error).toBe(false);
 
         // ROLE
-        let policyName = "test_auto_Resource_policy_" + testbatch;
+        let policyName = "test_auto_rdp_Resource_policy_" + testbatch;
         let endorsementRole = "test_role_for_" + policyName;
         let policy = await helper.Policy.setupResourcePolicy(api, endorsementRole, policyName);
 

@@ -104,6 +104,7 @@ export class HTTPResource implements ISerializable {
         this.updated_at = '';
         this.created_at = '';
         this.active_access = '';
+        this.exclude_from_pac = '';
         this.request_via = null;
         this.exclude_from_pac = false;
     }

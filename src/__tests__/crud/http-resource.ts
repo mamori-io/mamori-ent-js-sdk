@@ -48,7 +48,8 @@ describe("HTTP Resource CRUD tests", () => {
         }
         let s = new io_http_resource.HTTPResource(resourceName)
             .withURL("https://localhost/minotor")
-            .withDescription("Created by Automated Test");
+            .withDescription("Created by Automated Test")
+            .withExcludeFromPAC("false");
 
         // Test to and from JSON
         let s0 = io_http_resource.HTTPResource.build(s.toJSON());
