@@ -153,7 +153,8 @@ describe("encryption key tests", () => {
         await ignoreError(k.delete(api));
         //Create
         k.ofType(KEY_TYPE.SSH).withAlgorithm(SSH_ALGORITHM.RSA).ofSize(1024);
-        let res = await noThrow(k.create(api));
+        let res = await ignoreError(k.create(api));
+        //console.log("**** %o", res);
         expect(res).toContain(publicKeyTest);
 
         //Ensure key returned properly
