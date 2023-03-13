@@ -149,11 +149,13 @@ export class SshLogin implements ISerializable {
     public create(api: MamoriService): Promise<any> {
         let uri = (this.user && this.user.length > 0) ? "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port) :
             "ssh://" + this.host + (this.port == 22 ? "" : ":" + this.port);
+
+
         let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" +
             sqlEscape(uri) + "', '" +
             this.private_key_name + "', '" +
             sqlEscape(this.password || "") + "','" +
-            sqlEscape(this.theme_name || "") + + "')";
+            sqlEscape(this.theme_name || "") + "')";
         return api.select(query).then((res: any) => {
             return res[0];
         });
@@ -173,6 +175,7 @@ export class SshLogin implements ISerializable {
     public update(api: MamoriService): Promise<any> {
         let uri = (this.user && this.user.length > 0) ? "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port) :
             "ssh://" + this.host + (this.port == 22 ? "" : ":" + this.port);
+
         return api.select("call update_ssh_login(" +
             sqlEscape(this.id) +
             ", '" +
@@ -218,10 +221,15 @@ export class SshLogin implements ISerializable {
      * @param password    Optional password
      * @returns 
      */
-    public withCredentials(user: string, private_key_name: string, password?: string): SshLogin {
+    public withKeyCredentials(user: string, private_key_name: string, password?: string): SshLogin {
+        this.user = user;
+        this.password = password ? password : '';
+        this.private_key_name = private_key_name;
+        return this;
+    }
+    public withPasswordCredentials(user: string, password: string): SshLogin {
         this.user = user;
         this.password = password;
-        this.private_key_name = private_key_name;
         return this;
     }
 }

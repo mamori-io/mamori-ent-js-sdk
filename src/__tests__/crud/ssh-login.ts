@@ -56,7 +56,8 @@ describe("ssh login tests", () => {
         await io_utils.ignoreError(k.delete(api));
         //Create
         k.at("localhost", "22");
-        k.withCredentials("root", sshKeyName);
+        k.withKeyCredentials("root", sshKeyName);
+
         k = k.fromJSON(k.toJSON())
         let res = await io_utils.noThrow(k.create(api));
         expect(res.status).toBe("ok");
@@ -141,7 +142,7 @@ describe("ssh login tests", () => {
         await io_utils.ignoreError(k.delete(api));
         //Create
         k.at("localhost", "22");
-        k.withCredentials("testuser", "", "dummypw");
+        k.withPasswordCredentials("testuser", "dummypw");
         k = k.fromJSON(k.toJSON())
         let res = await io_utils.noThrow(k.create(api));
         expect(res.status).toBe("ok");
@@ -183,7 +184,7 @@ describe("ssh login tests", () => {
         let resource = "test_rdp_login" + testbatch;
         let k = new SshLogin(resource);
         k.at("localhost", "22");
-        k.withCredentials("testuser", "", "dummypw");
+        k.withPasswordCredentials("testuser", "dummypw");
         let res = await io_utils.noThrow(k.create(api));
         expect(res.status).toBe("ok");
 
