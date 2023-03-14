@@ -11,8 +11,9 @@ const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
 const dbHost = process.env.MAMORI_DB_HOST || 'localhost';
 const dbPort = process.env.MAMORI_DB_PORT || '54321';
 
-
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
+
+let dbtest = dbPassword ? test : test.skip;
 
 describe("DB Credential CRUD tests", () => {
 
@@ -57,7 +58,7 @@ describe("DB Credential CRUD tests", () => {
         await api.logout();
     });
 
-    test('credential create 01', async () => {
+    dbtest('credential create 01', async () => {
 
         await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"));
         let c = new io_db_credential.DBCredential().withDatasource(dsName).withUsername("postgres");
@@ -82,7 +83,7 @@ describe("DB Credential CRUD tests", () => {
         expect(x.error).toBe(false);
     });
 
-    test('rmd-rdp requestable', async () => {
+    dbtest('db cred requestable', async () => {
         await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"));
         let cred = new io_db_credential.DBCredential().withDatasource(dsName).withUsername("postgres");
         let r = await io_utils.noThrow(cred.create(api, dbPassword));
