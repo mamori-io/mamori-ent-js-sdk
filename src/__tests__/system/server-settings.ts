@@ -18,7 +18,7 @@ describe("Server Settings - bootstrap user", () => {
     let apiuserpw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D";
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
 
@@ -30,7 +30,7 @@ describe("Server Settings - bootstrap user", () => {
             identified_by: "password",
             email: "test@test.test"
         }).catch(e => {
-            console.log(e.response.data);
+            //console.log(e.response.data);
         })
     });
 

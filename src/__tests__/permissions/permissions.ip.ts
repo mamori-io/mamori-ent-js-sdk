@@ -25,8 +25,7 @@ describe("ip resource permission tests", () => {
     let granteepw = "J{J'vpKsn3213W6(6A,4_vdQ'}D"
 
     beforeAll(async () => {
-
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
         //create the user

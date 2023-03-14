@@ -104,12 +104,12 @@ export function noThrow(call: Promise<any>): any {
     try {
         return call.catch(e => {
             let x = handleAPIException(e);
-            console.log(x);
+            //console.log(x);
             return x;
         });
     } catch (e) {
         let x = handleAPIException(e);
-        console.log(x);
+        //console.log(x);
         return x;
     }
 }
@@ -212,5 +212,3 @@ export function decodeMessage(s: string): Message {
     res.params = parts;
     return res;
 }
-
-

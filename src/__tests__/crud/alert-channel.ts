@@ -17,7 +17,7 @@ describe("alert channel tests", () => {
     let grantee = "test_user_alert_channel" + testbatch;
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
     });

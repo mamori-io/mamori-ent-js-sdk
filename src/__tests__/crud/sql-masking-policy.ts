@@ -31,7 +31,7 @@ describe("sql-masking-policy crud tests", () => {
 
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
 
@@ -74,7 +74,7 @@ describe("sql-masking-policy crud tests", () => {
             expect(r2.errors).toBe(false);
             let r3 = await noThrow(role.grantTo(api, grantee, false));
             expect(r3.errors).toBe(false);
-            // Grant ALL 
+            // Grant ALL
             let p1 = await noThrow(new DatasourcePermission()
                 .on(ds.name, "*", "*", "")
                 .permissions([DB_PERMISSION.CREATE_TABLE, DB_PERMISSION.DROP_TABLE])
@@ -164,7 +164,7 @@ describe("sql-masking-policy crud tests", () => {
             expect(x2.errors).toBe(false);
             let schemaName = 'testschema' + testbatch;
             try {
-                //Create the schema, table and insert data         
+                //Create the schema, table and insert data
 
                 let q1 = await noThrow(apiAsAdmin.select("DROP SCHEMA " + schemaName + " CASCADE"));
                 let q2 = await noThrow(apiAsAdmin.select("CREATE SCHEMA " + schemaName));

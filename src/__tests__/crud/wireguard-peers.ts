@@ -18,7 +18,7 @@ describe("wireguard peer tests", () => {
     let granteepw = "J{J'v8@hs!$kjA(6A,4!98712_vdQ'}D"
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
 

@@ -26,7 +26,7 @@ describe("on-demand policy crud tests", () => {
     let endorseAlert = new io_alertchannel.AlertChannel("test_policy_endorse_alert" + testbatch);
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
 
@@ -126,7 +126,9 @@ describe("on-demand policy crud tests", () => {
         expect(x.error).toBe(false);
 
         let x3 = await io_utils.noThrow(io_ondemandpolicies.OnDemandPolicy.get(api, name));
-        expect(x3.name).toBeDefined();
+	if(!x3.name) {
+	    throw x3;
+	}
 
         let x2 = await io_utils.noThrow(k.delete(api));
         expect(x2.error).toBe(false);

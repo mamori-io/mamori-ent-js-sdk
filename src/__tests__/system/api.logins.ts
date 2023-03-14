@@ -11,7 +11,7 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("server based tests", () => {
 
     test('login should succeed', async () => {
-        console.log("%s %s", host, username);
+        //console.log("%s %s", host, username);
         let api = new MamoriService(host, INSECURE);
         let response = await api.login(username, password);
         expect(response.username).toBe(username);
@@ -34,7 +34,7 @@ describe("server based tests", () => {
                     await api.select("VALIDATE AUTHENTICATION USERNAME 'hfdhjdfjhdfgjhdfj' PASSWORD 'hnjdfjhfdghj' WITH PROVIDER '" + process.env.AD_AUTH_PROVIDER + "'");
                 }).rejects.toThrow();
             } finally {
-                await api.logout();                
+                await api.logout();
             }
         })
     }

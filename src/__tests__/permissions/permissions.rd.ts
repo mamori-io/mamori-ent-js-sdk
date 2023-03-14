@@ -4,7 +4,6 @@ import { RemoteDesktopLoginPermission, TIME_UNIT } from '../../permission';
 import { FILTER_OPERATION, handleAPIException, ignoreError, noThrow } from '../../utils';
 import { Role } from '../../role';
 import { LOGIN_PROMPT_MODE, RemoteDesktopLogin, REMOTE_DESKTOP_PROTOCOL } from '../../remote-desktop-login';
-import { Console } from 'console';
 import { DBHelper } from '../../__utility__/test-helper';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -21,7 +20,7 @@ describe("rdp permission tests", () => {
     let granteepw = "J{J'vMy72n\/a@C+W6(6A,4_vdQ'}D";
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
         await ignoreError(api.delete_user(grantee));

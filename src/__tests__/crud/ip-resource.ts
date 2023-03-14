@@ -19,7 +19,7 @@ describe("IP resource CRUD tests", () => {
     let granteepw = "J{J'vpKs!$nW6(6A,4!3#$4#12_vdQ'}D";
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
         await io_utils.ignoreError(api.delete_user(grantee));

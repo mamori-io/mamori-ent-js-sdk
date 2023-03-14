@@ -137,7 +137,7 @@ if (dbPassword) {
                 let r6 = await io_utils.noThrow(ds2.create(api));
                 expect(r6.errors).toBeUndefined();
                 let r9 = await io_utils.noThrow(ds2.validateCredential(api, grantee, loginU1, pw));
-                console.log(r9);
+                //console.log(r9);
                 expect(r9.errors).toBeDefined();
                 let r10 = await io_utils.noThrow(ds2.addCredentialWithManagedPassword(api, grantee, loginU2, pw, "15"));
                 expect(r10.errors).toBeUndefined();

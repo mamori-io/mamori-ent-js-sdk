@@ -14,7 +14,7 @@ describe("on-demand policy crud tests", () => {
     let requestAlert = new io_alertchannel.AlertChannel("test_c_policy_request_alert" + testbatch);
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
 

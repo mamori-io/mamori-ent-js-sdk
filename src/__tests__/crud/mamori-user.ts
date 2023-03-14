@@ -18,7 +18,7 @@ describe("mamori user tests", () => {
     let granteepw = "J{J'vpKs!$nW6(6A,4!98712_vdQ'}D"
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
     });

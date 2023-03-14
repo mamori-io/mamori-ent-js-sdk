@@ -22,7 +22,7 @@ describe("DB Credential CRUD tests", () => {
     let dsName = "test_ds_cred_local_pg" + testbatch;
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
 

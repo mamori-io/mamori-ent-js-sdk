@@ -17,7 +17,7 @@ describe("datasource permission tests", () => {
 
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
         await io_utils.ignoreError(api.delete_user(grantee));
@@ -213,7 +213,7 @@ describe("datasource permission tests", () => {
         await io_utils.ignoreError(obj.revoke(api));
     });
 
-    // Needs to handle more date formats. 
+    // Needs to handle more date formats.
     test('grant 03 - valid between', async () => {
         let tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
         let dt = new Date();
@@ -346,7 +346,7 @@ describe("datasource permission tests", () => {
 
     test.skip('test 06 select limit', async () => {
         //Create object with 5 rows
-        //Grant select 
+        //Grant select
         if (dbPassword) {
             //******SETUP
             //CREATE DS TO LOCAL PG

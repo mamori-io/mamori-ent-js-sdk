@@ -20,13 +20,13 @@ describe("network ssh tunnel tests", () => {
     let sshKeyName = "mamori_server_ssh_tunnel_test_key";
 
     /***********************
-    For test to run 
+    For test to run
     1. create an ssh key called mamori_server_ssh_tunnel_test_key
     2. add the public key to authorized keys of the mamori server
     *************************/
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
 

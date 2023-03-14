@@ -20,7 +20,7 @@ describe("ssh permission tests", () => {
     let granteepw = "J{J'vMy72BnpKsn\/a@C+W6(6A,4_vdQ'}D";
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
         await ignoreError(api.delete_user(grantee));

@@ -20,7 +20,7 @@ describe("mamori catalog tests", () => {
     //jest.setTimeout(30000);
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
         await ignoreError(api.delete_user(grantee));

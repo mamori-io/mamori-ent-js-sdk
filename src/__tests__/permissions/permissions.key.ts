@@ -22,7 +22,7 @@ describe("key permission tests", () => {
     let granteepw = "J{J'vpKsnsNm3W6(6A,4_vdQ'}D"
 
     beforeAll(async () => {
-        console.log("login %s %s", host, username);
+        //console.log("login %s %s", host, username);
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
         //
