@@ -16,7 +16,7 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("key permission tests", () => {
 
     let api: MamoriService;
-    let key = "test_aes_key" + testbatch;
+    let key = "test_aes_key_perm_" + testbatch;
     let grantee = "test_apiuser_permissions." + testbatch;
     let permType = "KEY USAGE";
     let granteepw = "J{J'vpKsnsNm3W6(6A,4_vdQ'}D"
@@ -69,7 +69,7 @@ describe("key permission tests", () => {
         let obj = new KeyPermission()
             .key(key)
             .grantee(grantee);
-            
+
 
         //make sure no exist
         await ignoreError(obj.revoke(api));
@@ -222,7 +222,9 @@ describe("key permission tests", () => {
         expect(res.totalCount).toBe(0);
 
         let resp = await noThrow(obj.grant(api));
-        expect(resp.errors).toBe(false);
+	if(resp.errors !== false) {
+	    throw resp;
+	}
 
         res = await new KeyPermission().grantee(roleName).list(api, filter);
         expect(res.totalCount).toBe(1);
