@@ -4,5 +4,6 @@
     "MAMORI_PASSWORD": "password",
     "MAMORI_DB_PASSWORD": "password",
     "MAMORI_TEST_BATCH": "test"
+    "MAMORI_ORACLE_DATASOURCE": "oracle193",
+    "MAMORI_SQLSERVER_DATASOURCE": "ss2014"
 }
-

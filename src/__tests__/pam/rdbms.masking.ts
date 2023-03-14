@@ -9,6 +9,11 @@ const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
+const oracle_ds = process.env.MAMORI_ORACLE_DATASOURCE || '';
+const sqlserver_ds = process.env.MAMORI_SQLSERVER_DATASOURCE || '';
+
+let oratest = oracle_ds ? test : test.skip;
+let sstest = sqlserver_ds ? test : test.skip;
 
 describe("masking policy tests", () => {
 
@@ -60,11 +65,11 @@ describe("masking policy tests", () => {
         await api.logout();
     });
 
-    test('masking oracle CH1711', async () => {
-        //admin passthrough session to db
+    oratest('masking oracle CH1711', async () => {
+        //admin passthrough session to db.
 
         let testID = "orach1711";
-        let dsname = "oracle193";
+        let dsname = oracle_ds;
         let dbname = "orcl";
         let schemaName = testID + '_' + testbatch;
         let rules = [{ objecturi: dsname + "." + dbname + "." + schemaName + ".tab1", column: "col1", mask: "masked by full()" }];
@@ -73,14 +78,14 @@ describe("masking policy tests", () => {
         let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(host, username, password, dsname);
         try {
 
-            let prep = await io_utils.noThrow(helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName));
-            //console.log("DML %o", prep);
-            //create the masking policy
-            let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await io_utils.noThrow(helper.DBHelper.addMaskingPolicy(api, policyName, rules));
-            //grant the policy to the user
-            await io_utils.noThrow(mpolicy.grantTo(api, user.username));
-            let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
-            try {
+	    let prep = await io_utils.noThrow(helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName));
+	    //console.log("DML %o", prep);
+	    //create the masking policy
+	    let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await io_utils.noThrow(helper.DBHelper.addMaskingPolicy(api, policyName, rules));
+	    //grant the policy to the user
+	    await io_utils.noThrow(mpolicy.grantTo(api, user.username));
+	    let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
+	    try {
 
                 //ISSUE ORACLE QUERY AND CONFIRM DATA IS MASKED
                 let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
@@ -96,22 +101,22 @@ describe("masking policy tests", () => {
                 let x4 = await io_utils.noThrow(permission.revoke(api));
                 expect(x4.errors).toBe(false);
 
-            } finally {
+	    } finally {
                 await apiUser.logout();
                 await io_utils.noThrow(mpolicy.delete(api));
-            }
+	    }
 
         } finally {
-            await io_utils.noThrow(helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName));
-            apiAdminPassthrough.logout();
+	    await io_utils.noThrow(helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName));
+	    apiAdminPassthrough.logout();
         }
     });
 
 
-    test('masking MSSQL CH1711', async () => {
+    sstest('masking MSSQL CH1711', async () => {
         //admin passthrough session to db
         let testID = "ssch1711";
-        let dsname = "ss2014";
+        let dsname = sqlserver_ds;
         let dbname = "mamori";
         let schemaName = testID + '_' + testbatch;
         let rules = [{ objecturi: dsname + "." + dbname + "." + schemaName + ".tab1", column: "col1", mask: "masked by full()" }];
@@ -119,13 +124,13 @@ describe("masking policy tests", () => {
         //Create the object
         let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(host, username, password, dsname);
         try {
-            let prep = await io_utils.noThrow(helper.DBHelper.prepareSSObjects(apiAdminPassthrough, schemaName));
-            //create the masking policy
-            let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await io_utils.noThrow(helper.DBHelper.addMaskingPolicy(api, policyName, rules));
-            //grant the policy to the user
-            await io_utils.noThrow(mpolicy.grantTo(api, user.username));
-            let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
-            try {
+	    let prep = await io_utils.noThrow(helper.DBHelper.prepareSSObjects(apiAdminPassthrough, schemaName));
+	    //create the masking policy
+	    let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await io_utils.noThrow(helper.DBHelper.addMaskingPolicy(api, policyName, rules));
+	    //grant the policy to the user
+	    await io_utils.noThrow(mpolicy.grantTo(api, user.username));
+	    let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
+	    try {
                 //ISSUE  QUERY AND CONFIRM DATA IS MASKED
                 let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
                 expect(x1.length).toBeGreaterThan(0);
@@ -139,17 +144,14 @@ describe("masking policy tests", () => {
                 expect(x3[0].col1).toContain("XXXX");
                 let x4 = await io_utils.noThrow(permission.revoke(api));
                 expect(x4.errors).toBe(false);
-            } finally {
+	    } finally {
                 await apiUser.logout();
                 await io_utils.noThrow(mpolicy.delete(api));
-            }
+	    }
         } finally {
-            await io_utils.noThrow(helper.DBHelper.cleanUpSchemaSS(apiAdminPassthrough, schemaName));
-            apiAdminPassthrough.logout();
+	    await io_utils.noThrow(helper.DBHelper.cleanUpSchemaSS(apiAdminPassthrough, schemaName));
+	    apiAdminPassthrough.logout();
         }
     });
-
-
-
 
 });
