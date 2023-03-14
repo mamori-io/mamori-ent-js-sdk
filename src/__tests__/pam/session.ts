@@ -7,6 +7,9 @@ const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
+const oracle_ds = process.env.MAMORI_ORACLE_DATASOURCE || '';
+
+let oratest = oracle_ds ? test : test.skip;
 
 describe("masking policy tests", () => {
 
@@ -49,14 +52,14 @@ describe("masking policy tests", () => {
         await api.logout();
     });
 
-    test('set passthrough', async () => {
+    oratest('set passthrough', async () => {
         let apiUser: MamoriService = new MamoriService(host, INSECURE);
 
         try {
             await apiUser.login(user.username, granteepw);
 
             //SET PASSTHROUGH Should fail since user does not have DB creds for DB
-            let x = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiUser, "oracle193"));
+            let x = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiUser, oracle_ds));
 
             expect(x.errors).toBe(true);
             //Grant roles with db permissions

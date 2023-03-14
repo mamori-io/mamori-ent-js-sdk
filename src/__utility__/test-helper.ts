@@ -131,7 +131,10 @@ export class Policy {
         policy.withScript(["GRANT :privileges ON :resource_name TO :applicant VALID for :time minutes;"]);
         await io_utils.noThrow(policy.delete(api));
         let r = await io_utils.noThrow(policy.create(api));
-        expect(r.error).toBe(false);
+	if(r.error !== false) {
+	    // it is done like this so we can see the error
+            expect(r).toBe({});
+	}
         return policy;
     }
 }

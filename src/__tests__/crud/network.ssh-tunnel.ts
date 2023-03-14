@@ -11,6 +11,9 @@ const password = process.env.MAMORI_PASSWORD || '';
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
+const vpn_ssh_host = process.env.MAMORI_SSH_VPN_HOST || '';
+let vpn_test = vpn_ssh_host ? test : test.skip;
+
 describe("network ssh tunnel tests", () => {
 
     let api: MamoriService;
@@ -54,9 +57,9 @@ describe("network ssh tunnel tests", () => {
         await api.logout();
     });
 
-    test('ssh tunnel 01', async () => {
+    vpn_test('ssh tunnel 01', async () => {
         let k = new SshTunnel("test_ssh_tunnel_to_local" + testbatch);
-        k.at("localhost", 22);
+        k.at(vpn_ssh_host, 22);
         k.withCredentials("root", sshKeyName);
         await ignoreError(k.delete(api));
         //Create

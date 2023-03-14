@@ -5,5 +5,6 @@
     "MAMORI_DB_PASSWORD": "password",
     "MAMORI_TEST_BATCH": "test"
     "MAMORI_ORACLE_DATASOURCE": "oracle193",
-    "MAMORI_SQLSERVER_DATASOURCE": "ss2014"
+    "MAMORI_SQLSERVER_DATASOURCE": "ss2014",
+    "MAMORI_SSH_VPN_HOST": "localhost"
 }
