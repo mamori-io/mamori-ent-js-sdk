@@ -46,8 +46,9 @@ describe("DB Credential CRUD tests", () => {
             .withDatabase('mamorisys')
             .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
         let res = await io_utils.noThrow(ds.create(api));
-        expect(res.error).toBe(false);
-
+	if(res.error !== false) {
+            expect(res).toBe({});
+	}
     });
 
     afterAll(async () => {

@@ -1,11 +1,6 @@
-
 import { MamoriService } from '../../api';
 import { io_https, io_utils, io_permission, io_role, io_secret } from '../../api';
 import { DBHelper } from '../../__utility__/test-helper';
-
-
-
-
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';

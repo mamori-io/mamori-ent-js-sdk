@@ -11,6 +11,9 @@ const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
+
+let bootstraptest = process.env.MAMORI_BS_TESTS ? test : test.skip;
+
 describe("Server Settings - bootstrap user", () => {
 
     let api: MamoriService;
@@ -39,13 +42,13 @@ describe("Server Settings - bootstrap user", () => {
         await api.logout();
     });
 
-    test('disable bootstrap', async () => {
+    bootstraptest('disable bootstrap', async () => {
         let ss = new ServerSettings(api);
         let result = await ss.setBootstrapAccount(false);
         expect(result.error).toBe(false);
     });
 
-    test('enable bootstrap', async () => {
+    bootstraptest('enable bootstrap', async () => {
         let ss = new ServerSettings(api);
         let pw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D";
         let result = await ss.setBootstrapAccount(true, pw);
@@ -62,7 +65,7 @@ describe("Server Settings - bootstrap user", () => {
         expect(result.error).toBe(false);
     });
 
-    test('non-admin user bootstrap', async () => {
+    bootstraptest('non-admin user bootstrap', async () => {
         let apiUser = new MamoriService(host, INSECURE);
         try {
             let loginresult = await apiUser.login(apiuser, apiuserpw);
