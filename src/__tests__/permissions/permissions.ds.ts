@@ -9,6 +9,9 @@ const password = process.env.MAMORI_PASSWORD || '';
 const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 
+const sqlserver_ds = process.env.MAMORI_SQLSERVER_DATASOURCE || '';
+let sstest = sqlserver_ds ? test : test.skip;
+
 describe("datasource permission tests", () => {
 
     let api: MamoriService;
@@ -254,19 +257,19 @@ describe("datasource permission tests", () => {
 
     });
 
-    test('grant 01.01', async () => {
+    sstest('grant 01.01', async () => {
         let obj = new io_permission.DatasourcePermission()
-            .on("ss2016", "mamoritest", "dbo", "customer_pii")
+            .on(sqlserver_ds, "mamoritest", "dbo", "customer_pii")
             .permission(io_permission.DB_PERMISSION.SELECT)
             .grantee(grantee);
         //make sure no exist
         await io_utils.ignoreError(obj.revoke(api));
         // Test to check the query is working correctly
-        let res = await io_utils.noThrow(api.grantee_object_grants(grantee, io_permission.DB_PERMISSION.SELECT, "ss2016.mamoritest.dbo.customer_pii"));
+        let res = await io_utils.noThrow(api.grantee_object_grants(grantee, io_permission.DB_PERMISSION.SELECT, sqlserver_ds + ".mamoritest.dbo.customer_pii"));
         expect(res.length).toBe(0);
     });
 
-    test('test 04.01 grant mix case', async () => {
+    sstest('test 04.01 grant mix case', async () => {
 
         //Ensure main admin also has db creds to be able to grant
         await io_utils.ignoreError(new io_permission.RolePermission().role("DB_CREDS").grantee(username).grant(api));
@@ -276,12 +279,12 @@ describe("datasource permission tests", () => {
 
         //let p = await io_utils.noThrow(new RolePermission().role("DB_CREDS").grantee(grantee).grant(api));
         let obj = new io_permission.DatasourcePermission()
-            .on("ss2016", "*", "dev", "customer_pii")
+            .on(sqlserver_ds, "*", "dev", "customer_pii")
             .permission(io_permission.DB_PERMISSION.SELECT)
             .grantee(grantee);
 
         let obj2 = new io_permission.DatasourcePermission()
-            .on("Ss2016", "*", "Dev", "CUSTOMER_pii")
+            .on(sqlserver_ds, "*", "Dev", "CUSTOMER_pii")
             .permission(io_permission.DB_PERMISSION.SELECT)
             .grantee(grantee);
 
