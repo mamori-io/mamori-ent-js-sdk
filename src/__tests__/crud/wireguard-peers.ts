@@ -49,7 +49,13 @@ describe("wireguard peer tests", () => {
         let name = "testlaptop";
         let k = new WireGuardPeer(grantee, name);
         let res = await noThrow(k.create(api));
-        expect(res.config).toContain("[Interface]");
+	if(res.config) {
+            expect(res.config).toContain("[Interface]");
+	} else {
+	    // dump out the value we got back
+	    expect(res).toBe({});
+	}
+
         //get list
         let filter = [["userid", "=", grantee], ["device_name", "", name]];
         let x = await noThrow(WireGuardPeer.list(api, 0, 10, filter));
