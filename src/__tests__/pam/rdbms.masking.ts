@@ -70,7 +70,7 @@ describe("masking policy tests", () => {
 
         let testID = "orach1711";
         let dsname = oracle_ds;
-        let dbname = "orcl";
+        let dbname = "orclpdb1";
         let schemaName = testID + '_' + testbatch;
         let rules = [{ objecturi: dsname + "." + dbname + "." + schemaName + ".tab1", column: "col1", mask: "masked by full()" }];
         let policyName = testID + '_policy_' + testbatch;
@@ -78,14 +78,14 @@ describe("masking policy tests", () => {
         let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(host, username, password, dsname);
         try {
 
-	    let prep = await io_utils.noThrow(helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName));
-	    //console.log("DML %o", prep);
-	    //create the masking policy
-	    let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await io_utils.noThrow(helper.DBHelper.addMaskingPolicy(api, policyName, rules));
-	    //grant the policy to the user
-	    await io_utils.noThrow(mpolicy.grantTo(api, user.username));
-	    let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
-	    try {
+            let prep = await io_utils.noThrow(helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName));
+            //console.log("DML %o", prep);
+            //create the masking policy
+            let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await io_utils.noThrow(helper.DBHelper.addMaskingPolicy(api, policyName, rules));
+            //grant the policy to the user
+            await io_utils.noThrow(mpolicy.grantTo(api, user.username));
+            let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
+            try {
 
                 //ISSUE ORACLE QUERY AND CONFIRM DATA IS MASKED
                 let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
@@ -101,14 +101,14 @@ describe("masking policy tests", () => {
                 let x4 = await io_utils.noThrow(permission.revoke(api));
                 expect(x4.errors).toBe(false);
 
-	    } finally {
+            } finally {
                 await apiUser.logout();
                 await io_utils.noThrow(mpolicy.delete(api));
-	    }
+            }
 
         } finally {
-	    await io_utils.noThrow(helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName));
-	    apiAdminPassthrough.logout();
+            await io_utils.noThrow(helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName));
+            apiAdminPassthrough.logout();
         }
     });
 
@@ -124,13 +124,13 @@ describe("masking policy tests", () => {
         //Create the object
         let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(host, username, password, dsname);
         try {
-	    let prep = await io_utils.noThrow(helper.DBHelper.prepareSSObjects(apiAdminPassthrough, schemaName));
-	    //create the masking policy
-	    let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await io_utils.noThrow(helper.DBHelper.addMaskingPolicy(api, policyName, rules));
-	    //grant the policy to the user
-	    await io_utils.noThrow(mpolicy.grantTo(api, user.username));
-	    let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
-	    try {
+            let prep = await io_utils.noThrow(helper.DBHelper.prepareSSObjects(apiAdminPassthrough, schemaName));
+            //create the masking policy
+            let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await io_utils.noThrow(helper.DBHelper.addMaskingPolicy(api, policyName, rules));
+            //grant the policy to the user
+            await io_utils.noThrow(mpolicy.grantTo(api, user.username));
+            let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
+            try {
                 //ISSUE  QUERY AND CONFIRM DATA IS MASKED
                 let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
                 expect(x1.length).toBeGreaterThan(0);
@@ -144,13 +144,13 @@ describe("masking policy tests", () => {
                 expect(x3[0].col1).toContain("XXXX");
                 let x4 = await io_utils.noThrow(permission.revoke(api));
                 expect(x4.errors).toBe(false);
-	    } finally {
+            } finally {
                 await apiUser.logout();
                 await io_utils.noThrow(mpolicy.delete(api));
-	    }
+            }
         } finally {
-	    await io_utils.noThrow(helper.DBHelper.cleanUpSchemaSS(apiAdminPassthrough, schemaName));
-	    apiAdminPassthrough.logout();
+            await io_utils.noThrow(helper.DBHelper.cleanUpSchemaSS(apiAdminPassthrough, schemaName));
+            apiAdminPassthrough.logout();
         }
     });
 
