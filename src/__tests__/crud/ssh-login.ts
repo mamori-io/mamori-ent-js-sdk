@@ -180,11 +180,12 @@ describe("ssh login tests", () => {
     });
 
 
-    test('shh requestable', async () => {
+    test('ssh requestable', async () => {
         let resource = "test_rdp_login" + testbatch;
         let k = new SshLogin(resource);
         k.at("localhost", "22");
         k.withPasswordCredentials("testuser", "dummypw");
+        await io_utils.ignoreError(k.delete(api));
         let res = await io_utils.noThrow(k.create(api));
         expect(res.status).toBe("ok");
 
@@ -202,6 +203,7 @@ describe("ssh login tests", () => {
             requestable.resource_type, grantee, resource, policyName));
         //
         let r1 = await io_utils.noThrow(requestable.create(api));
+
         expect(r1.error).toBe(false);
 
         let r2 = await io_utils.noThrow(io_requestable_resource.RequestableResource.getByName(api,

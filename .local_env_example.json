@@ -3,8 +3,11 @@
     "MAMORI_USERNAME": "testadmin",
     "MAMORI_PASSWORD": "password",
     "MAMORI_DB_PASSWORD": "password",
-    "MAMORI_TEST_BATCH": "test"
+    "MAMORI_TEST_BATCH": "test",
     "MAMORI_ORACLE_DATASOURCE": "oracle193",
+    "MAMORI_ORACLE_HOST": "0.0.0.0",
+    "MAMORI_ORACLE_PORT": "1521",
+    "MAMORI_ORACLE_SID": "ORCL",
     "MAMORI_SQLSERVER_DATASOURCE": "ss2014",
     "MAMORI_SSH_VPN_HOST": "localhost"
 }

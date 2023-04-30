@@ -101,6 +101,7 @@ class SshProxyDemo extends Runnable {
       "",
       "true",
       "",
+      "true",
       "BEGIN; GRANT " + mgrRoleName + " TO :applicant VALID FOR :time seconds; END");
     console.info("Created access policy: ", accessName);
 

@@ -131,6 +131,7 @@ export class OnDemandPolicy implements ISerializable {
     deny_alert: string;
     parameters: any[];
     approval_expiry: string;
+    allow_self_endorse: string;
 
     public constructor(name: string, type?: POLICY_TYPES) {
 
@@ -150,6 +151,7 @@ export class OnDemandPolicy implements ISerializable {
         this.deny_alert = "";
         this.parameters = [];
         this.approval_expiry = "24";
+        this.allow_self_endorse = "false";
     }
 
     public clearParameters() {
@@ -200,6 +202,7 @@ export class OnDemandPolicy implements ISerializable {
             this.execute_on_endorse == 'true' ? "true" : "false",
             this.execute_alert,
             this.approval_expiry,
+            this.allow_self_endorse == 'true' ? "true" : "false",
             this.sqlText);
     }
 

@@ -1837,6 +1837,7 @@ export class MamoriService {
         execute_on_endorse: string,
         execute_alert: string,
         approval_expiry: string,
+        allow_self_endorse: string,
         sql: string) {
         return this.callAPI("POST", "/v1/policies/create_procedure", {
             procedure_name: procedure_name,
@@ -1854,6 +1855,7 @@ export class MamoriService {
             execute_on_endorse: execute_on_endorse ? execute_on_endorse : "false",
             execute_alert: execute_alert ? execute_alert : "",
             approval_expiry: approval_expiry,
+            allow_self_endorse: allow_self_endorse ? allow_self_endorse : "false",
             sql: sql,
         });
     }
