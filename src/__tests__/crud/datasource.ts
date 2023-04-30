@@ -196,4 +196,81 @@ describe("datasource tests", () => {
         await io_utils.ignoreError(ds.delete(api));
         await io_utils.ignoreError(api.delete_user(uName));
     });
+
+    dbtest('datasource 004 - managed pw without role', async () => {
+        //Create DS
+        let dsHost = dbHost;
+        let dsport = dbPort;
+        let dsUser = "postgres";
+        let dsDBPW = dbPassword;
+        let dsDB = "mamorisys";
+
+        let dsName = "test_004_local_pg" + testbatch;
+        let ds = new io_datasource.Datasource(dsName);
+        await io_utils.ignoreError(ds.delete(api));
+        ds.ofType("POSTGRESQL", 'postgres')
+            .at(dsHost, dsport)
+            .withCredentials(dsUser, dsDBPW)
+            .withDatabase(dsDB);
+        let res = await io_utils.noThrow(ds.create(api));
+        expect(res.error).toBe(false);
+        //CREATE THE USER
+        let uName = 'T004' + grantee;
+        await io_utils.ignoreError(api.delete_user(uName));
+        let r1 = await io_utils.noThrow(api.create_user({
+            username: uName,
+            password: granteepw,
+            fullname: grantee,
+            identified_by: "password",
+            email: "test@test.test"
+        }));
+        expect(r1.error).toBe(false);
+        //ADD CREDENTIAL
+        let ccred = await io_utils.noThrow(ds.addCredential(api, uName, dsUser, dsDBPW));
+        expect(ccred.error).toBe(false);
+        //SET PERMISSIONS
+        await setPassthroughPermissions(api, uName, dsName);
+        let apiU = await createNewPassthroughSession(host, uName, granteepw, dsName);
+        try {
+            //MAKE NEW DB LOGIN USER 2
+            let pw = "!testPW";
+            let loginU1 = ("testu1004" + testbatch).toLowerCase();
+            let loginU2 = ("testu2004" + testbatch).toLowerCase();
+            await createPGDatabaseUser(apiU, loginU1, pw, dsDB);
+            await createPGDatabaseUser(apiU, loginU2, pw, dsDB);
+            //CHECK U1 Password no longer works with credential validate
+            let r7 = await io_utils.noThrow(ds.validateCredential(api, grantee, loginU1, pw));
+            expect(r7).toBe("Authorization valid");
+            //CHECK U1 Password no longer works with credential validate
+            let r8 = await io_utils.noThrow(ds.validateCredential(api, grantee, loginU2, pw));
+            expect(r8).toBe("Authorization valid");
+
+            //MAKE NEW DATA SOURCE using USER1
+            let ds2 = new io_datasource.Datasource("A" + dsName);
+            await io_utils.ignoreError(ds2.delete(api));
+            ds2.ofType("POSTGRESQL", 'postgres')
+                .at(dsHost, dsport)
+                .withCredentials(loginU1, pw)
+                .withDatabase(dsDB)
+                .withPasswordPolicy("30", "");
+            let r6 = await io_utils.noThrow(ds2.create(api));
+            expect(r6.errors).toBeUndefined();
+            let r9 = await io_utils.noThrow(ds2.validateCredential(api, grantee, loginU1, pw));
+            //console.log(r9);
+            expect(r9.errors).toBeDefined();
+            let r10 = await io_utils.noThrow(ds2.addCredentialWithManagedPassword(api, grantee, loginU2, pw, "15"));
+            expect(r10.errors).toBeUndefined();
+            let r11 = await io_utils.noThrow(ds2.validateCredential(api, grantee, loginU2, pw));
+            expect(r11.errors).toBeDefined();
+
+            await io_utils.ignoreError(ds2.delete(api));
+            await dropPGDatabaseUser(apiU, loginU1, dsDB);
+            await dropPGDatabaseUser(apiU, loginU2, dsDB);
+        } finally {
+            //CLEAN UP
+            await io_utils.ignoreError(apiU.logout());
+            await io_utils.ignoreError(ds.delete(api));
+            await io_utils.ignoreError(api.delete_user(uName));
+        }
+    });
 });
