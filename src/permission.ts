@@ -21,7 +21,8 @@ export enum PERMISSION_TYPE {
     REMOTE_DESKTOP = "remotedesktop",
     IP_RESOURCE = "ip_resource",
     HTTP_RESOURCE = "http_resource",
-    SECRET = "secret"
+    SECRET = "secret",
+    CREDENTIAL = "credential",
 }
 
 export enum TIME_UNIT {
@@ -142,6 +143,8 @@ export class Permissions {
             return new RemoteDesktopLoginPermission().fromJSON(rec);
         } else if (rec.permissiontype == 'KEY USAGE') {
             return new KeyPermission().fromJSON(rec);
+        } else if (rec.permissiontype == 'CREDENTIAL USAGE') {
+            return new CredentialPermission().fromJSON(rec);
         } else if (rec.permissiontype == 'REVEAL SECRET') {
             return new SecretPermission().fromJSON(rec);
         } else if (rec.permissiontype == 'HTTP ACCESS') {
@@ -184,6 +187,8 @@ export class Permissions {
                 return new HTTPResourcePermission();
             case PERMISSION_TYPE.SECRET:
                 return new SecretPermission();
+            case PERMISSION_TYPE.CREDENTIAL:
+                return new CredentialPermission();
         }
     }
 }
@@ -1062,7 +1067,6 @@ export class MamoriPermission extends PermissionBase {
     }
 }
 
-
 export class RemoteDesktopLoginPermission extends PermissionBase {
     private items?: string[];
     private RDLoginName?: string;
@@ -1198,7 +1202,7 @@ export class SecretPermission extends PermissionBase {
         return res;
     }
 }
-
+//GRANT HTTP ACCESS USAGE ON {resource} TO {grantee}
 export class HTTPResourcePermission extends PermissionBase {
     private items?: string[];
     private itemName?: string;
@@ -1266,6 +1270,106 @@ export class HTTPResourcePermission extends PermissionBase {
         return res;
     }
 }
+
+export class CredentialPermission extends PermissionBase {
+    private items?: string[];
+    private datasource?: string;
+    private loginName?: string;
+
+    public constructor() {
+        super();
+
+        this.datasource = "";
+        this.loginName = "";
+        this.items = ["CREDENTIAL USAGE"];
+    }
+
+    /**
+    * Set the name to grant
+    * @param datasource The name of the resource
+    * @returns  
+    */
+    public withDatasource(value: string): CredentialPermission {
+        this.datasource = value;
+        return this;
+    }
+    /**
+    * Set the name to grant
+    * @param loginName The name of the resource
+    * @returns  
+    */
+    public withLoginName(value: string): CredentialPermission {
+        this.loginName = value;
+        return this;
+    }
+
+    public prepare(): any {
+        let res = super.prepare();
+        this.options.grantables = this.items;
+        this.options.object_name = '"' + this.loginName + "@" + this.datasource + '"';
+        return res;
+    }
+
+    /**
+     * Initialize the object from JSON.
+     * Call toJSON to see the expected record.
+     * @param record JSON record
+     * @returns
+     */
+    fromJSON(record: any) {
+        super.fromJSON(record);
+        if (record.key_name && record.key_name != '') {
+            this.loginName = record.key_name;
+        }
+        if (record.onsystem && record.onsystem != '') {
+            this.datasource = record.onsystem;
+        }
+
+        if (record.loginName && record.loginName != '') {
+            this.loginName = record.key_name;
+        }
+        if (record.datasource && record.datasource != '') {
+            this.datasource = record.onsystem;
+        }
+
+        for (let prop in this) {
+            if (prop == "items" && record.hasOwnProperty("permissions")) {
+                this.items = record["permissions"].split(",");
+            } else if (record.hasOwnProperty(prop)) {
+                this[prop] = record[prop];
+            }
+        }
+        return this;
+    }
+    /**
+    * Serialize the object to JSON
+    * @param
+    * @returns JSON 
+    */
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            if (prop != "options") {
+                if (prop == "items") {
+                    res["permissions"] = this.items?.join(",");
+                } else {
+                    res[prop] = this[prop];
+                }
+            }
+        }
+        return res;
+    }
+
+    public list(api: MamoriService, filter?: any): Promise<any> {
+        let f = filter ? filter : [];
+        if (f) {
+            f.push(["permissiontype", "equals", "CREDENTIAL USAGE"]);
+        }
+        return super.list(api, f);
+    }
+}
+
+
 
 
 

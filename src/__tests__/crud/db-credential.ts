@@ -1,5 +1,5 @@
 import { MamoriService } from '../../api';
-import { io_https, io_utils, io_http_resource, io_requestable_resource, io_role, io_db_credential, io_datasource } from '../../api';
+import { io_https, io_utils, io_permission, io_requestable_resource, io_role, io_db_credential, io_datasource } from '../../api';
 import * as helper from '../../__utility__/test-helper';
 
 
@@ -47,9 +47,9 @@ describe("DB Credential CRUD tests", () => {
             .withDatabase('mamorisys')
             .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
         let res = await io_utils.noThrow(ds.create(api));
-	if(res.error !== false) {
+        if (res.error !== false) {
             expect(res).toBe({});
-	}
+        }
     });
 
     afterAll(async () => {
@@ -69,11 +69,31 @@ describe("DB Credential CRUD tests", () => {
         let r2 = await io_utils.noThrow(io_db_credential.DBCredential.getByName(api, dsName, "postgres", "@"));
         expect(r2.auth_id).toBeDefined();
 
+        //GRANT THE CREDENTIAL TO A ROLE
+        let rname = "role_" + dsName;
+        let nrole = new io_role.Role(rname);
+        await io_utils.ignoreError(nrole.delete(api));
+        let rx = await io_utils.noThrow(nrole.create(api));
+        expect(rx.error).toBe(false);
+        let credPermission = new io_permission.CredentialPermission();
+        credPermission.withDatasource(dsName).withLoginName("postgres").grantee(rname);
+        let rx2 = await io_utils.noThrow(credPermission.grant(api));
+        expect(rx2.errors).toBe(false);
+        let rx3 = await io_utils.noThrow(credPermission.revoke(api));
+        expect(rx3.errors).toBe(false);
+        let res = await credPermission.list(api);
+        expect(res.data.length).toBe(0);
+        //Clean up role
+        await io_utils.ignoreError(nrole.delete(api));
+
         //EXPORT
         let keyName = "test_cred_aes_key" + testbatch;
         await helper.EncryptionKey.setupAESEncryptionKey(api, keyName);
         let xx = await io_utils.noThrow(io_db_credential.DBCredential.exportByName(api, dsName, "postgres", "@", keyName));
         expect(xx.password).toBeDefined();
+
+
+
 
         await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"))
         let xx1 = await io_utils.noThrow(xx.restore(api, keyName));
