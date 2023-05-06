@@ -344,7 +344,7 @@ export class PermissionBase implements ISerializable {
      * @param 
      * @returns 
     */
-    public prepare(): any {
+    public prepare(forGrant?: boolean): any {
         this.options = {};
         if (this.validType == VALID_RANGE_TYPE.BETWEEN) {
             this.options.valid_from = this.validFrom;
@@ -385,7 +385,7 @@ export class PermissionBase implements ISerializable {
      * @returns 
     */
     public grant(api: MamoriService): Promise<any> {
-        this.prepare();
+        this.prepare(true);
         return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(this.recipient!.toLowerCase()), this.options).then(result => {
             return this.handleResult(result);
         });
@@ -397,7 +397,7 @@ export class PermissionBase implements ISerializable {
      * @returns 
     */
     public revoke(api: MamoriService): Promise<any> {
-        this.prepare();
+        this.prepare(false);
         return api.callAPI("DELETE", "/v1/grantee/" + encodeURIComponent(this.recipient!.toLowerCase()), this.options).then(result => {
             return this.handleResult(result);
         });
@@ -1303,10 +1303,14 @@ export class CredentialPermission extends PermissionBase {
         return this;
     }
 
-    public prepare(): any {
+    public prepare(forGrant?: boolean): any {
         let res = super.prepare();
         this.options.grantables = this.items;
-        this.options.object_name = '"' + this.loginName + "@" + this.datasource + '"';
+        if (forGrant) {
+            this.options.object_name = '"' + this.loginName + "@" + this.datasource + '"';
+        } else {
+            this.options.object_name = '"' + this.datasource + '"';
+        }
         return res;
     }
 
