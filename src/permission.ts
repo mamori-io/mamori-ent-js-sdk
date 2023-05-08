@@ -250,7 +250,7 @@ export class PermissionBase implements ISerializable {
     /**
      * Serialize the object to JSON
      * @param
-     * @returns JSON 
+     * @returns JSON
      */
     toJSON(): any {
         let res: any = {};
@@ -263,8 +263,8 @@ export class PermissionBase implements ISerializable {
     }
 
     /**
-     * @param grantee  The recipient of the permission 
-     * @returns 
+     * @param grantee  The recipient of the permission
+     * @returns
      */
     public grantee(name: string): PermissionBase {
         this.recipient = name;
@@ -272,9 +272,9 @@ export class PermissionBase implements ISerializable {
     }
 
     /**
-     * For revokes.  Will remove all permissions of the same type and object 
+     * For revokes.  Will remove all permissions of the same type and object
      * @param value  True or False
-     * @returns 
+     * @returns
     */
     public all(value: boolean): PermissionBase {
         this.revokeAll = value ? 1 : 0;
@@ -282,9 +282,9 @@ export class PermissionBase implements ISerializable {
     }
 
     /**
-     * Allow user to grant this permission 
+     * Allow user to grant this permission
      * @param value  True or False
-     * @returns 
+     * @returns
     */
     public withGrantOption(value: boolean): PermissionBase {
         this.grantable = value;
@@ -295,7 +295,7 @@ export class PermissionBase implements ISerializable {
      * Grant permission for a set amount of time
      * @param duration The amount
      * @param unit  The time unit (seconds, minutes, hours)
-     * @returns 
+     * @returns
     */
     public withValidFor(duration: Number, unit: TIME_UNIT): PermissionBase {
         this.validType = VALID_RANGE_TYPE.FOR;
@@ -307,7 +307,7 @@ export class PermissionBase implements ISerializable {
     /**
      * Grant a permission that is valid from a datetime
      * @param from The from date & time (YYYY-MM-DD HH:MM)
-     * @returns 
+     * @returns
     */
     public withValidFrom(from: string): PermissionBase {
         this.validType = VALID_RANGE_TYPE.FROM;
@@ -318,7 +318,7 @@ export class PermissionBase implements ISerializable {
     /**
      * Grant a permission that is valid until a datetime
      * @param until A date & time (YYYY-MM-DD HH:MM)
-     * @returns 
+     * @returns
     */
     public withValidUntil(until: string): PermissionBase {
         this.validType = VALID_RANGE_TYPE.UNTIL;
@@ -328,9 +328,9 @@ export class PermissionBase implements ISerializable {
 
     /**
      * Grant a permission that is valid for a datetime range
-     * @param from A date & time (YYYY-MM-DD HH:MM)  
+     * @param from A date & time (YYYY-MM-DD HH:MM)
      * @param until A date & time (YYYY-MM-DD HH:MM)
-     * @returns 
+     * @returns
     */
     public withValidBetween(from: string, until: string): PermissionBase {
         this.validType = VALID_RANGE_TYPE.BETWEEN;
@@ -341,8 +341,8 @@ export class PermissionBase implements ISerializable {
 
     /**
      * Prepares and validates the payload
-     * @param 
-     * @returns 
+     * @param
+     * @returns
     */
     public prepare(forGrant?: boolean): any {
         this.options = {};
@@ -381,8 +381,8 @@ export class PermissionBase implements ISerializable {
     }
     /**
      * Executes the grant
-     * @param api 
-     * @returns 
+     * @param api
+     * @returns
     */
     public grant(api: MamoriService): Promise<any> {
         this.prepare(true);
@@ -393,8 +393,8 @@ export class PermissionBase implements ISerializable {
 
     /**
      * Executes the revoke
-     * @param api 
-     * @returns 
+     * @param api
+     * @returns
     */
     public revoke(api: MamoriService): Promise<any> {
         this.prepare(false);
@@ -405,8 +405,8 @@ export class PermissionBase implements ISerializable {
 
     /**
      * Executes the revoke
-     * @param api 
-     * @returns 
+     * @param api
+     * @returns
     */
     public revokeByID(api: MamoriService, id: Number): Promise<any> {
         return api.callAPI("DELETE", "/v1/permissions/granted/" + id);
@@ -415,9 +415,9 @@ export class PermissionBase implements ISerializable {
     /**
      * Searches the permissions
      * NOTE: Non-admins will only be able to see their permissions
-     * @param api 
+     * @param api
      * @param filter a filter in the format [["column1","=","value"],["column2","contains","value2"]]
-     * @returns 
+     * @returns
     */
     public list(api: MamoriService, filter?: any): Promise<any> {
 
@@ -475,7 +475,7 @@ export class DatasourcePermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -497,7 +497,7 @@ export class DatasourcePermission extends PermissionBase {
     * @param database name  ( enter * for all)
     * @param schema Name  ( enter * for all)
     * @param object Name  ( enter * for all)
-    * @returns  
+    * @returns
     */
     public on(datasource: string, database: string, schema: string, object: string): DatasourcePermission {
         this.datasource = datasource;
@@ -510,7 +510,7 @@ export class DatasourcePermission extends PermissionBase {
     /**
     * Add option to see all rows.
     * @param limit the number of rows
-    * @returns  
+    * @returns
     */
     public withUnlimitedRows(): DatasourcePermission {
         this.rowLimit = "none";
@@ -520,7 +520,7 @@ export class DatasourcePermission extends PermissionBase {
     /**
     * Add option limit on the number of rows returned
     * @param limit the number of rows
-    * @returns  
+    * @returns
     */
     public withRowLimit(limit: Number): DatasourcePermission {
         this.rowLimit = limit.toString();
@@ -530,7 +530,7 @@ export class DatasourcePermission extends PermissionBase {
     /**
     * Set a where condition
     * @param clause a clause (do not include WHERE)
-    * @returns  
+    * @returns
     */
     public withClause(clause: string): DatasourcePermission {
         this.where = clause;
@@ -549,7 +549,7 @@ export class DatasourcePermission extends PermissionBase {
     /**
     * Set the permission to grant
     * @param name The name of the SSH Login
-    * @returns  
+    * @returns
     */
     public permission(name: DB_PERMISSION): DatasourcePermission {
         this.items = [name];
@@ -559,7 +559,7 @@ export class DatasourcePermission extends PermissionBase {
     /**
     * Set list of permissions to grant
     * @param names an array of permission names
-    * @returns  
+    * @returns
     */
     public permissions(names: DB_PERMISSION[]): DatasourcePermission {
         this.items = names;
@@ -629,7 +629,7 @@ export class PolicyPermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -648,7 +648,7 @@ export class PolicyPermission extends PermissionBase {
     /**
     * Set the policy name to grant
     * @param name The name of the policy
-    * @returns  
+    * @returns
     */
     public policy(name: string): PolicyPermission {
         this.items = [" POLICY \"" + name + "\""];
@@ -675,7 +675,7 @@ export class KeyPermission extends PermissionBase {
     /**
     * Set the key name to grant
     * @param name The name of the encryption key
-    * @returns  
+    * @returns
     */
     public key(name: string): KeyPermission {
         this.items = ["KEY USAGE"];
@@ -710,7 +710,7 @@ export class KeyPermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -754,7 +754,7 @@ export class RolePermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -773,7 +773,7 @@ export class RolePermission extends PermissionBase {
     /**
     * Set the role name to grant
     * @param name The name of the role
-    * @returns  
+    * @returns
     */
     public role(name: string): RolePermission {
         this.items = [name];
@@ -799,7 +799,7 @@ export class SSHLoginPermission extends PermissionBase {
     /**
      * Set the SSH login to grant
      * @param name The name of the SSH Login
-     * @returns  
+     * @returns
      */
     public sshLogin(name: string): SSHLoginPermission {
         this.sshLoginName = name;
@@ -837,7 +837,7 @@ export class SSHLoginPermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -867,7 +867,7 @@ export class SFTPLoginPermission extends PermissionBase {
     /**
      * Set the SSH login to grant
      * @param name The name of the SSH Login
-     * @returns  
+     * @returns
      */
     public sshLogin(name: string): SFTPLoginPermission {
         this.sshLoginName = name;
@@ -905,7 +905,7 @@ export class SFTPLoginPermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -938,7 +938,7 @@ export class IPResourcePermission extends PermissionBase {
     /**
     * Set the name to grant
     * @param name The name of the resource
-    * @returns  
+    * @returns
     */
     public resource(name: string): IPResourcePermission {
         this.resourceName = name;
@@ -986,7 +986,7 @@ export class IPResourcePermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -1034,7 +1034,7 @@ export class MamoriPermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -1053,7 +1053,7 @@ export class MamoriPermission extends PermissionBase {
     /**
     * Set the permission to grant
     * @param name The name of the permission
-    * @returns  
+    * @returns
     */
     public permission(name: MAMORI_PERMISSION): MamoriPermission {
         this.items = [name];
@@ -1079,7 +1079,7 @@ export class RemoteDesktopLoginPermission extends PermissionBase {
     /**
      * Set the RDP login to grant
      * @param name The name of the RDP Login
-     * @returns  
+     * @returns
      */
     public name(name: string): RemoteDesktopLoginPermission {
         this.RDLoginName = name;
@@ -1117,7 +1117,7 @@ export class RemoteDesktopLoginPermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -1148,7 +1148,7 @@ export class SecretPermission extends PermissionBase {
     /**
     * Set the name to grant
     * @param name The name of the resource
-    * @returns  
+    * @returns
     */
     public name(name: string): SecretPermission {
         this.secretName = name;
@@ -1186,7 +1186,7 @@ export class SecretPermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -1216,7 +1216,7 @@ export class HTTPResourcePermission extends PermissionBase {
     /**
     * Set the name to grant
     * @param name The name of the resource
-    * @returns  
+    * @returns
     */
     public name(name: string): HTTPResourcePermission {
         this.itemName = name;
@@ -1254,7 +1254,7 @@ export class HTTPResourcePermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -1287,7 +1287,7 @@ export class CredentialPermission extends PermissionBase {
     /**
     * Set the name to grant
     * @param datasource The name of the resource
-    * @returns  
+    * @returns
     */
     public withDatasource(value: string): CredentialPermission {
         this.datasource = value;
@@ -1296,7 +1296,7 @@ export class CredentialPermission extends PermissionBase {
     /**
     * Set the name to grant
     * @param loginName The name of the resource
-    * @returns  
+    * @returns
     */
     public withLoginName(value: string): CredentialPermission {
         this.loginName = value;
@@ -1306,10 +1306,10 @@ export class CredentialPermission extends PermissionBase {
     public prepare(forGrant?: boolean): any {
         let res = super.prepare();
         this.options.grantables = this.items;
-        if (forGrant) {
+        if (this.loginName) {
             this.options.object_name = '"' + this.loginName + "@" + this.datasource + '"';
         } else {
-            this.options.object_name = '"' + this.datasource + '"';
+            this.options.object_name = this.datasource;
         }
         return res;
     }
@@ -1348,7 +1348,7 @@ export class CredentialPermission extends PermissionBase {
     /**
     * Serialize the object to JSON
     * @param
-    * @returns JSON 
+    * @returns JSON
     */
     toJSON(): any {
         let res: any = {};
@@ -1372,15 +1372,3 @@ export class CredentialPermission extends PermissionBase {
         return super.list(api, f);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-

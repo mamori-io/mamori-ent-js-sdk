@@ -92,9 +92,6 @@ describe("DB Credential CRUD tests", () => {
         let xx = await io_utils.noThrow(io_db_credential.DBCredential.exportByName(api, dsName, "postgres", "@", keyName));
         expect(xx.password).toBeDefined();
 
-
-
-
         await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"))
         let xx1 = await io_utils.noThrow(xx.restore(api, keyName));
         expect(xx1.error).toBe(false);
