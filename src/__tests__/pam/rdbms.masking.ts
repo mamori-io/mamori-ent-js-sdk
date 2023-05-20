@@ -8,6 +8,9 @@ const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
+
+const credential_role = process.env.MAMORI_CREDENTIAL_ROLE || 'db_creds';
+
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 const oracle_ds = process.env.MAMORI_ORACLE_DATASOURCE || '';
 const sqlserver_ds = process.env.MAMORI_SQLSERVER_DATASOURCE || '';
@@ -36,7 +39,7 @@ describe("masking policy tests", () => {
             fail(io_utils.handleAPIException(e));
         });
         //Grant roles with db permissions
-        let p = await io_utils.noThrow(new io_permission.RolePermission().role("db_creds").grantee(grantee).grant(api));
+        let p = await io_utils.noThrow(new io_permission.RolePermission().role(credential_role).grantee(grantee).grant(api));
         expect(p.errors).toBe(false);
 
         //CREATE THE ROLE WITH DB ACCESS

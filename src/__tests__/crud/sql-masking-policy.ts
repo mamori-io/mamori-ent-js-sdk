@@ -165,7 +165,6 @@ describe("sql-masking-policy crud tests", () => {
             let schemaName = 'testschema' + testbatch;
             try {
                 //Create the schema, table and insert data
-
                 let q1 = await noThrow(apiAsAdmin.select("DROP SCHEMA " + schemaName + " CASCADE"));
                 let q2 = await noThrow(apiAsAdmin.select("CREATE SCHEMA " + schemaName));
                 let q3 = await noThrow(apiAsAdmin.select("CREATE TABLE " + schemaName + ".TAB1 (col1 varchar(50),col2 varchar(50))"));
@@ -178,7 +177,7 @@ describe("sql-masking-policy crud tests", () => {
                 await ignoreError(o.delete(api));
                 let q7 = await noThrow(o.create(api));
                 expect(q7.errors).toBeUndefined();
-                let q8 = await noThrow(o.addColumnRule(api, dsName + ".mamorisys." + schemaName + ".tab1", "col1", "masked by full()"));
+                let q8 = await noThrow(o.addColumnRule(api, dsName + ".*." + schemaName + ".tab1", "col1", "masked by full()"));
                 expect(q8.errors).toBe(false);
                 let q9 = await noThrow(o.listColumnRules(api));
                 expect(q9.totalCount).toBe(1);

@@ -8,6 +8,7 @@ const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 const oracle_ds = process.env.MAMORI_ORACLE_DATASOURCE || '';
+const credential_role = process.env.MAMORI_CREDENTIAL_ROLE || 'db_creds';
 
 let oratest = oracle_ds ? test : test.skip;
 
@@ -60,14 +61,13 @@ describe("masking policy tests", () => {
 
             //SET PASSTHROUGH Should fail since user does not have DB creds for DB
             let x = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiUser, oracle_ds));
-
             expect(x.errors).toBe(true);
             //Grant roles with db permissions
-            let p = await io_utils.noThrow(new io_permission.RolePermission().role("db_creds").grantee(grantee).grant(api));
+            let p = await io_utils.noThrow(new io_permission.RolePermission().role(credential_role).grantee(grantee).grant(api));
             expect(p.errors).toBe(false);
             let p2 = await io_utils.noThrow(new io_permission.RolePermission().role(accessRoleName).grantee(grantee).grant(api));
             expect(p2.errors).toBe(false);
-            let x2 = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiUser, "oracle193"));
+            let x2 = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiUser, oracle_ds));
             expect(x2.errors).toBe(false);
 
         } finally {
