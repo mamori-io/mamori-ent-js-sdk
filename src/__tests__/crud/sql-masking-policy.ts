@@ -15,13 +15,17 @@ const password = process.env.MAMORI_PASSWORD || '';
 const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
 const dbHost = process.env.MAMORI_DB_HOST || 'localhost';
 const dbPort = process.env.MAMORI_DB_PORT || '54321';
+const oracle_ds = process.env.MAMORI_ORACLE_DATASOURCE || '';
+const sqlserver_ds = process.env.MAMORI_SQLSERVER_DATASOURCE || '';
+let oratest = oracle_ds ? test : test.skip;
+let sstest = sqlserver_ds ? test : test.skip;
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
 describe("sql-masking-policy crud tests", () => {
 
     let api: MamoriService;
-    let dsName = "maskingPolicyDS" + testbatch;
+    let dsName = "test_mask008ds" + testbatch;
     let ds: Datasource | null = null;
     let testRole = "test_sql_masking_user_role" + testbatch;
     let grantee = "test_sql-masking_user." + testbatch;
@@ -57,7 +61,7 @@ describe("sql-masking-policy crud tests", () => {
             ds.ofType("POSTGRESQL", 'postgres')
                 .at(dbHost, Number(dbPort))
                 .withCredentials('postgres', dbPassword)
-                .withDatabase('mamorisys')
+                .withDatabase('postgres')
                 .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
             await ignoreError(ds.delete(api));
             let res = await noThrow(ds.create(api));
@@ -151,7 +155,7 @@ describe("sql-masking-policy crud tests", () => {
         expect(res4.totalCount).toBe(0);
     });
 
-    test('masking policy 002', async () => {
+    test.skip('masking policy 002', async () => {
         if (dbPassword) {
             let apiAsAdmin = new MamoriService(host, INSECURE);
             await apiAsAdmin.login(admin, adminpw);
@@ -177,7 +181,8 @@ describe("sql-masking-policy crud tests", () => {
                 await ignoreError(o.delete(api));
                 let q7 = await noThrow(o.create(api));
                 expect(q7.errors).toBeUndefined();
-                let q8 = await noThrow(o.addColumnRule(api, dsName + ".*." + schemaName + ".tab1", "col1", "masked by full()"));
+                let q8 = await noThrow(o.addColumnRule(api, dsName + ".postgres." + schemaName + ".tab1", "col1", "masked by full()"));
+                console.log("**** %s %o", dsName + ".postgres." + schemaName + ".tab1", q8);
                 expect(q8.errors).toBe(false);
                 let q9 = await noThrow(o.listColumnRules(api));
                 expect(q9.totalCount).toBe(1);

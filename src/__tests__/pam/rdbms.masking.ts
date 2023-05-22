@@ -115,6 +115,89 @@ describe("masking policy tests", () => {
         }
     });
 
+    oratest('masking oracle select with where clause', async () => {
+        //admin passthrough session to db.
+
+        let testID = "orach7309";
+        let dsname = oracle_ds;
+        let dbname = "orclpdb1";
+        let schemaName = testID + '_' + testbatch;
+        //let rules = [{ objecturi: dsname + "." + dbname + "." + schemaName + ".tab1", column: "col1", mask: "masked by full()" }];
+        let policyName = testID + '_policy_' + testbatch;
+        //Create the object
+        let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(host, username, password, dsname);
+        try {
+
+            let prep = await io_utils.noThrow(helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName));
+            //Create the permission with the where filter
+            let perm = (new io_permission.DatasourcePermission()).on(dsname, dbname, schemaName, "tab1")
+                .permission(io_permission.DB_PERMISSION.SELECT)
+                .withClause("$.col1 = 'value6'")
+                .grantee(user.username);
+            let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
+            try {
+                //GET ALL ROWS
+                let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x1.length).toBeGreaterThan(1);
+                //GRANT RESTRICTION ON SELECT
+                await io_utils.noThrow(perm.grant(api))
+                let x2 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x2.length).toBe(1);
+                //REVOKE
+                await io_utils.noThrow(perm.revoke(api));
+                //GET ALL DATA
+                let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x3.length).toBeGreaterThan(1);
+            } finally {
+                await apiUser.logout();
+            }
+
+        } finally {
+            await io_utils.noThrow(helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName));
+            apiAdminPassthrough.logout();
+        }
+    });
+
+    sstest('masking sqlserver select with where clause', async () => {
+        //admin passthrough session to db.
+
+        let testID = "ssch7309";
+        let dsname = sqlserver_ds;
+        let dbname = "mamori";
+        let schemaName = testID + '_' + testbatch;
+        //Create the object
+        let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(host, username, password, dsname);
+        try {
+
+            let prep = await io_utils.noThrow(helper.DBHelper.prepareSSObjects(apiAdminPassthrough, schemaName));
+            //Create the permission with the where filter
+            let perm = (new io_permission.DatasourcePermission()).on(dsname, dbname, schemaName, "tab1")
+                .permission(io_permission.DB_PERMISSION.SELECT)
+                .withClause("$.col1 = 'value6'")
+                .grantee(user.username);
+            let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
+            try {
+                //GET ALL ROWS
+                let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x1.length).toBeGreaterThan(1);
+                //GRANT RESTRICTION ON SELECT
+                await io_utils.noThrow(perm.grant(api))
+                let x2 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x2.length).toBe(1);
+                //REVOKE
+                await io_utils.noThrow(perm.revoke(api));
+                //GET ALL DATA
+                let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x3.length).toBeGreaterThan(1);
+            } finally {
+                await apiUser.logout();
+            }
+
+        } finally {
+            await io_utils.noThrow(helper.DBHelper.cleanUpSchemaSS(apiAdminPassthrough, schemaName));
+            apiAdminPassthrough.logout();
+        }
+    });
 
     sstest('masking MSSQL CH1711', async () => {
         //admin passthrough session to db
