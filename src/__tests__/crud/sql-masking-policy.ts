@@ -15,10 +15,10 @@ const password = process.env.MAMORI_PASSWORD || '';
 const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
 const dbHost = process.env.MAMORI_DB_HOST || 'localhost';
 const dbPort = process.env.MAMORI_DB_PORT || '54321';
-const oracle_ds = process.env.MAMORI_ORACLE_DATASOURCE || '';
-const sqlserver_ds = process.env.MAMORI_SQLSERVER_DATASOURCE || '';
-let oratest = oracle_ds ? test : test.skip;
-let sstest = sqlserver_ds ? test : test.skip;
+//const oracle_ds = process.env.MAMORI_ORACLE_DATASOURCE || '';
+//const sqlserver_ds = process.env.MAMORI_SQLSERVER_DATASOURCE || '';
+//let oratest = oracle_ds ? test : test.skip;
+//let sstest = sqlserver_ds ? test : test.skip;
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
