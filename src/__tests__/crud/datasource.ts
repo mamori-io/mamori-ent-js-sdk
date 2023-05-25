@@ -1,5 +1,5 @@
 import { MamoriService } from '../../api';
-import { io_https, io_datasource, io_utils, io_role } from '../../api';
+import { io_https, io_datasource, io_utils, io_role, io_db_credential } from '../../api';
 import { setPassthroughPermissions, createNewPassthroughSession, createPGDatabaseUser, dropPGDatabaseUser } from '../../__utility__/ds';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -9,11 +9,12 @@ const password = process.env.MAMORI_PASSWORD || '';
 const dbPassword = process.env.MAMORI_DB_PASSWORD || '';
 const dbHost = process.env.MAMORI_DB_HOST || 'localhost';
 const dbPort = process.env.MAMORI_DB_PORT || '54321';
+const oracleDS = process.env.MAMORI_ORACLE_DS;
 
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 
 let dbtest = dbPassword ? test : test.skip;
-
+let oracleDSTest = oracleDS ? test : test.skip;
 
 describe("datasource tests", () => {
 
@@ -272,5 +273,75 @@ describe("datasource tests", () => {
             await io_utils.ignoreError(ds.delete(api));
             await io_utils.ignoreError(api.delete_user(uName));
         }
+    });
+
+    oracleDSTest('datasource 005 - ORA create DS alter 01', async () => {
+
+        //
+        let dsDef = JSON.parse(oracleDS!);
+
+        let dsName = "test_005_ORA_" + testbatch;
+        let ds = new io_datasource.Datasource(dsName);
+        await io_utils.ignoreError(ds.delete(api));
+        ds.ofType("ORACLE", dsDef.driver)
+            .at(dsDef.host, dsDef.port)
+            .withCredentials(dsDef.uname, dsDef.pw)
+            .withDatabase(dsDef.sid);
+
+        await io_utils.ignoreError(ds.delete(api))
+
+        let res = await io_utils.noThrow(ds.create(api));
+        expect(res.error).toBe(false);
+
+        //let r4 = await io_utils.noThrow(ds.get(api));
+        //console.log("**** %o", r4);
+        //
+        let r2 = await io_utils.noThrow(io_db_credential.DBCredential.getByName(api, ds.name, dsDef.uname, "@"));
+        expect(r2.auth_id).toBeDefined();
+        //
+        let cs = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL =TCP)(HOST=:HOST)(PORT=:PORT))(CONNECT_DATA=(SERVICE_NAME=:SID)))"
+            .replace(":HOST", dsDef.host)
+            .replace(":PORT", dsDef.port)
+            .replace(":SID", dsDef.sid);
+        let opt = { connection_string: cs, host: '', port: '' };
+        let r = await io_utils.noThrow(ds.update(api, opt));
+        expect(r.error).toBe(false);
+
+        let r5 = await io_utils.noThrow(ds.get(api));
+        expect(r5.options).toBeDefined();
+        let o = r5.options.filter((x: any) => x.optionnameddl == 'CONNECTION_STRING');
+        expect(o[0].currentvalue).toBe(cs);
+
+        await io_utils.ignoreError(ds.delete(api));
+    });
+
+    oracleDSTest('datasource 006- ORA create DS alter 02', async () => {
+
+        //
+        let dsDef = JSON.parse(oracleDS!);
+        let dsName = "test_006_ORA_" + testbatch;
+        let ds = new io_datasource.Datasource(dsName);
+        await io_utils.ignoreError(ds.delete(api));
+        //
+        let cs = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL =TCP)(HOST=:HOST)(PORT=:PORT))(CONNECT_DATA=(SERVICE_NAME=:SID)))"
+            .replace(":HOST", dsDef.host)
+            .replace(":PORT", dsDef.port)
+            .replace(":SID", dsDef.sid);
+        //
+        ds.ofType("ORACLE", dsDef.driver)
+            .withConnectionString(cs)
+            .withCredentials(dsDef.uname, dsDef.pw);
+
+        await io_utils.ignoreError(ds.delete(api))
+        let res = await io_utils.noThrow(ds.create(api));
+        expect(res.error).toBe(false);
+        let opt = { host: dsDef.host, port: dsDef.port, database: dsDef.sid };
+        let r = await io_utils.noThrow(ds.update(api, opt));
+        expect(r.error).toBe(false);
+
+
+
+
+        await io_utils.ignoreError(ds.delete(api))
     });
 });

@@ -88,6 +88,7 @@ export class Datasource implements ISerializable {
     extraOptions?: string;
     credential_reset_days?: string;
     credential_role?: string;
+    connection_string?: string;
 
     /**
          * Initialize the object from JSON.
@@ -133,13 +134,12 @@ export class Datasource implements ISerializable {
     public create(api: MamoriService): Promise<any> {
         var options = this.makeOptionsSql();
         let loggedInUser = (api.authorization as unknown as LoginResponse).username;
-        let auth = this.credential_reset_days ? [] : { a: { system_name: this.name, mamori_user: loggedInUser, username: this.user, password: this.password } };
-
+        //let auth = this.credential_reset_days ? [] : { a: { system_name: this.name, mamori_user: loggedInUser, username: this.user, password: this.password } };
         return api.callAPI("POST", "/v1/systems", {
             preview: 'N',
             system: { name: this.name, type: this.type, host: this.host },
             options: options,
-            authorizations: auth
+            authorizations: []
         });
     }
 
@@ -160,17 +160,17 @@ export class Datasource implements ISerializable {
      */
     public update(api: MamoriService, properties: any): Promise<any> {
         var options = this.makeUpdateOptionsSQL(properties);
-        let loggedInUser = (api.authorization as unknown as LoginResponse).username;
-        let auth: any = {};
-        if (this.authChanged(properties)) {
-            auth = { a: { system_name: properties.name, mamori_user: loggedInUser, username: properties.user, password: properties.password } };
-        }
+        //let loggedInUser = (api.authorization as unknown as LoginResponse).username;
+        //let auth: any = {};
+        //if (this.authChanged(properties)) {
+        //    auth = { a: { system_name: properties.name, mamori_user: loggedInUser, username: properties.user, password: properties.password } };
+        //}
 
         return api.callAPI("PUT", "/v1/systems/" + this.name, {
             preview: "N",
             system: { type: this.type, host: this.host },
             options: options,
-            authorizations: auth
+            authorizations: []
         });
     }
 
@@ -267,6 +267,7 @@ export class Datasource implements ISerializable {
     public at(host: string, port: any): Datasource {
         this.host = host;
         this.port = port;
+        this.connection_string = '';
         return this;
     }
 
@@ -345,6 +346,14 @@ export class Datasource implements ISerializable {
         return this;
     }
 
+    public withConnectionString(value: string): Datasource {
+        this.connection_string = value;
+        this.host = "";
+        this.port = "";
+        this.withDatabase("");
+        return this;
+    }
+
     /**
      * More options are available in the full SQL syntax.
      * E.g., "POOL_MAXIMUM '3', ENABLED FALSE"
@@ -362,8 +371,12 @@ export class Datasource implements ISerializable {
         return this;
     }
 
-    private generateOptionsSQL(rec: any): string {
+    private generateOptionsSQL(rec: any, update?: boolean): any {
         let res: any[] = [];
+
+        if (update && rec.host) {
+            res.push("HOST '" + rec.host + "'");
+        }
 
         if (rec.driver) {
             res.push("DRIVER '" + rec.driver + "'");
@@ -383,34 +396,39 @@ export class Datasource implements ISerializable {
         }
 
         if (rec.port) {
-            res.push(" PORT '" + rec.port + "'");
+            res.push("PORT '" + rec.port + "'");
         }
         if (rec.tempDatabase) {
-            res.push(" TEMPDATABASE '" + rec.tempDatabase + "'");
+            res.push("TEMPDATABASE '" + rec.tempDatabase + "'");
         }
         else if (rec.database) {
-            res.push(" TEMPDATABASE '" + rec.database + "'");
+            res.push("TEMPDATABASE '" + rec.database + "'");
         }
         if (rec.database) {
-            res.push(" DEFAULTDATABASE '" + rec.database + "'");
+            res.push("DEFAULTDATABASE '" + rec.database + "'");
         }
         if (rec.caseSensitive) {
-            res.push(" OBJECTNAMECASESENSITIVE 'TRUE'");
+            res.push("OBJECTNAMECASESENSITIVE 'TRUE'");
         }
         if (rec.enabled != undefined) {
-            res.push(" ENABLED '" + (rec.enabled ? "TRUE" : "FALSE") + "'");
+            res.push("ENABLED '" + (rec.enabled ? "TRUE" : "FALSE") + "'");
         }
         if (rec.group) {
-            res.push(" DATASOURCE GROUP '" + rec.group + "'");
+            res.push("DATASOURCE GROUP '" + rec.group + "'");
         }
         if (rec.urlProperties) {
-            res.push(" CONNECTION_PROPERTIES '" + rec.urlProperties + "'");
+            res.push("CONNECTION_PROPERTIES '" + rec.urlProperties + "'");
         }
+
+        if (rec.connection_string) {
+            res.push("CONNECTION_STRING '" + rec.connection_string + "'");
+        }
+
         let r = res.join(",");
         if (rec.extraOptions) {
-            r = r + ", " + rec.extraOptions;
+            r = r + "," + rec.extraOptions;
         }
-        return r;
+        return r.split(",");
     }
 
     private makeUpdateOptionsSQL(properties: any): any {
@@ -422,7 +440,7 @@ export class Datasource implements ISerializable {
                 options[prop] = properties[prop];
             }
         }
-        return this.generateOptionsSQL(options);
+        return this.generateOptionsSQL(options, true);
     }
 
 
