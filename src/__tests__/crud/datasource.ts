@@ -292,9 +292,6 @@ describe("datasource tests", () => {
 
         let res = await io_utils.noThrow(ds.create(api));
         expect(res.error).toBe(false);
-
-        //let r4 = await io_utils.noThrow(ds.get(api));
-        //console.log("**** %o", r4);
         //
         let r2 = await io_utils.noThrow(io_db_credential.DBCredential.getByName(api, ds.name, dsDef.uname, "@"));
         expect(r2.auth_id).toBeDefined();
@@ -335,13 +332,43 @@ describe("datasource tests", () => {
         await io_utils.ignoreError(ds.delete(api))
         let res = await io_utils.noThrow(ds.create(api));
         expect(res.error).toBe(false);
-        let opt = { host: dsDef.host, port: dsDef.port, database: dsDef.sid };
+        let opt = { host: dsDef.host, port: dsDef.port, database: dsDef.sid, driver: dsDef.driver };
+        //ds.at(dsDef.host, dsDef.port)
+        //this.host = dsDef.host;
         let r = await io_utils.noThrow(ds.update(api, opt));
         expect(r.error).toBe(false);
-
-
-
-
+        //["DRIVER 'oracle11204'", "HOST 'sandbox.mamori.io'", "PORT '1521'", "DEFAULTDATABASE 'oracle193'", "TEMPDATABASE 'oracle193'"]
         await io_utils.ignoreError(ds.delete(api))
     });
+
+    oracleDSTest('datasource 007 - ORA create DS alter 03', async () => {
+        //
+        let dsDef = JSON.parse(oracleDS!);
+
+        let dsName = "test_007_ORA_" + testbatch;
+        let ds = new io_datasource.Datasource(dsName);
+        await io_utils.ignoreError(ds.delete(api));
+        ds.ofType("ORACLE", dsDef.driver)
+            .at(dsDef.host, dsDef.port)
+            .withCredentials(dsDef.uname.toLowerCase(), dsDef.pw)
+            .withDatabase(dsDef.sid);
+
+        await io_utils.ignoreError(ds.delete(api))
+
+        let res = await io_utils.noThrow(ds.create(api));
+        expect(res.error).toBe(false);
+        let r2 = await io_utils.noThrow(io_db_credential.DBCredential.getByName(api, ds.name, dsDef.uname.toLowerCase(), "@"));
+        expect(r2.auth_id).toBeDefined();
+
+        let opt = { user: dsDef.uname.toUpperCase(), password: dsDef.password };
+        let r = await io_utils.noThrow(ds.update(api, opt));
+        expect(r.error).toBe(false);
+        let r3 = await io_utils.noThrow(io_db_credential.DBCredential.listFor(api, 0, 100, dsName, dsDef.uname, "@"));
+        expect(r3.length).toBe(1);
+        //
+        await io_utils.ignoreError(ds.delete(api));
+    });
+
+
+
 });

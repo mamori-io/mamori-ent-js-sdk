@@ -47,7 +47,7 @@ export class DBHelper {
         let setPassthroughSession = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiAsAdmin, datasource));
         if (setPassthroughSession.errors) {
             await apiAsAdmin.logout();
-	    // it is done this way so we can see the error in the output
+            // it is done this way so we can see the error in the output
             expect(setPassthroughSession).toBe({});
         } else {
             // console.log("***** Passthrough OK - user:%s datasource:%s", username, datasource);
@@ -57,6 +57,10 @@ export class DBHelper {
 
     static async prepareOracleObjects(api: MamoriService, schemaName: string) {
         let statements = ["alter session set \"_ORACLE_SCRIPT\"=true"
+            , "DROP USER " + schemaName + "01 CASCADE"
+            , "CREATE USER  " + schemaName + "01 identified by mamoritest6351"
+            , "GRANT DBA TO " + schemaName + "01 "
+            , "DROP USER " + schemaName + " CASCADE"
             , "DROP USER " + schemaName + " CASCADE"
             , "CREATE USER  " + schemaName + " no authentication "
             , "ALTER USER  " + schemaName + " quota unlimited on users"
@@ -97,7 +101,7 @@ export class DBHelper {
     }
 
     static async cleanUpSchemaOracle(api: MamoriService, schemaName: string) {
-        let statements = ["DROP USER " + schemaName + " CASCADE"];
+        let statements = ["DROP USER " + schemaName + " CASCADE", "DROP USER " + schemaName + "01 CASCADE"];
         let results = await this.runSQLStatements(api, statements);
     }
 
@@ -131,10 +135,10 @@ export class Policy {
         policy.withScript(["GRANT :privileges ON :resource_name TO :applicant VALID for :time minutes;"]);
         await io_utils.noThrow(policy.delete(api));
         let r = await io_utils.noThrow(policy.create(api));
-	if(r.error !== false) {
-	    // it is done like this so we can see the error
+        if (r.error !== false) {
+            // it is done like this so we can see the error
             expect(r).toBe({});
-	}
+        }
         return policy;
     }
 }

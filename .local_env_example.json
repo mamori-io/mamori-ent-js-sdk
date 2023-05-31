@@ -9,5 +9,14 @@
     "MAMORI_ORACLE_PORT": "1521",
     "MAMORI_ORACLE_SID": "ORCL",
     "MAMORI_SQLSERVER_DATASOURCE": "ss2014",
-    "MAMORI_SSH_VPN_HOST": "localhost"
+    "MAMORI_SSH_VPN_HOST": "localhost",
+    "MAMORI_CREDENTIAL_ROLE": "db_credentials",
+    "MAMORI_ORACLE_DS": {
+        "driver": "oracle11204",
+        "host": "10.240.0.137",
+        "port": "19300",
+        "sid": "orclpdb1",
+        "uname": "system",
+        "pw": "Mamori2021"
+    }
 }

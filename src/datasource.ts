@@ -158,20 +158,20 @@ export class Datasource implements ISerializable {
      * @param api  A logged-in MamoriService instance
      * @returns
      */
-    public update(api: MamoriService, properties: any): Promise<any> {
-        var options = this.makeUpdateOptionsSQL(properties);
+    public update(api: MamoriService, properties: any, diffsOnly?: boolean): Promise<any> {
+        var options = this.makeUpdateOptionsSQL(properties, diffsOnly);
         //let loggedInUser = (api.authorization as unknown as LoginResponse).username;
         //let auth: any = {};
         //if (this.authChanged(properties)) {
         //    auth = { a: { system_name: properties.name, mamori_user: loggedInUser, username: properties.user, password: properties.password } };
         //}
-
-        return api.callAPI("PUT", "/v1/systems/" + this.name, {
+        let payload = {
             preview: "N",
-            system: { type: this.type, host: this.host },
+            system: { type: this.type, host: properties.host ? properties.properties : this.host },
             options: options,
             authorizations: []
-        });
+        };
+        return api.callAPI("PUT", "/v1/systems/" + this.name, payload);
     }
 
     private authChanged(properties: any): boolean {
@@ -431,12 +431,16 @@ export class Datasource implements ISerializable {
         return r.split(",");
     }
 
-    private makeUpdateOptionsSQL(properties: any): any {
+    private makeUpdateOptionsSQL(properties: any, diffsOnly?: boolean): any {
         let options: any = {};
         for (let prop in properties) {
             let v1 = (this as any)[prop];
             let v2 = properties[prop];
-            if (v1 != v2) {
+            if (diffsOnly) {
+                if (v1 != v2) {
+                    options[prop] = properties[prop];
+                }
+            } else {
                 options[prop] = properties[prop];
             }
         }

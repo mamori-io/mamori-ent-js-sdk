@@ -54,7 +54,6 @@ describe("HTTP Resource CRUD tests", () => {
         // Test to and from JSON
         let s0 = io_http_resource.HTTPResource.build(s.toJSON());
         let s1 = await io_utils.noThrow(s0.create(api));
-        console.log("**** %o", s1);
         expect(s1.status).toBe('ok');
 
         let r2 = await io_utils.noThrow(io_http_resource.HTTPResource.list(api, 0, 100, [["name", "=", resourceName]]));

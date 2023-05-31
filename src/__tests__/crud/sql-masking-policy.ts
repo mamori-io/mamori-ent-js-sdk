@@ -182,7 +182,6 @@ describe("sql-masking-policy crud tests", () => {
                 let q7 = await noThrow(o.create(api));
                 expect(q7.errors).toBeUndefined();
                 let q8 = await noThrow(o.addColumnRule(api, dsName + ".postgres." + schemaName + ".tab1", "col1", "masked by full()"));
-                console.log("**** %s %o", dsName + ".postgres." + schemaName + ".tab1", q8);
                 expect(q8.errors).toBe(false);
                 let q9 = await noThrow(o.listColumnRules(api));
                 expect(q9.totalCount).toBe(1);
