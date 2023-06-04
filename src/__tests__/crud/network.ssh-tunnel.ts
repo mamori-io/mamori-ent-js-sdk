@@ -1,15 +1,13 @@
-import { MamoriService } from '../../api';
-import * as https from 'https';
-import { Key, KEY_TYPE, SSH_ALGORITHM } from '../../key';
+import { MamoriService, io_utils } from '../../api';
+import { io_https, io_user } from '../../api';
 import { SshTunnel } from '../../network';
-import { handleAPIException, noThrow, ignoreError } from '../../utils';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
 
-const INSECURE = new https.Agent({ rejectUnauthorized: false });
+const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 
 const vpn_ssh_host = process.env.MAMORI_SSH_VPN_HOST || '';
 let vpn_test = vpn_ssh_host ? test : test.skip;
@@ -33,22 +31,14 @@ describe("network ssh tunnel tests", () => {
         api = new MamoriService(host, INSECURE);
         await api.login(username, password);
 
-        await ignoreError(api.delete_user(grantee));
-        await api.create_user({
-            username: grantee,
-            password: granteepw,
-            fullname: grantee,
-            identified_by: "password",
-            email: "test@test.test"
-        }).catch(e => {
-            fail(handleAPIException(e));
-        })
+        let user = new io_user.User(grantee).withFullName(grantee).withEmail("test@test.com");
+        await io_utils.ignoreError(user.delete(api));
+        let r = await io_utils.noThrow(user.create(api, granteepw));
 
         apiAsAPIUser = new MamoriService(host, INSECURE);
-        await apiAsAPIUser.login(grantee, granteepw);
-        //Create the SSH KEY
-        //let x = await new Key(sshKeyName).ofType(KEY_TYPE.SSH).withAlgorithm(SSH_ALGORITHM.RSA).ofSize(1024).create(api);
-        //expect(x).toContain("ssh-rsa");
+        let r2 = await io_utils.noThrow(apiAsAPIUser.login(grantee, granteepw));
+        expect(r2.username).toBe(grantee);
+        expect(r2.login_token).toBeDefined();
     });
 
     afterAll(async () => {
@@ -60,15 +50,16 @@ describe("network ssh tunnel tests", () => {
     vpn_test('ssh tunnel 01', async () => {
         let k = new SshTunnel("test_ssh_tunnel_to_local" + testbatch);
         k.at(vpn_ssh_host, 22);
+        k.forward(1122, "localhost", 22);
         k.withCredentials("root", sshKeyName);
-        await ignoreError(k.delete(api));
+        await io_utils.ignoreError(k.delete(api));
         //Create
-        let res = await noThrow(k.create(api));
+        let res = await io_utils.noThrow(k.create(api));
         expect(res).toBe("started");
         //Ensure item returned properly
-        let x = (await noThrow(SshTunnel.getAll(api))).filter((o: any) => o.name == k.name)[0];
+        let x = (await io_utils.noThrow(SshTunnel.getAll(api))).filter((o: any) => o.name == k.name)[0];
         expect(x.type).toBe("ssh");
-        let resDel = await noThrow(k.delete(api));
+        let resDel = await io_utils.noThrow(k.delete(api));
         expect(resDel).toBe("ok");
 
         //expect(x.private_key_name).toBe(sshKeyName);
