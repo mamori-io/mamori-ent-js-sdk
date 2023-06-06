@@ -302,6 +302,9 @@ describe("datasource tests", () => {
             .replace(":SID", dsDef.sid);
         let opt = { connection_string: cs, host: '', port: '' };
         let r = await io_utils.noThrow(ds.update(api, opt));
+	if(r.errors) {
+	    throw r.response.data.message;
+	}
         expect(r.error).toBe(false);
 
         let r5 = await io_utils.noThrow(ds.get(api));
@@ -324,6 +327,7 @@ describe("datasource tests", () => {
             .replace(":HOST", dsDef.host)
             .replace(":PORT", dsDef.port)
             .replace(":SID", dsDef.sid);
+
         //
         ds.ofType("ORACLE", dsDef.driver)
             .withConnectionString(cs)
@@ -336,6 +340,9 @@ describe("datasource tests", () => {
         //ds.at(dsDef.host, dsDef.port)
         //this.host = dsDef.host;
         let r = await io_utils.noThrow(ds.update(api, opt));
+	if(r.errors) {
+	    throw r.response.data.message;
+	}
         expect(r.error).toBe(false);
         //["DRIVER 'oracle11204'", "HOST 'sandbox.mamori.io'", "PORT '1521'", "DEFAULTDATABASE 'oracle193'", "TEMPDATABASE 'oracle193'"]
         await io_utils.ignoreError(ds.delete(api))
@@ -362,6 +369,9 @@ describe("datasource tests", () => {
 
         let opt = { user: dsDef.uname.toUpperCase(), password: dsDef.password };
         let r = await io_utils.noThrow(ds.update(api, opt));
+	if(r.errors) {
+	    throw r.response.data.message;
+	}
         expect(r.error).toBe(false);
         let r3 = await io_utils.noThrow(io_db_credential.DBCredential.listFor(api, 0, 100, dsName, dsDef.uname, "@"));
         expect(r3.length).toBe(1);

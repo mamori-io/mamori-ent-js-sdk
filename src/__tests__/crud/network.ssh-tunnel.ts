@@ -2,6 +2,8 @@ import { MamoriService, io_utils } from '../../api';
 import { io_https, io_user } from '../../api';
 import { SshTunnel } from '../../network';
 
+import { execute, sleep } from '../../__utility__/test-helper';
+
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
@@ -9,6 +11,7 @@ const password = process.env.MAMORI_PASSWORD || '';
 
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 
+const vpn_ssh_user = process.env.MAMORI_SSH_VPN_USER || 'root';
 const vpn_ssh_host = process.env.MAMORI_SSH_VPN_HOST || '';
 let vpn_test = vpn_ssh_host ? test : test.skip;
 
@@ -50,8 +53,8 @@ describe("network ssh tunnel tests", () => {
     vpn_test('ssh tunnel 01', async () => {
         let k = new SshTunnel("test_ssh_tunnel_to_local" + testbatch);
         k.at(vpn_ssh_host, 22);
-        k.forward(1122, "localhost", 22);
-        k.withCredentials("root", sshKeyName);
+        k.forward(2222, "localhost", 22);
+        k.withCredentials(vpn_ssh_user, sshKeyName);
         await io_utils.ignoreError(k.delete(api));
         //Create
         let res = await io_utils.noThrow(k.create(api));
@@ -59,6 +62,14 @@ describe("network ssh tunnel tests", () => {
         //Ensure item returned properly
         let x = (await io_utils.noThrow(SshTunnel.getAll(api))).filter((o: any) => o.name == k.name)[0];
         expect(x.type).toBe("ssh");
+
+	await sleep(2000);
+
+	let stdout = await execute('ssh -p 2222 ' + vpn_ssh_user + "@localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C \"echo 'SVQgTElWRVMK' | base64 -d\"");
+
+	expect(stdout.trim()).toBe("IT LIVES");
+
+
         let resDel = await io_utils.noThrow(k.delete(api));
         expect(resDel).toBe("ok");
 
