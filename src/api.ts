@@ -2086,6 +2086,14 @@ export class MamoriService {
         return this.callAPI("POST", "/v1/secrets/", {restore: true, secret});
     }
 
+    public export_secret(name: string, key?: string): Promise<any> {
+	if(key) {
+            return this.callAPI("GET", "/v1/secrets/" + encodeURIComponent(name) + "/export?key=" + encodeURIComponent(key));
+	}
+
+        return this.callAPI("GET", "/v1/secrets/" + encodeURIComponent(name) + "/export");
+    }
+
     public update_secret(id: number|string, secret: any): Promise<any> {
         return this.callAPI("PUT", "/v1/secrets/" + id, {secret});
     }

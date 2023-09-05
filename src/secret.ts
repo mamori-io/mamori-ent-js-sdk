@@ -241,7 +241,7 @@ export class Secret implements ISerializable {
     }
 
     public exportSecret(api: MamoriService) {
-        return api.select("call export_secret('" + sqlEscape(this.name) + "')")
+        return api.export_secret(this.name)
             .then((result: any) => {
                 if (result && result.length > 0 && result[0].value) {
                     return result[0].value;
@@ -252,8 +252,7 @@ export class Secret implements ISerializable {
     }
 
     public exportSecretWithKey(api: MamoriService, keyName: string) {
-        let query = "call export_secret_ex('" + sqlEscape(this.name) + "','" + sqlEscape(keyName) + "')";
-        return api.select(query)
+        return api.export_secret(this.name, keyName)
             .then((result: any) => {
                 if (result && result.length > 0 && result[0].value) {
                     return result[0].value;
