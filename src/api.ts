@@ -2055,10 +2055,48 @@ export class MamoriService {
             calls.push(this.update_provider(conf.name, conf));
             return Promise.all(calls);
         })
-
-
     }
 
+
+    public get_secrets(options: any): Promise<any> {
+        return this.callAPI("GET", "/v1/secrets/", options);
+    }
+
+    public get_secret(id: number|string): Promise<any> {
+        return this.callAPI("GET", "/v1/secrets/" + id);
+    }
+
+    public get_secret_parts(id: number|string): Promise<any> {
+        return this.callAPI("GET", "/v1/secrets/" + id + "/parts");
+    }
+
+    public reveal_secret(id: number|string): Promise<any> {
+        return this.callAPI("GET", "/v1/secrets/" + id + "/reveal");
+    }
+
+    public create_secret(secret: any): Promise<any> {
+        return this.callAPI("POST", "/v1/secrets/", {secret});
+    }
+
+    public restore_secret(secret: any, key?: string): Promise<any> {
+	if(key) {
+            return this.callAPI("POST", "/v1/secrets/", {restore: true, key, secret});
+	}
+
+        return this.callAPI("POST", "/v1/secrets/", {restore: true, secret});
+    }
+
+    public update_secret(id: number|string, secret: any): Promise<any> {
+        return this.callAPI("PUT", "/v1/secrets/" + id, {secret});
+    }
+
+    public delete_secret(id: number|string): Promise<any> {
+        return this.callAPI("DELETE", "/v1/secrets/" + id);
+    }
+
+    public reset_secret_alert(id: number|string, alert_at: string): Promise<any> {
+        return this.callAPI("PUT", "/v1/secrets/" + id + "/reset_alert", { alert_at });
+    }
 
 
 }

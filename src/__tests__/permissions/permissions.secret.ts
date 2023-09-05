@@ -34,12 +34,14 @@ describe("secret permission tests", () => {
         })
 
         let newS = new io_secret.Secret(io_secret.SECRET_PROTOCOL.RDP, resource)
+	    .withSecret("secret")
             .withUsername("uname")
             .withHost("10.100.100.100")
             .withDescription("Udesc");
         await io_utils.ignoreError(newS.create(api));
 
         let newCapS = new io_secret.Secret(io_secret.SECRET_PROTOCOL.RDP, "CAPS" + resource)
+	    .withSecret("secret")
             .withUsername("uname")
             .withHost("10.100.100.100")
             .withDescription("Udesc");

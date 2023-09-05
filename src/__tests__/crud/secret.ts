@@ -79,6 +79,7 @@ describe("Secret CRUD tests", () => {
         expect(xx.id).toBeDefined();
         await io_utils.noThrow(io_secret.Secret.deleteByName(api, resourceName));
         let xx1 = await io_utils.noThrow(xx.restoreWithKey(api, kName));
+	//console.info(xx1);
         expect(xx1.status).toBe('OK');
         //
         let x2 = await io_utils.noThrow(io_secret.Secret.getByName(api, resourceName));
