@@ -45,16 +45,18 @@ async function example() {
         ////////////
 		//CREATE IT
 		await io_utils.noThrow(policy.create(api));
-		console.info("creating alert channel...%s",name);
+		console.info("creating connection policy...%s",name);
 		////////////
-		//READ IT
-		let x2 = await io_utils.noThrow(io_policy.ConnectionPolicy.listBefore(api, { description: name }));		
-		console.info("reading alert channel...%o",x2);
+		//READ IT		
+		let listResults = (await io_utils.noThrow(io_policy.ConnectionPolicy.listBefore(api, { description: name })))[0];		
+		console.info("reading  connection policy...%s",name);
+		let policyObject = io_policy.ConnectionPolicy.build(listResults);
 		////////////
 		//DELETE IT
-		
-		console.info("deleting alert channel...%o",name);
-	  	
+	    await  io_utils.ignoreError(io_utils.noThrow(policyObject.delete(api)));
+		console.info("deleting connection policy...%o",name);
+	  	//
+		api.logout();
 }
 
 example()
