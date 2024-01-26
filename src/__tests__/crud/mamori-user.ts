@@ -49,6 +49,33 @@ describe("mamori user tests", () => {
         expect(res.error).toBe(false);
     });
 
+
+
+    test('mamori user 01.5', async () => {
+        let k = new User(grantee).withEmail(grantee + "@ace.com").withFullName("Te-st User");
+        await ignoreError(k.delete(api));
+        let res = await noThrow(k.create(api, granteepw));
+        expect(res.error).toBe(false);
+        let x = await noThrow(User.get(api, grantee));
+        expect(x.username).toBe(grantee);
+        //Test connection
+        let apiAsAPIUser: MamoriService = new MamoriService(host, INSECURE);
+        let x4 = await noThrow(apiAsAPIUser.login(grantee, granteepw));
+        expect(x4.username).toBe(grantee);
+        ignoreError(apiAsAPIUser.logout());
+        //Update email
+        k.email = "testit@test.com";
+        let x2 = await noThrow(k.update(api));
+        expect(x2.error).toBe(false);
+        let x3 = await noThrow(User.get(api, grantee));
+        expect(x3.email).toBe("testit@test.com");
+        let d = await noThrow(k.delete(api));
+        expect(res.error).toBe(false);
+    });
+
+
+
+
     //spaces, periods, dashes, and underscores
     test('mamori user 02 - special characters', async () => {
         let uname = grantee + ".-_TEST";

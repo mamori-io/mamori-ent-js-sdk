@@ -59,4 +59,41 @@ describe("alert channel tests", () => {
         k.id = r.id;
         await ignoreError(k.delete(api));
     });
+
+
+    test('alert 02', async () => {
+        let name = "alert-test01_" + testbatch;
+        let k = new AlertChannel(name);
+        //Delete old one
+        let r2 = await noThrow(AlertChannel.get(api, name));
+        if (r2) {
+            await ignoreError(r2.delete(api));
+        }
+        k.addEmailAlert("omasri@mamori.io", "test subject", "My Message");
+        let body = {
+            "attachments": [
+                {
+                    "color": "#f93836",
+                    "pretext": "A wireguard peer has been blocked",
+                    "author_name": "Mamori",
+                    "title": "Wireguard peer blocked - {{device}}",
+                    "text": "User: {{username}} - client ip: {{source}}",
+                    "footer": "This is a Mamori Peer Notification",
+                }
+            ]
+        };
+        k.addHTTPAlert(HTTP_OPERATION.POST
+            , ""
+            , "https://hooks.slack.com/services/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"
+            , JSON.stringify(body)
+            , "application/json")
+        k.addPushNotificationAlert("{{applicant}}", "Test Message");
+        k.fromJSON(k.toJSON());
+        let r = await noThrow(k.create(api));
+        expect(r.id).toBeDefined();
+        k.id = r.id;
+        await ignoreError(k.delete(api));
+    });
+
+
 });

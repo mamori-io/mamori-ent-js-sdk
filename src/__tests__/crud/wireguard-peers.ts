@@ -83,4 +83,46 @@ describe("wireguard peer tests", () => {
         expect(x5.status).toBe("ok");
         //
     });
+
+
+    test('peer 02', async () => {
+
+        let name = "test-laptop";
+        let k = new WireGuardPeer(grantee, name);
+        let res = await noThrow(k.create(api));
+	if(res.config) {
+            expect(res.config).toContain("[Interface]");
+	} else {
+	    // dump out the value we got back
+	    expect(res).toBe({});
+	}
+
+        //get list
+        let filter = [["userid", "=", grantee], ["device_name", "", name]];
+        let x = await noThrow(WireGuardPeer.list(api, 0, 10, filter));
+        let peer = x.data[0];
+        k.id = peer.id;
+        expect(x.data.length).toBe(1);
+        /*
+        //
+        //notify - causes timeout issues
+        let x1 = await noThrow(k.sendNotification(api, res.config));
+        expect(x1).toBe("ok");
+        //
+        //reset peer
+        let x2 = await noThrow(k.reset(api, false));
+        expect(x2.config).toContain("[Interface]");
+        //lock peer
+        let x3 = await noThrow(k.lock(api));
+        expect(x3.status).toBe("ok");
+        //unlock peer
+        let x4 = await noThrow(k.unlock(api));
+        expect(x4.status).toBe("ok");
+        */
+        //delete peer
+        let x5 = await noThrow(k.delete(api));
+        expect(x5.status).toBe("ok");
+        //
+    });
+
 });

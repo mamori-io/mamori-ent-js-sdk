@@ -111,6 +111,30 @@ describe("on-demand policy crud tests", () => {
     });
 
 
+    test('policy 03', async () => {
+        let name = "te-st_auto_policy_" + testbatch;
+        let k = new io_ondemandpolicies.OnDemandPolicy(name);
+        k.request_role = requestRole;
+        k.requires = agentRole;
+        k.request_alert = requestAlert.name;
+        k.endorse_alert = endorseAlert.name;
+        k.addParameter("time", "number of minutes", "15");
+        k.withScript(["GRANT SELECT ON * TO :APPLICANT VALID FOR :time minutes"]);
+
+        await io_utils.noThrow(k.delete(api));
+        let x = await io_utils.noThrow(k.create(api));
+        expect(x.error).toBe(false);
+
+        let x3 = await io_utils.noThrow(io_ondemandpolicies.OnDemandPolicy.get(api, name));
+        expect(x3.name).toBeDefined();
+
+        let x2 = await io_utils.noThrow(k.delete(api));
+        expect(x2.error).toBe(false);
+
+    });
+
+
+
     test('policy 02 - resource', async () => {
         let name = "test_auto_Resource_policy_" + testbatch;
         let k = new io_ondemandpolicies.OnDemandPolicy(name, io_ondemandpolicies.POLICY_TYPES.RESOURCE);

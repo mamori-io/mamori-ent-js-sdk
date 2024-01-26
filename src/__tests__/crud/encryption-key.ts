@@ -90,6 +90,51 @@ describe("encryption key tests", () => {
         expect(resDel.error).toBe(false);
     });
 
+
+    test('aes 02', async () => {
+        let k = new Key("t-est_aes_key" + testbatch);
+
+        await ignoreError(k.delete(api));
+
+        //Create
+        k.ofType(KEY_TYPE.AES);
+        let res = await noThrow(k.create(api));
+        expect(res.error).toBe(false);
+
+        //Ensure key returned properly
+        let x = (await noThrow(Key.getAll(api))).filter((key: any) => key.name == k.name)[0];
+        expect(x.type).toBe(KEY_TYPE.AES);
+        expect(x.private_key).toBeUndefined();
+
+        //Ensure non-admins can't see any keys
+        let x2 = (await noThrow(Key.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
+        expect(x2.length).toBe(0);
+
+        //Grant Key to User
+        let x3 = await noThrow(k.grantTo(api, grantee));
+        expect(x3).toBe('Granted');
+        //Ensure user can see the key
+        let x4 = (await noThrow(Key.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
+        expect(x4.length).toBe(1);
+
+        //Ensure user can't delete a key
+        let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
+        expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
+
+
+        let x5 = await noThrow(k.revokeFrom(api, grantee));
+        expect(x5).toBe('Revoked');
+        //Ensure the key was revoked
+        let x6 = (await noThrow(Key.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
+        expect(x6.length).toBe(0);
+
+
+        //Delete the data source
+        let resDel = await noThrow(k.delete(api));
+        expect(resDel.error).toBe(false);
+    });
+
+
     test('rsa pair as admin', async () => {
         let name = "test_rsa_key" + testbatch;
         let k = new Key(name);

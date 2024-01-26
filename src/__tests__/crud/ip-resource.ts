@@ -64,6 +64,35 @@ describe("IP resource CRUD tests", () => {
     });
 
 
+    test('ip create 02', async () => {
+        let cidr = "10.0.200.0/24";
+        let ports = "443,80";
+        let baseR = new io_ipresource.IpResource(resourceName).withCIDR(cidr).withPorts(ports);
+        // Test to and from JSON
+        let r = new io_ipresource.IpResource("").fromJSON(baseR.toJSON());
+        //Clean up any prior test
+        let d = await io_utils.ignoreError(r.delete(api));
+        let r1 = await io_utils.noThrow(r.create(api));
+        expect(r1.error).toBe(false);
+
+        let r2 = await io_utils.noThrow(io_ipresource.IpResource.list(api, 0, 100, [["na-me", "=", resourceName]]));
+        expect(r2.data.length).toBe(1);
+        let y = r2.data[0];
+        expect(y.name).toBe(resourceName);
+        expect(y.cidr).toBe(cidr);
+        expect(y.ports).toBe(ports);
+
+        let r3 = await io_utils.noThrow(r.delete(api));
+        expect(r3.error).toBe(false);
+        let r4 = await io_utils.noThrow(io_ipresource.IpResource.list(api, 0, 100, [["na-me", "=", resourceName]]));
+        expect(r4.data.length).toBe(0);
+    });
+
+
+
+
+
+
     test('ip resource requestable', async () => {
         let resource = "test_ip_rsc_" + testbatch;
         let cidr = "10.0.200.0/24";

@@ -83,6 +83,46 @@ describe("role tests", () => {
     });
 
 
+    test('role 03', async () => {
+
+        let name = "test_autom-ated_role" + testbatch;
+        let k = new Role(name);
+
+        await ignoreError(k.delete(api));
+        let res = await noThrow(k.create(api));
+        expect(res.error).toBe(false);
+
+        //Ensure key returned properly
+        let x = (await noThrow(Role.getAll(api))).filter((o: any) => o.roleid == k.roleid);
+        expect(x.length).toBe(1);
+
+        //Ensure non-admins can't see any keys
+
+        let x2 = (await noThrow(k.getGrantees(apiAsAPIUser)))
+        expect(x2.length).toBe(0);
+        //Grant to user
+        let x3 = await noThrow(k.grantTo(api, grantee, false));
+        expect(x3.errors).toBe(false);
+        //Ensure user can see the role
+        let x4 = (await noThrow(k.getGrantees(apiAsAPIUser)))
+        expect(x4.length).toBe(1);
+        //Ensure user can't delete the item
+        let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
+        expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
+        let x5 = await noThrow(k.revokeFrom(api, grantee));
+        expect(x5.errors).toBe(false);
+        //Ensure the role was revoked
+        let x6 = (await noThrow(k.getGrantees(apiAsAPIUser)))
+        expect(x6.length).toBe(0);
+        //Delete the data source
+        let resDel = await noThrow(k.delete(api));
+        expect(resDel.error).toBe(false);
+
+    });
+
+
+
+
     test('role 02', async () => {
 
         let name = "test_2_automated_role" + testbatch;
