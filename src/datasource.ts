@@ -49,6 +49,15 @@ export class Datasource implements ISerializable {
     }
 
     /**
+     * @param api  A logged-in MamoriService instance
+     * @param datasourcename datasource name
+     * @returns A datasource
+     */
+    public static read(api: MamoriService, datasourcename:string): Promise<Datasource> {
+        return api.callAPI("GET", "/v1/systems/" + datasourcename);
+    }
+
+    /**
      * @param api
      * @returns The database drivers configured.
      */
