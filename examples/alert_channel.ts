@@ -23,7 +23,7 @@ async function example() {
 
 	  	///////////////////
 		//CONFIGURE OBJECT
-		let name = "SOMENAME" ;
+		let name = "examplealert" ;
 		let k = new io_alertchannel.AlertChannel(name);
 		k.addEmailAlert("omasri@mamori.io", "test subject", "My Message");
 		let body = {
@@ -55,6 +55,7 @@ async function example() {
 		////////////
 		//DELETE IT
 		await  io_utils.ignoreError(io_utils.noThrow(r2.delete(api)));
+		console.info("deleting alert channel...%o",name);
 	  	//
 		api.logout();
 }

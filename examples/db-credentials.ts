@@ -21,7 +21,23 @@ async function example() {
 		console.info("Connecting...");
 	  	let login = await api.login(mamoriUser, mamoriPwd);
 	  	console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
-	  	console.info("creating connection policy...");
+	  	///////////////////
+		//CONFIGURE OBJECT
+		let name = "exampleconnectionpolicy" ;
+		
+	  	////////////
+		//CREATE IT
+		
+		console.info("creating alert channel...%s %o",name,r);
+		////////////
+		//READ IT
+		
+		console.info("reading alert channel...%o",r2);
+		////////////
+		//DELETE IT
+		
+		console.info("deleting alert channel...%o",name);
+	  	
 }
 
 example()
