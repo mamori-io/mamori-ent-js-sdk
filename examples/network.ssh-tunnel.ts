@@ -4,14 +4,14 @@ import { lchmodSync } from 'fs';
 //import { MamoriService,io_https,io_utils } from 'mamori-ent-js-sdk';
 //import { } from 'mamori-ent-js-sdk';
 import { MamoriService,io_https, io_utils, SshTunnel} from '../src/api';
-import { execute } from '..' //unsure where to src command from
+import { execute,sleep } from '../src/__utility__/test-helper';
 
 const mamoriUrl = process.env.MAMORI_SERVER || '';
 const mamoriUser = process.env.MAMORI_USERNAME || '';
 const mamoriPwd = process.env.MAMORI_PASSWORD || '';
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
-const vpn_ssh_host = process.env.MAMORI_SSH_VPN_HOST || 'root';
-const vpn_ssh_user = process.env.MAMORI_SSH_VPN_USER || '';  
+const vpn_ssh_host = process.env.MAMORI_SSH_VPN_HOST || '';
+const vpn_ssh_user = process.env.MAMORI_SSH_VPN_USER || 'root';  
 
 //let mamoriUrl = "https://localhost/" ;
 //let mamoriUser = "alice" ;
@@ -22,7 +22,7 @@ async function example() {
 		console.info("Connecting...");
 	  let login = await api.login(mamoriUser, mamoriPwd);
 	  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
-    let sshKeyName = "mamori_server_ssh_tunnel_example_key";
+    let sshKeyName = "mamori_server_ssh_tunnel_test_key";
     ///////////////
     //CONFIGURE IT
     let name : string = "example_network_ssh_tunnel";
@@ -36,6 +36,8 @@ async function example() {
     // CREATE IT
     await io_utils.noThrow(s.create(api));
     console.info("creating network.ssh_t...%s", name);
+    await sleep(2000);
+
     ///////////
     //READ IT
     await execute('ssh -p 2222 ' + vpn_ssh_user + "@localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C \"echo 'SVQgTElWRVMK' | base64 -d\"");

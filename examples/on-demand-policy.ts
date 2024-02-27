@@ -3,7 +3,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 import { lchmodSync } from 'fs';
 //import { MamoriService,io_https,io_utils } from 'mamori-ent-js-sdk';
 //import { } from 'mamori-ent-js-sdk';
-import { MamoriService,io_https, io_utils, io_user, io_ondemandpolicies, io_alertchannel, io_role, io_permission } from '../src/api';
+import { MamoriService,io_https, io_utils, io_user, io_ondemandpolicies, io_alertchannel, io_role, io_permission, SshTunnel } from '../src/api';
 
 const mamoriUrl = process.env.MAMORI_SERVER || '';
 const mamoriUser = process.env.MAMORI_USERNAME || '';
@@ -22,28 +22,35 @@ async function example() {
     let requestAlert = new io_alertchannel.AlertChannel("example_policy_request_alert");
     let endorseAlert = new io_alertchannel.AlertChannel("example_policy_endorse_alert");
 
-    ///////////////
-    //CONFIGURE IT
-    let name: string = "example_auto_policy_";
-    let d = new io_ondemandpolicies.OnDemandPolicy(name);
-
 
     /////////////////////////
     // CREATE ROLE TO GRANTEE
     let grantee = "example_role";
-    let requestRole = "test_policy_user_role";
-    let agentRole = "test_policy_agent_role
+    let requestRole = "example_policy_user_role";
+    let agentRole = "example_policy_agent_role";
+    let agent = "example_o_d_policy_agent.";
+
     await io_utils.ignoreError(new io_role.Role(agentRole).create(api));
     await io_utils.ignoreError(new io_role.Role(requestRole).create(api));
 
+    ///////////////
+    //CONFIGURE IT
+    let name: string = "example_auto_policy_";
+    let o = new io_ondemandpolicies.OnDemandPolicy(name);
+    o.request_role = requestRole;
+    o.requires = agentRole;
+    o.request_alert = requestAlert.name;
+    o.endorse_alert = endorseAlert.name;
+    o.addParameter("time", "number of minutes", "15");
+    o.withScript(["GRANT SELECT ON * TO :APPLICANT VALID FOR :time minutes"]);
 
     /////////////   
     // CREATE IT
-    
+    await io_utils.noThrow(o.create(api));
     console.info("creating...%s", name);
     ///////////
     //READ IT
-
+    await io_utils.ignoreError(io_ondemandpolicies.OnDemandPolicy.get(api, name));
     console.info("reading...%s", name);
     ///////////
     //GRANT IT
@@ -52,7 +59,7 @@ async function example() {
     await io_utils.ignoreError(new io_role.Role(requestRole).grantTo(api, grantee, false));
     ///////////
     //DELETE IT
-    
+    await io_utils.noThrow(io_ondemandpolicies.OnDemandPolicy.get(api, name))
     console.info("deleting ...%s", name);
 }
 
