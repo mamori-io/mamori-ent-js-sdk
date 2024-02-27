@@ -4,7 +4,7 @@ import { lchmodSync } from 'fs';
 //import { MamoriService,io_https,io_utils } from 'mamori-ent-js-sdk';
 //import { } from 'mamori-ent-js-sdk';
 import { MamoriService,io_https, io_utils, SshTunnel} from '../src/api';
-import { execute,sleep } from '../src/__utility__/test-helper';
+import { execute, sleep } from '../src/__utility__/test-helper';
 
 const mamoriUrl = process.env.MAMORI_SERVER || '';
 const mamoriUser = process.env.MAMORI_USERNAME || '';
@@ -36,10 +36,10 @@ async function example() {
     // CREATE IT
     await io_utils.noThrow(s.create(api));
     console.info("creating network.ssh_t...%s", name);
-    await sleep(2000);
-
     ///////////
     //READ IT
+    await sleep(2000);
+    
     await execute('ssh -p 2222 ' + vpn_ssh_user + "@localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C \"echo 'SVQgTElWRVMK' | base64 -d\"");
     (await io_utils.noThrow(SshTunnel.getAll(api))).filter((o: any) => o.name == s.name)[0];
     console.info("reading network.ssh_t...%s", name);
