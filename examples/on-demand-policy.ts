@@ -47,11 +47,11 @@ async function example() {
     /////////////   
     // CREATE IT
     await io_utils.noThrow(o.create(api));
-    console.info("creating...%s", name);
+    console.info("creating on_demand_policy...%s", name);
     ///////////
     //READ IT
     await io_utils.ignoreError(io_ondemandpolicies.OnDemandPolicy.get(api, name));
-    console.info("reading...%s", name);
+    console.info("reading on_demand_policy...%s", name);
     ///////////
     //GRANT IT
     await io_utils.ignoreError(new io_permission.MamoriPermission([io_permission.MAMORI_PERMISSION.REQUEST]).grantee(requestRole).grant(api));
@@ -60,7 +60,7 @@ async function example() {
     ///////////
     //DELETE IT
     await io_utils.noThrow(io_ondemandpolicies.OnDemandPolicy.get(api, name))
-    console.info("deleting ...%s", name);
+    console.info("deleting on_demand_policy...%s", name);
 }
 
 example()
