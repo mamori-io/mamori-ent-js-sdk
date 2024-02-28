@@ -38,7 +38,7 @@ async function example() {
 
     ///////////////
     //CONFIGURE IT
-    let name = "test_sql-masking.policy._";
+    let name = "example_sql-masking.policy._";
     let s = new SQLMaskingPolicy(name);
     s.priority = 100;
 
@@ -46,7 +46,7 @@ async function example() {
     // CREATE IT
     await io_utils.noThrow(s.create(api));
     console.info("creating ...%s", name);
-    
+
     ///////////
     //READ IT
     await io_utils.noThrow(io_user.User.get(api, name));
