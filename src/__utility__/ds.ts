@@ -39,3 +39,19 @@ export async function dropPGDatabaseUser(api: MamoriService, username: string, d
     let x1 = await io_utils.ignoreError(api.select("DROP USER " + username));
     //expect(x1.errors).toBeUndefined();
 }
+
+export async function createOracleDatabaseUser(api: MamoriService, username: string, password: string) {
+    await dropOracleDatabaseUser(api, username);
+    let statements = [];
+    statements.push("CREATE USER "+username+" IDENTIFIED BY "+password);
+    statements.push("ALTER USER "+username+" quota unlimited on users");
+    statements.push("grant dba to "+username);
+    for (let sql of statements){
+        let x1 = await io_utils.noThrow(api.select(sql));
+        expect(x1.errors).toBeUndefined();
+    }
+}
+
+export async function dropOracleDatabaseUser(api: MamoriService, username: string) {
+    let x1 = await io_utils.ignoreError(api.select("DROP USER " + username+" CASCADE" ));
+}
