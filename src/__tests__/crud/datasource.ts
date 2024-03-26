@@ -61,7 +61,8 @@ describe("datasource tests", () => {
         //
         let results = (await io_utils.noThrow(io_datasource.Datasource.read(api,dsName)));		
         //console.info("reading  datasource..%o",results);
-        expect(results.status).not.toBeNull();
+        expect(results.available).toBe("true");
+        expect(results.status).toBeNull();
 
         //Grant a credential to a user
         let ccred = await io_utils.noThrow(ds.addCredential(api, grantee, 'postgres', dbPassword));
