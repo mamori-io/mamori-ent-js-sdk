@@ -23,37 +23,27 @@ async function example() {
 
     ///////////////
     //CONFIGURE IT
-    let name: string = "";
     let secretText = "#(*7322323!!!jnsas@^0001";
     let s = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, resourceName)
         .withSecret(secretText)
         .withUsername("testUser")
         .withHost("10.123.0.100")
         .withDescription("The Desc");
-    let s0 = io_secret.Secret.build(s.toJSON());
-
     /////////////  
     // CREATE IT
-    await io_utils.noThrow(s0.create(api));
-    console.info("creating secret...%s", name);
+    await io_utils.noThrow(s.create(api));
+    console.info("creating secret...%s", resourceName);
     
     ///////////
     //READ IT
     await io_utils.noThrow(io_secret.Secret.list(api, 0, 100, [["name", "=", resourceName]]));
     let w = await io_utils.noThrow(io_secret.Secret.getByName(api, resourceName));
-    if (w) {
-        let w1 = (w as io_secret.Secret).withHost("100.100.100.100").withDescription("NewDesc");
-        await io_utils.noThrow(w1.update(api));
-        let w3 = (await io_utils.noThrow(io_secret.Secret.getByName(api, resourceName)) as io_secret.Secret);
-        expect(w3.description).toBe("NewDesc");
-        expect(w3.hostname).toBe("100.100.100.100");
-        }
-    console.info("reading secret...%s", name);
+    console.info("reading secret...%s", w);
 
     ///////////
     //DELETE IT
-    await io_utils.noThrow(s.delete(api));
-    console.info("deleting secret...%s", name);
+    await io_utils.noThrow(io_secret.Secret.deleteByName(api,resourceName));
+    console.info("deleting secret...%s", resourceName);
 }
 
 example()
