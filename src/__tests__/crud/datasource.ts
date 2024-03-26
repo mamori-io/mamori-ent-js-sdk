@@ -58,6 +58,11 @@ describe("datasource tests", () => {
             .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
         let res = await io_utils.noThrow(ds.create(api));
         expect(res.error).toBe(false);
+        //
+        let results = (await io_utils.noThrow(io_datasource.Datasource.read(api,dsName)));		
+        //console.info("reading  datasource..%o",results);
+        expect(results.status).not.toBeNull();
+
         //Grant a credential to a user
         let ccred = await io_utils.noThrow(ds.addCredential(api, grantee, 'postgres', dbPassword));
         expect(res.error).toBe(false);

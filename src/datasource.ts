@@ -54,7 +54,9 @@ export class Datasource implements ISerializable {
      * @returns A datasource
      */
     public static read(api: MamoriService, datasourcename:string): Promise<Datasource> {
-        return api.callAPI("GET", "/v1/systems/" + datasourcename);
+        return api.callAPI("GET", '/v1/objects/databases?usersystems=true&name='+encodeURIComponent(datasourcename)).then( (result : any) => {
+            return result.length > 0 ? result[0] : null;
+        })
     }
 
     /**
