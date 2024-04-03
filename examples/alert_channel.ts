@@ -11,7 +11,7 @@ const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 
 //let mamoriUrl = "https://localhost/" ;
 //let mamoriUser = "alice" ;
-//let mamoriPwd  = "mirror" ;
+//let mamoriPwd  = "mirror" ;  
 
 async function example() {
 	let api = new MamoriService(mamoriUrl);

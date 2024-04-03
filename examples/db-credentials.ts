@@ -20,7 +20,7 @@ async function example() {
 	console.info("Connecting...");
 	let login = await api.login(mamoriUser, mamoriPwd);
 	console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
-	  	
+	  	    
 function createDS(name:string){
 	let ds = new io_datasource.Datasource(name);
 	let targetHost = dbHost;

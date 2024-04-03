@@ -10,7 +10,7 @@ const mamoriUrl = process.env.MAMORI_SERVER || '';
 const mamoriUser = process.env.MAMORI_USERNAME || '';
 const mamoriPwd = process.env.MAMORI_PASSWORD || '';
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
-
+  
 //let mamoriUrl = "https://localhost/" ;
 //let mamoriUser = "alice" ;
 //let mamoriPwd  = "mirror" ;
