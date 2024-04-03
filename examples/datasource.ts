@@ -3,8 +3,8 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 import { lchmodSync } from 'fs';
 //import { MamoriService,io_https,io_utils } from 'mamori-ent-js-sdk';
 //import { } from 'mamori-ent-js-sdk';
-import { MamoriService,io_https, io_utils } from '../src/api';
-import { io_datasource } from "../src/api";
+import { MamoriService,io_https, io_utils } from 'mamori-ent-js-sdk';
+import { io_datasource } from "mamori-ent-js-sdk";
 
 const mamoriUrl = process.env.MAMORI_SERVER || '';
 const mamoriUser = process.env.MAMORI_USERNAME || '';
