@@ -79,11 +79,11 @@ export class DBHelper {
         let INSECURE = new io_https.Agent({ rejectUnauthorized: false })
         let apiAsAdmin = new MamoriService(host, INSECURE);
         await apiAsAdmin.login(username, password);
-        // console.log("***** Passthrough Initiating - user:%s datasource:%s", username, datasource);
         let setPassthroughSession = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiAsAdmin, datasource));
         if (setPassthroughSession.errors) {
             await apiAsAdmin.logout();
             // it is done this way so we can see the error in the output
+            //console.log("***** Passthrough Initiating - user:%s datasource:%s", username, datasource);
             expect(setPassthroughSession).toBe({});
         } else {
             // console.log("***** Passthrough OK - user:%s datasource:%s", username, datasource);

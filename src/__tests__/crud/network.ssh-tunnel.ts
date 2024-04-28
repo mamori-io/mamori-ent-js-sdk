@@ -53,7 +53,7 @@ describe("network ssh tunnel tests", () => {
     vpn_test('ssh tunnel 01', async () => {
         let k = new SshTunnel("test_ssh_tunnel_to_local" + testbatch);
         k.at(vpn_ssh_host, 22);
-        k.forward(2222, "localhost", 22);
+        k.forward(2224, "localhost", 22);
         k.withCredentials(vpn_ssh_user, sshKeyName);
         await io_utils.ignoreError(k.delete(api));
         //Create
@@ -65,7 +65,7 @@ describe("network ssh tunnel tests", () => {
 
 	await sleep(2000);
 
-	let stdout = await execute('ssh -p 2222 ' + vpn_ssh_user + "@localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C \"echo 'SVQgTElWRVMK' | base64 -d\"");
+	let stdout = await execute('ssh -p 2224 ' + vpn_ssh_user + "@localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C \"echo 'SVQgTElWRVMK' | base64 -d\"");
 
 	expect(stdout.trim()).toBe("IT LIVES");
 
