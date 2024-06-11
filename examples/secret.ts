@@ -27,7 +27,7 @@ async function example() {
         .withHost("10.123.0.100")
         .withDescription("The Desc");
     /////////////  
-    // CREATE IT
+    // CREATE IT    
     await io_utils.noThrow(s.create(api));
     console.info("creating secret...%s", resourceName);
     

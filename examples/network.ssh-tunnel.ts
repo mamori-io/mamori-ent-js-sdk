@@ -13,7 +13,7 @@ const vpn_ssh_user = process.env.MAMORI_SSH_VPN_USER || 'root';
 //let mamoriUrl = "https://localhost/" ;
 //let mamoriUser = "alice" ;
 //let mamoriPwd  = "mirror" ;
-
+  
 async function example() {
     let api = new MamoriService(mamoriUrl);
 		console.info("Connecting...");
