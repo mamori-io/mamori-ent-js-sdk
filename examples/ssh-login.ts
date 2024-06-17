@@ -3,7 +3,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 import { lchmodSync } from 'fs';
 //import { MamoriService,io_https,io_utils } from 'mamori-ent-js-sdk';
 //import { } from 'mamori-ent-js-sdk';
-import { MamoriService,io_https, io_utils, io_user, SshLogin} from '../src/api';
+import { MamoriService,io_https, io_utils, io_user } from '../src/api';
 
 const mamoriUrl = process.env.MAMORI_SERVER || '';
 const mamoriUser = process.env.MAMORI_USERNAME || '';
@@ -26,7 +26,7 @@ async function example() {
     /////////////
     // CREATE IT
     await io_utils.noThrow(m.create(api));
-    console.info("creating mamori_user...%s", name);
+    console.info("creating mamori_user...%s", name);   
     ///////////
     //READ IT
     await io_utils.noThrow(io_user.User.get(api, name));

@@ -4,14 +4,13 @@ import { lchmodSync } from 'fs';
 //import { MamoriService,io_https,io_utils } from 'mamori-ent-js-sdk';
 //import { } from 'mamori-ent-js-sdk';
 import { MamoriService,io_https, io_utils} from 'mamori-ent-js-sdk';
-import { ignoreError } from 'mamori-ent-js-sdk';
-import { Role } from 'mamori-ent-js-sdk';
+import { io_role } from 'mamori-ent-js-sdk';
 
 const mamoriUser = process.env.MAMORI_USERNAME || '';
 const mamoriPwd = process.env.MAMORI_PASSWORD || '';
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 const host = process.env.MAMORI_SERVER || '';
-
+ 
 async function example() {
     let api = new MamoriService(host, INSECURE);
 		console.info("Connecting...");
@@ -24,7 +23,7 @@ async function example() {
     let grantee = "example_roles_user.";
     let granteepw = "J{J'vpKs!$nW6(6A,4!98712_vdQ'}D";
 
-    await ignoreError(api.delete_user(grantee));
+    await io_utils.ignoreError(api.delete_user(grantee));
     await api.create_user({
       username: grantee,
       password: granteepw,
@@ -38,7 +37,7 @@ async function example() {
     ///////////////
     //CONFIGURE IT
     let name: string = "example_automated_role";
-    let r = new Role(name);
+    let r = new io_role.Role(name);
 
     /////////////
     // CREATE IT
@@ -46,7 +45,7 @@ async function example() {
     console.info("creating role...%s", name);
     ///////////
     //READ IT
-    (await io_utils.noThrow(Role.getAll(api))).filter((o: any) => o.roleid == r.roleid);
+    (await io_utils.noThrow(io_role.Role.getAll(api))).filter((o: any) => o.roleid == r.roleid);
     console.info("reading role...%s", name);
 
     ///////////

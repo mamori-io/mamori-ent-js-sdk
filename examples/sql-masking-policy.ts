@@ -1,9 +1,8 @@
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import { MamoriService,io_https, io_utils, io_user, Role} from 'mamori-ent-js-sdk';
-import { User } from 'mamori-ent-js-sdk';
-import { SQLMaskingPolicy } from 'mamori-ent-js-sdk';
-import { PolicyPermission } from 'mamori-ent-js-sdk';
+import { MamoriService,io_https, io_utils, io_user } from 'mamori-ent-js-sdk';
+import { io_sqlmaskingpolicies } from 'mamori-ent-js-sdk';
+import { io_permission } from 'mamori-ent-js-sdk';
 
 const mamoriUrl = process.env.MAMORI_SERVER || '';
 const mamoriUser = process.env.MAMORI_USERNAME || '';
@@ -27,16 +26,16 @@ async function example() {
     let admin = "example_sql-masking_admin.";
     let adminpw = "J{J'vpKs!$sadmins!23(6A,12_vdQ'}D";
 
-    let adminU = new User(admin).withEmail("userexample@ace.com").withFullName("Policy User");
+    let adminU = new io_user.User(admin).withEmail("userexample@ace.com").withFullName("Policy User");
     await io_utils.noThrow(adminU.create(api, adminpw));
-    let policyU = new User(grantee).withEmail("userexample@ace.com").withFullName("Policy User");
+  let policyU = new io_user.User(grantee).withEmail("userexample@ace.com").withFullName("Policy User");
     await io_utils.noThrow(policyU.create(api, granteepw));
 
 
     ///////////////
     //CONFIGURE IT
     let name = "example_sql-masking.policy._";
-    let s = new SQLMaskingPolicy(name);
+    let s = new io_sqlmaskingpolicies.SQLMaskingPolicy(name);
     s.priority = 100;
 
     /////////////
@@ -52,7 +51,7 @@ async function example() {
     let filter = [["permissiontype", io_utils.FILTER_OPERATION.EQUALS_STRING, "POLICY"],
     ["grantee", io_utils.FILTER_OPERATION.EQUALS_STRING, grantee],
     ["policy", io_utils.FILTER_OPERATION.EQUALS_STRING, name]];
-    await new PolicyPermission().grantee(grantee).list(api, filter)
+    await new io_permission.PolicyPermission().grantee(grantee).list(api, filter)
 
     //////////
     //GRANT IT
