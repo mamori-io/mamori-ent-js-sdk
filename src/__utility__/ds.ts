@@ -1,4 +1,4 @@
-import { MamoriService } from '../api';
+import { Datasource, MamoriService } from '../api';
 import * as https from 'https';
 import { io_utils, io_permission } from '../api';
 import { ServerSession } from '../server-session';

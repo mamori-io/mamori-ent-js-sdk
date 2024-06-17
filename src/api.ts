@@ -15,6 +15,9 @@ import { SshLogin } from "./ssh-login";
 import { RoleGrant, Role } from "./role";
 import { Runnable } from './runnable';
 import { decodeMessage } from './utils';
+
+import { MamoriWebsocketClient } from './ws_client';
+
 // namespaces
 import * as io_https from 'https';
 import * as io_alertchannel from './alert-channel';
@@ -38,9 +41,10 @@ import * as io_secret from './secret';
 import * as io_http_resource from './http-resource';
 import * as io_requestable_resource from './requestable_resource';
 import * as io_db_credential from "./db-credential";
+import * as eventable from './eventable';
+import * as io_utility_helper from "./__utility__/test-helper";
+import * as io_utility_ds from "./__utility__/ds";
 //import { Channel, Socket } from "./phoenix";
-
-
 
 export {
     Datasource
@@ -52,6 +56,8 @@ export {
     , OpenVPN
     , SshTunnel
     , Runnable
+    , eventable
+    , MamoriWebsocketClient
     , io_https
     , io_alertchannel
     , io_datasource
@@ -74,6 +80,8 @@ export {
     , io_http_resource
     , io_requestable_resource
     , io_db_credential
+    , io_utility_helper
+    , io_utility_ds
 };
 
 
@@ -88,9 +96,6 @@ let ___api_request_cache___: StringIndexed<ApiCacheEntry> = {};
 
 type PromiseCallback = (value: any) => void;
 type ApiCallback = (result: any, resolve: PromiseCallback, reject: PromiseCallback) => void;
-
-type EventCallback = (data: any) => void;
-type EventCallbacks = EventCallback[];
 
 export type ProgressHandler = (value: any, cont: (flag: boolean) => void) => void;
 interface PromiseHolder {
@@ -206,7 +211,7 @@ function buildParams(prefix: string, obj: any, add: (k: string, v: any) => void)
     }
 }
 
-export class MamoriService {
+export class MamoriService extends eventable.Eventable {
 
     private _base: string;
     private _http: AxiosInstance;
@@ -214,7 +219,7 @@ export class MamoriService {
     private _cookies: string[] = [];
     private _claims: any;
     private _session_id: Nullable<string> = null;
-    private _handlers: StringIndexed<EventCallbacks> = {};
+
     //private _ws_token: Nullable<string> = null;
     //private _socket: Nullable<Socket> = null;
     //private _channels: StringIndexed<Channel> = {};
@@ -229,36 +234,13 @@ export class MamoriService {
     username?: string;
 
     constructor(base: string, httpsAgent?: io_https.Agent, websocketOptions?: any) {
+        super();
         this._base = base;
         this._http = axios.create({
             baseURL: base,
             httpsAgent: httpsAgent
         });
         //this._wsOptions = websocketOptions;
-    }
-
-    public on(name: string, handler: EventCallback): void {
-        let handlers = this._handlers[name];
-        if (!handlers) {
-            handlers = [];
-            this._handlers[name] = handlers;
-        }
-
-        handlers.push(handler);
-    }
-
-    public off(name: string, handler: EventCallback): void {
-        let handlers = this._handlers[name];
-        if (handlers) {
-            this._handlers[name] = handlers.filter(h => h != handler);
-        }
-    }
-
-    private trigger(name: string, data: any): void {
-        let handlers = this._handlers[name];
-        if (handlers) {
-            handlers.slice(0).forEach(h => h(data))
-        }
     }
 
     get authorization(): Nullable<string> {
@@ -550,10 +532,10 @@ export class MamoriService {
         }
 
         let that = this;
-        deferred = new Promise(function (resolve: any, reject: any) {
+        deferred = new Promise(function(resolve: any, reject: any) {
             if (!callback) {
                 // default callback
-                callback = function (result, xresolve, _reject) {
+                callback = function(result, xresolve, _reject) {
                     xresolve(result);
                 };
             }
@@ -574,13 +556,13 @@ export class MamoriService {
                 payload.data = params;
             }
 
-            that._http.request(payload).then(function (x: any) {
+            that._http.request(payload).then(function(x: any) {
                 if (callback) {
                     callback(x.data, resolve, reject);
                 } else {
                     resolve(x.data);
                 }
-            }).catch(function (error: any) {
+            }).catch(function(error: any) {
                 reject(error);
             });
 
@@ -589,7 +571,7 @@ export class MamoriService {
 
         if (cachable) {
             ___api_request_cache___[cacheKey] = { deferred: deferred, resolved: false, value: null };
-            deferred.then(function (result: any) {
+            deferred.then(function(result: any) {
                 ___api_request_cache___[cacheKey].resolved = true;
                 ___api_request_cache___[cacheKey].value = result;
             });
@@ -2008,8 +1990,7 @@ export class MamoriService {
 
     public get_remote_desktop_download_link(token: string, onprogress?: (message: string, percentage?: number) => void): Promise<any> {
         return new Promise((resolve, reject) => {
-            /*
-            let ws = new this._socket!.transport("wss://" + document.location.host + "/rdp/tunnel?" + token);
+            let ws = new WebSocket(this._base.replace(/^http/, "ws") + "/rdp/tunnel?" + token);
             ws.onmessage = (e: any) => {
                 let msg = decodeMessage(e.data);
                 if (msg.command == "_status") {
@@ -2026,8 +2007,6 @@ export class MamoriService {
                     reject(msg.params[0]);
                 }
             };
-            */
-            reject("socket not implemented");
         });
     }
 
@@ -2062,49 +2041,48 @@ export class MamoriService {
         return this.callAPI("GET", "/v1/secrets/", options);
     }
 
-    public get_secret(id: number|string): Promise<any> {
+    public get_secret(id: number | string): Promise<any> {
         return this.callAPI("GET", "/v1/secrets/" + id);
     }
 
-    public get_secret_parts(id: number|string): Promise<any> {
+    public get_secret_parts(id: number | string): Promise<any> {
         return this.callAPI("GET", "/v1/secrets/" + id + "/parts");
     }
 
-    public reveal_secret(id: number|string): Promise<any> {
+    public reveal_secret(id: number | string): Promise<any> {
         return this.callAPI("GET", "/v1/secrets/" + id + "/reveal");
     }
 
     public create_secret(secret: any): Promise<any> {
-        return this.callAPI("POST", "/v1/secrets/", {secret});
+        return this.callAPI("POST", "/v1/secrets/", { secret });
     }
 
     public restore_secret(secret: any, key?: string): Promise<any> {
-	if(key) {
-            return this.callAPI("POST", "/v1/secrets/", {restore: true, key, secret});
-	}
+        if (key) {
+            return this.callAPI("POST", "/v1/secrets/", { restore: true, key, secret });
+        }
 
-        return this.callAPI("POST", "/v1/secrets/", {restore: true, secret});
+        return this.callAPI("POST", "/v1/secrets/", { restore: true, secret });
     }
 
     public export_secret(name: string, key?: string): Promise<any> {
-	if(key) {
+        if (key) {
             return this.callAPI("GET", "/v1/secrets/" + encodeURIComponent(name) + "/export?key=" + encodeURIComponent(key));
-	}
+        }
 
         return this.callAPI("GET", "/v1/secrets/" + encodeURIComponent(name) + "/export");
     }
 
-    public update_secret(id: number|string, secret: any): Promise<any> {
-        return this.callAPI("PUT", "/v1/secrets/" + id, {secret});
+    public update_secret(id: number | string, secret: any): Promise<any> {
+        return this.callAPI("PUT", "/v1/secrets/" + id, { secret });
     }
 
-    public delete_secret(id: number|string): Promise<any> {
+    public delete_secret(id: number | string): Promise<any> {
         return this.callAPI("DELETE", "/v1/secrets/" + id);
     }
 
-    public reset_secret_alert(id: number|string, alert_at: string): Promise<any> {
+    public reset_secret_alert(id: number | string, alert_at: string): Promise<any> {
         return this.callAPI("PUT", "/v1/secrets/" + id + "/reset_alert", { alert_at });
     }
-
 
 }

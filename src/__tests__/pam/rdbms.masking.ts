@@ -33,7 +33,7 @@ describe("masking policy tests", () => {
 
         await api.login(username, password);
         //create the user
-        user = new io_user.User(grantee).withEmail("test@.test.com");
+        user = new io_user.User(grantee).withEmail("test@test.com");
         await io_utils.ignoreError(user.delete(api));
         await user.create(api, granteepw).catch(e => {
             fail(io_utils.handleAPIException(e));

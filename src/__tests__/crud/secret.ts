@@ -153,7 +153,7 @@ describe("Secret CRUD tests", () => {
         expect(r1.status).toBe('OK');
 
         let p2 = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, part2)
-            .withSecret("2222")
+            .withSecret("2224")
             .withUsername("testUser")
             .withHost("10.123.0.100")
             .withDescription("The Desc");

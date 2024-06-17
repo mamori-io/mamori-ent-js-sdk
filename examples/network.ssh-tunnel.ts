@@ -25,7 +25,7 @@ async function example() {
     let name : string = "example_network_ssh_tunnel";
     let s = new SshTunnel("example_ssh_tunnel_to_local");
     s.at(vpn_ssh_host, 22);
-    s.forward(2222, "localhost", 22);
+    s.forward(2224, "localhost", 22);
     s.withCredentials(vpn_ssh_user, sshKeyName);
     await io_utils.ignoreError(s.delete(api));
 
@@ -37,7 +37,7 @@ async function example() {
     //READ IT
     await sleep(2000);
     
-    await execute('ssh -p 2222 ' + vpn_ssh_user + "@localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C \"echo 'SVQgTElWRVMK' | base64 -d\"");
+    await execute('ssh -p 2224 ' + vpn_ssh_user + "@localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C \"echo 'SVQgTElWRVMK' | base64 -d\"");
     (await io_utils.noThrow(SshTunnel.getAll(api))).filter((o: any) => o.name == s.name)[0];
     console.info("reading network.ssh_t...%s", name);
     ///////////
