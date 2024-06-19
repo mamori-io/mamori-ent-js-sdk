@@ -1,7 +1,7 @@
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-import { MamoriService,io_https, io_utils, io_network} from 'mamori-ent-js-sdk';
-import { execute, sleep } from 'mamori-ent-js-sdk';
+import { MamoriService,io_https, io_utils, io_network, io_utility_helper } from 'mamori-ent-js-sdk';
+
 
 const mamoriUrl = process.env.MAMORI_SERVER || '';
 const mamoriUser = process.env.MAMORI_USERNAME || '';
@@ -35,9 +35,9 @@ async function example() {
     console.info("creating network.ssh_t...%s", name);
     ///////////
     //READ IT
-    await sleep(2000);
+    await io_utility_helper.sleep(2000);
     
-    await execute('ssh -p 2224 ' + vpn_ssh_user + "@localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C \"echo 'SVQgTElWRVMK' | base64 -d\"");
+    await io_utility_helper.execute('ssh -p 2224 ' + vpn_ssh_user + "@localhost -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C \"echo 'SVQgTElWRVMK' | base64 -d\"");
     (await io_utils.noThrow(io_network.SshTunnel.getAll(api))).filter((o: any) => o.name == s.name)[0];
     console.info("reading network.ssh_t...%s", name);
     ///////////
