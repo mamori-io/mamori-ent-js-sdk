@@ -5,7 +5,7 @@ import { MamoriService,io_https, io_utils, io_user} from 'mamori-ent-js-sdk';
 const mamoriUrl = process.env.MAMORI_SERVER || '';
 const mamoriUser = process.env.MAMORI_USERNAME || '';
 const mamoriPwd = process.env.MAMORI_PASSWORD || '';
-const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
+
 
 //let mamoriUrl = "https://localhost/" ;
 //let mamoriUser = "alice" ;

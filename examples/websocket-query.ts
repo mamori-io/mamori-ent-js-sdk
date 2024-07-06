@@ -17,7 +17,7 @@ async function example() {
     let client = await api.connect(mamoriUrl.replace(/^http/, "ws") + "/websockets/query", mamoriUser, mamoriPwd);
 
     try {
-        console.info("Login successful");
+        console.info("Login successful"); 
 
         let counter = 0;
         for await (const row of client.select("select * from SYS.QUERIES")) {
