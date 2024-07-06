@@ -10,6 +10,10 @@ const mamoriPwd = process.env.MAMORI_PASSWORD || '';
 const host = process.env.MAMORI_SERVER || '';
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 
+function fail(reason = "fail was called in a test.") {
+  throw new Error(reason);
+}
+
 //let mamoriUrl = "https://localhost/" ;
 //let mamoriUser = "alice" ;
 //let mamoriPwd  = "mirror" ;   
