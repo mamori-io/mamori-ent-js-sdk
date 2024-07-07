@@ -3,7 +3,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 //import { MamoriService,io_https,io_utils } from 'mamori-ent-js-sdk';
 //import { } from 'mamori-ent-js-sdk';
 import { MamoriService,io_https, io_utils } from 'mamori-ent-js-sdk';
-import { io_key, SshLogin, sshKeyName } from 'mamori-ent-js-sdk';
+import { io_key, SshLogin } from 'mamori-ent-js-sdk';
 
 const mamoriUser = process.env.MAMORI_USERNAME || '';
 const mamoriPwd = process.env.MAMORI_PASSWORD || '';
@@ -21,6 +21,7 @@ function fail(reason = "fail was called in a test.") {
 async function example() {
     let api = new MamoriService(host, INSECURE);
     let apiAsAPIUser: MamoriService;
+    let sshKeyName = "example_sshlogin_ssh_key";
 		console.info("Connecting...");
 	  let login = await api.login(mamoriUser, mamoriPwd);
 	  console.info("Login successful for: ", login.fullname, ", session: ", login.session_id);
