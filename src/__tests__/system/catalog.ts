@@ -2,6 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
 import { MamoriPermission, MAMORI_PERMISSION, TIME_UNIT } from '../../permission';
+import '../../__utility__/jest/error_matcher'
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -68,7 +69,7 @@ describe("mamori catalog tests", () => {
         //Select from the connection log
         let sql = "select * from SYS.QUERIES where userid !='" + grantee + "' limit 10";
         let r = await noThrow(apiAsAPIUser.select(sql));
-
+        expect(r).toSucceed();
         expect(r.length).toBe(0);
 
         let perm = new MamoriPermission()

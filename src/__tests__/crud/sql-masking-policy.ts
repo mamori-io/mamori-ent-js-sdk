@@ -7,6 +7,7 @@ import { DatasourcePermission, DB_PERMISSION, MamoriPermission, MAMORI_PERMISSIO
 import { handleAPIException, noThrow, ignoreError, FILTER_OPERATION } from '../../utils';
 import { Datasource } from '../../datasource';
 import { ServerSession } from '../../server-session';
+import '../../__utility__/jest/error_matcher'
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -117,7 +118,7 @@ describe("sql-masking-policy crud tests", () => {
         o.priority = 100;
         await noThrow(o.delete(api));
         let x = await noThrow(o.create(api));
-        expect(x.error).toBe(false);
+        expect(x).toSucceed();
 
         let r = await noThrow(SQLMaskingPolicy.list(api, 0, 10, [["name", FILTER_OPERATION.EQUALS_STRING, o.name]]));
         expect(r.totalCount).toBe(1);
@@ -131,23 +132,23 @@ describe("sql-masking-policy crud tests", () => {
         expect(res.totalCount).toBe(0);
         //Grant a policy
         let x4 = await noThrow(o.grantTo(api, grantee));
-        expect(x4.errors).toBe(false);
+        expect(x4).toSucceed();
         let res2 = await new PolicyPermission().grantee(grantee).list(api, filter);
         expect(res2.totalCount).toBe(1);
         //Revoke a policy
         let x5 = await noThrow(o.revokeFrom(api, grantee));
-        expect(x5.errors).toBe(false);
+        expect(x5).toSucceed()
         let res3 = await new PolicyPermission().grantee(grantee).list(api, filter);
         expect(res3.totalCount).toBe(0);
 
         //Add masking rules
         //GRANT AGAIN - to test delete removes permissions
         let x6 = await noThrow(o.grantTo(api, grantee));
-        expect(x6.errors).toBe(false);
+        expect(x6).toSucceed();
 
         //Delete Policy
         let d0 = await noThrow(o.delete(api));
-        expect(d0.error).toBe(false);
+        expect(d0).toSucceed();
         let d2 = await noThrow(SQLMaskingPolicy.list(api, 0, 10, [["name", FILTER_OPERATION.EQUALS_STRING, o.name]]));
         expect(d2.totalCount).toBe(0);
         //Check permissions gone

@@ -1,4 +1,4 @@
-import type {Config} from 'jest';
+import type { Config } from 'jest';
 import { promises as fs } from 'fs';
 
 const config: Config = {
@@ -22,23 +22,23 @@ const config: Config = {
 export default async (): Promise<Config> => {
     try {
         const json = JSON.parse(await fs.readFile(__dirname + "/.local_env.json", "utf8"));
-	for(let k in json) {
-	    let v = json[k];
+        for (let k in json) {
+            let v = json[k];
 
-	    if(typeof v === "string") {
-		process.env[k] = v;
-	    } else {
-		process.env[k] = JSON.stringify(v);
-	    }
-	}
-    } catch(_e) {
+            if (typeof v === "string") {
+                process.env[k] = v;
+            } else {
+                process.env[k] = JSON.stringify(v);
+            }
+        }
+    } catch (_e) {
         // ignore any error
     }
 
     try {
         const json = JSON.parse(await fs.readFile(__dirname + "/.local_jest.json", "utf8"));
         Object.assign(config, json);
-    } catch(_e) {
+    } catch (_e) {
         // ignore any error
     }
 
