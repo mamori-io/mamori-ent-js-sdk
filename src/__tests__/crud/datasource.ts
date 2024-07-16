@@ -1,6 +1,7 @@
 import { MamoriService } from '../../api';
 import { io_https, io_datasource, io_utils, io_role, io_db_credential } from '../../api';
 import { setPassthroughPermissions, createNewPassthroughSession, createPGDatabaseUser, dropPGDatabaseUser } from '../../__utility__/ds';
+import '../../__utility__/jest/error_matcher'
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -57,22 +58,22 @@ describe("datasource tests", () => {
             .withDatabase('mamorisys')
             .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
         let res = await io_utils.noThrow(ds.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed()
         //
-        let results = (await io_utils.noThrow(io_datasource.Datasource.read(api,dsName)));		
+        let results = (await io_utils.noThrow(io_datasource.Datasource.read(api, dsName)));
         //console.info("reading  datasource..%o",results);
         expect(results.available).toBe("true");
         expect(results.status).toBeNull();
 
         //Grant a credential to a user
         let ccred = await io_utils.noThrow(ds.addCredential(api, grantee, 'postgres', dbPassword));
-        expect(res.error).toBe(false);
+        expect(ccred).toSucceed();
         //Delete a credential to a user
         let dcred = await io_utils.noThrow(ds.removeCredential(api, grantee));
-        expect(res.error).toBe(false);
+        expect(dcred).toSucceed();
         //Delete the data source
         let resDel = await io_utils.noThrow(ds.delete(api));
-        expect(resDel.error).toBe(false);
+        expect(resDel).toSucceed();
 
     });
 
@@ -92,7 +93,7 @@ describe("datasource tests", () => {
             .withCredentials(dsUser, dsDBPW)
             .withDatabase(dsDB);
         let res = await io_utils.noThrow(ds.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         //CREATE THE USER
         let uName = 'T002' + grantee;
         await io_utils.ignoreError(api.delete_user(uName));
@@ -103,10 +104,10 @@ describe("datasource tests", () => {
             identified_by: "password",
             email: "test@test.test"
         }));
-        expect(r1.error).toBe(false);
+        expect(r1).toSucceed();
         //ADD CREDENTIAL
         let ccred = await io_utils.noThrow(ds.addCredential(api, uName, dsUser, dsDBPW));
-        expect(ccred.error).toBe(false);
+        expect(ccred).toSucceed();
         //SET PERMISSIONS
         await setPassthroughPermissions(api, uName, dsName);
         let apiU = await createNewPassthroughSession(host, uName, granteepw, dsName);
@@ -129,9 +130,9 @@ describe("datasource tests", () => {
             let dsRole = new io_role.Role(rName);
             await io_utils.ignoreError(dsRole.delete(api));
             let r4 = await io_utils.noThrow(dsRole.create(api));
-            expect(r4.errors).toBeUndefined();
+            expect(r4).toSucceed();
             let r5 = await io_utils.noThrow(dsRole.grantTo(api, uName, false));
-            expect(r5.errors).toBe(false);
+            expect(r5).toSucceed();
             //MAKE NEW DATA SOURCE using USER1
             let ds2 = new io_datasource.Datasource("A" + dsName);
             await io_utils.ignoreError(ds2.delete(api));
@@ -141,14 +142,14 @@ describe("datasource tests", () => {
                 .withDatabase(dsDB)
                 .withPasswordPolicy("30", rName);
             let r6 = await io_utils.noThrow(ds2.create(api));
-            expect(r6.errors).toBeUndefined();
+            expect(r6).toSucceed();
             let r9 = await io_utils.noThrow(ds2.validateCredential(api, grantee, loginU1, pw));
             //console.log(r9);
-            expect(r9.errors).toBeDefined();
+            expect(r9).not.toSucceed();
             let r10 = await io_utils.noThrow(ds2.addCredentialWithManagedPassword(api, grantee, loginU2, pw, "15"));
-            expect(r10.errors).toBeUndefined();
+            expect(r10).toSucceed();
             let r11 = await io_utils.noThrow(ds2.validateCredential(api, grantee, loginU2, pw));
-            expect(r11.errors).toBeDefined();
+            expect(r11).not.toSucceed();
 
             await io_utils.ignoreError(dsRole.delete(api));
             await io_utils.ignoreError(ds2.delete(api));
@@ -178,7 +179,7 @@ describe("datasource tests", () => {
             .withCredentials(dsUser, dsDBPW)
             .withDatabase(dsDB);
         let res = await io_utils.noThrow(ds.create(api));
-        expect(res.errors).toBeUndefined();
+        expect(res).toSucceed();
 
         //CREATE THE USER
         let uName = 'T003' + grantee;
@@ -190,15 +191,15 @@ describe("datasource tests", () => {
             identified_by: "password",
             email: "test@test.test"
         }));
-        expect(r1.error).toBe(false);
+        expect(r1).toSucceed();
         //ADD CREDENTIAL
         let ccred = await io_utils.noThrow(ds.addCredential(api, uName, dsUser, dsDBPW));
-        expect(ccred.error).toBe(false);
+        expect(ccred).toSucceed();
         //DISABLE DS
         let r = await io_utils.noThrow(ds.update(api, { enabled: false }));
-        expect(r.errors).toBeUndefined();
+        expect(r).toSucceed();
         let r2 = await io_utils.noThrow(ds.removeCredential(api, uName));
-        expect(r2.errors).toBeUndefined();
+        expect(r2).toSucceed();
         //CLEAN UP
         await io_utils.ignoreError(ds.delete(api));
         await io_utils.ignoreError(api.delete_user(uName));
@@ -220,7 +221,7 @@ describe("datasource tests", () => {
             .withCredentials(dsUser, dsDBPW)
             .withDatabase(dsDB);
         let res = await io_utils.noThrow(ds.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         //CREATE THE USER
         let uName = 'T004' + grantee;
         await io_utils.ignoreError(api.delete_user(uName));
@@ -231,10 +232,10 @@ describe("datasource tests", () => {
             identified_by: "password",
             email: "test@test.test"
         }));
-        expect(r1.error).toBe(false);
+        expect(r1).toSucceed();
         //ADD CREDENTIAL
         let ccred = await io_utils.noThrow(ds.addCredential(api, uName, dsUser, dsDBPW));
-        expect(ccred.error).toBe(false);
+        expect(ccred).toSucceed();
         //SET PERMISSIONS
         await setPassthroughPermissions(api, uName, dsName);
         let apiU = await createNewPassthroughSession(host, uName, granteepw, dsName);
@@ -261,14 +262,14 @@ describe("datasource tests", () => {
                 .withDatabase(dsDB)
                 .withPasswordPolicy("30", "");
             let r6 = await io_utils.noThrow(ds2.create(api));
-            expect(r6.errors).toBeUndefined();
+            expect(r6).toSucceed();
             let r9 = await io_utils.noThrow(ds2.validateCredential(api, grantee, loginU1, pw));
             //console.log(r9);
-            expect(r9.errors).toBeDefined();
+            expect(r9).not.toSucceed();
             let r10 = await io_utils.noThrow(ds2.addCredentialWithManagedPassword(api, grantee, loginU2, pw, "15"));
-            expect(r10.errors).toBeUndefined();
+            expect(r10).toSucceed();
             let r11 = await io_utils.noThrow(ds2.validateCredential(api, grantee, loginU2, pw));
-            expect(r11.errors).toBeDefined();
+            expect(r11).not.toSucceed();
 
             await io_utils.ignoreError(ds2.delete(api));
             await dropPGDatabaseUser(apiU, loginU1, dsDB);
@@ -297,7 +298,7 @@ describe("datasource tests", () => {
         await io_utils.ignoreError(ds.delete(api))
 
         let res = await io_utils.noThrow(ds.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         //
         let r2 = await io_utils.noThrow(io_db_credential.DBCredential.getByName(api, ds.name, dsDef.uname, "@"));
         expect(r2.auth_id).toBeDefined();
@@ -308,13 +309,13 @@ describe("datasource tests", () => {
             .replace(":SID", dsDef.sid);
         let opt = { connection_string: cs, host: '', port: '' };
         let r = await io_utils.noThrow(ds.update(api, opt));
-	if(r.errors) {
-	    throw r.response.data.message;
-	}
-        expect(r.error).toBe(false);
+        if (r.errors) {
+            throw r.response.data.message;
+        }
+        expect(r).toSucceed();
 
         let r5 = await io_utils.noThrow(ds.get(api));
-        expect(r5.options).toBeDefined();
+        expect(r5).not.toSucceed();
         let o = r5.options.filter((x: any) => x.optionnameddl == 'CONNECTION_STRING');
         expect(o[0].currentvalue).toBe(cs);
 
@@ -341,15 +342,12 @@ describe("datasource tests", () => {
 
         await io_utils.ignoreError(ds.delete(api))
         let res = await io_utils.noThrow(ds.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         let opt = { host: dsDef.host, port: dsDef.port, database: dsDef.sid, driver: dsDef.driver };
         //ds.at(dsDef.host, dsDef.port)
         //this.host = dsDef.host;
         let r = await io_utils.noThrow(ds.update(api, opt));
-	if(r.errors) {
-	    throw r.response.data.message;
-	}
-        expect(r.error).toBe(false);
+        expect(r).toSucceed();
         //["DRIVER 'oracle11204'", "HOST 'sandbox.mamori.io'", "PORT '1521'", "DEFAULTDATABASE 'oracle193'", "TEMPDATABASE 'oracle193'"]
         await io_utils.ignoreError(ds.delete(api))
     });
@@ -369,16 +367,13 @@ describe("datasource tests", () => {
         await io_utils.ignoreError(ds.delete(api))
 
         let res = await io_utils.noThrow(ds.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         let r2 = await io_utils.noThrow(io_db_credential.DBCredential.getByName(api, ds.name, dsDef.uname.toLowerCase(), "@"));
         expect(r2.auth_id).toBeDefined();
 
         let opt = { user: dsDef.uname.toUpperCase(), password: dsDef.password };
         let r = await io_utils.noThrow(ds.update(api, opt));
-	if(r.errors) {
-	    throw r.response.data.message;
-	}
-        expect(r.error).toBe(false);
+        expect(r).toSucceed();
         let r3 = await io_utils.noThrow(io_db_credential.DBCredential.listFor(api, 0, 100, dsName, dsDef.uname, "@"));
         expect(r3.length).toBe(1);
         //
