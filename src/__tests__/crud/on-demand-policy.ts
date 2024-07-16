@@ -1,5 +1,7 @@
 import { MamoriService } from '../../api';
 import { io_alertchannel, io_role, io_user, io_utils, io_permission, io_ondemandpolicies, io_https } from '../../api';
+import '../../__utility__/jest/error_matcher';
+
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -123,12 +125,11 @@ describe("on-demand policy crud tests", () => {
 
         await io_utils.noThrow(k.delete(api));
         let x = await io_utils.noThrow(k.create(api));
-        expect(x.error).toBe(false);
-
+        expect(x).toSucceed();
         let x3 = await io_utils.noThrow(io_ondemandpolicies.OnDemandPolicy.get(api, name));
-	if(!x3.name) {
-	    throw x3;
-	}
+        if(!x3.name) {
+            throw x3;
+        }
 
         let x2 = await io_utils.noThrow(k.delete(api));
         expect(x2.error).toBe(false);
