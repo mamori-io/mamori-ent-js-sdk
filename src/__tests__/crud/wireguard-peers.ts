@@ -2,6 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { WireGuardPeer } from '../../wireguard-peer';
 import { handleAPIException, noThrow, ignoreError, hex2a } from '../../utils';
+import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';

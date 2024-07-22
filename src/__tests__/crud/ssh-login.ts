@@ -1,6 +1,7 @@
 import { MamoriService, io_utils, io_https, io_requestable_resource, io_role, io_key } from '../../api';
 import * as helper from '../../__utility__/test-helper';
 import { SshLogin } from '../../ssh-login';
+import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';

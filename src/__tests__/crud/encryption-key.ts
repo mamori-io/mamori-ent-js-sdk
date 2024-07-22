@@ -2,6 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { Key, KEY_TYPE, SSH_ALGORITHM } from '../../key';
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
+import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';

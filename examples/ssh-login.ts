@@ -65,7 +65,7 @@ async function example() {
 
     ///////////
     //READ IT
-    (await io_utils.noThrow(SshLogin.getAll(api))).filter((o: any) => o.s == s.s)[0];
+    (await io_utils.noThrow(SshLogin.getAll(api))).filter((o: any) => o.name == s.name)[0];
     console.info("reading ssh_login_to_local...%s", s);
 
     ////////////////////////////////////

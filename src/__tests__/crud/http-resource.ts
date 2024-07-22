@@ -1,6 +1,7 @@
 import { MamoriService } from '../../api';
 import { io_https, io_utils, io_http_resource, io_requestable_resource, io_role, io_user } from '../../api';
 import * as helper from '../../__utility__/test-helper';
+import '../../__utility__/jest/error_matcher';
 
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';

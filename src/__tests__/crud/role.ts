@@ -3,6 +3,7 @@ import * as https from 'https';
 import { Role } from '../../role';
 import { DatasourcePermission, DB_PERMISSION, TIME_UNIT } from '../../permission';
 import { handleAPIException, noThrow, ignoreError, FILTER_OPERATION } from '../../utils';
+import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';

@@ -3,6 +3,7 @@ import * as https from 'https';
 import { AlertChannel, HTTP_OPERATION } from "../../alert-channel";
 import { WireGuardPeer } from '../../wireguard-peer';
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
+import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';

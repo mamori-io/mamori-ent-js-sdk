@@ -3,6 +3,7 @@ import { io_https, io_user } from '../../api';
 import { SshTunnel } from '../../network';
 
 import { execute, sleep } from '../../__utility__/test-helper';
+import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
