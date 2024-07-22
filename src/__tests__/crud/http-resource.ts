@@ -108,7 +108,7 @@ describe("HTTP Resource CRUD tests", () => {
             requestable.resource_type, grantee, resourceName, policyName));
         //
         let r1 = await io_utils.noThrow(requestable.create(api));
-        expect(r1.error).toBe(false);
+        expect(r1).toSucceed();
 
         let r2 = await io_utils.noThrow(io_requestable_resource.RequestableResource.getByName(api,
             requestable.resource_type, grantee, resourceName, policyName));

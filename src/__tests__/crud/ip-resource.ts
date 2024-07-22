@@ -49,7 +49,7 @@ describe("IP resource CRUD tests", () => {
         //Clean up any prior test
         let d = await io_utils.ignoreError(r.delete(api));
         let r1 = await io_utils.noThrow(r.create(api));
-        expect(r1.error).toBe(false);
+        expect(r1).toSucceed();
 
         let r2 = await io_utils.noThrow(io_ipresource.IpResource.list(api, 0, 100, [["name", "=", resourceName]]));
         expect(r2.data.length).toBe(1);
@@ -59,7 +59,7 @@ describe("IP resource CRUD tests", () => {
         expect(y.ports).toBe(ports);
 
         let r3 = await io_utils.noThrow(r.delete(api));
-        expect(r3.error).toBe(false);
+        expect(r3).toSucceed();
         let r4 = await io_utils.noThrow(io_ipresource.IpResource.list(api, 0, 100, [["name", "=", resourceName]]));
         expect(r4.data.length).toBe(0);
     });
@@ -72,7 +72,7 @@ describe("IP resource CRUD tests", () => {
         let r = new io_ipresource.IpResource(resource).withCIDR(cidr).withPorts(ports);
         await io_utils.ignoreError(r.delete(api));
         let r3 = await io_utils.noThrow(r.create(api));
-        expect(r3.error).toBe(false);
+        expect(r3).toSucceed();
         // ROLE
         let policyName = "test_auto_Resource_policy_" + testbatch;
         let endorsementRole = "test_role_for_" + policyName;
@@ -87,7 +87,7 @@ describe("IP resource CRUD tests", () => {
             requestable.resource_type, grantee, resource, policyName));
         //
         let r1 = await io_utils.noThrow(requestable.create(api));
-        expect(r1.error).toBe(false);
+        expect(r1).toSucceed();
 
         let r2 = await io_utils.noThrow(io_requestable_resource.RequestableResource.getByName(api,
             requestable.resource_type, grantee, resource, policyName));

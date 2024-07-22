@@ -44,15 +44,15 @@ describe("sql-masking-policy crud tests", () => {
         let adminU = new User(admin).withEmail("usertest@ace.com").withFullName("Policy User");
         await ignoreError(adminU.delete(api));
         let res4 = await noThrow(adminU.create(api, adminpw));
-        expect(res4.error).toBe(false);
+        expect(res4).toSucceed();
         let res5 = await noThrow(new Role("mamori_admin").grantTo(api, admin, false));
-        expect(res5.errors).toBe(false);
+        expect(res5).toSucceed();
 
         //Policy User
         let policyU = new User(grantee).withEmail("usertest@ace.com").withFullName("Policy User");
         await ignoreError(policyU.delete(api));
         let res2 = await noThrow(policyU.create(api, granteepw));
-        expect(res2.error).toBe(false);
+        expect(res2).toSucceed();
 
 
 
@@ -66,38 +66,38 @@ describe("sql-masking-policy crud tests", () => {
                 .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
             await ignoreError(ds.delete(api));
             let res = await noThrow(ds.create(api));
-            expect(res.error).toBe(false);
+            expect(res).toSucceed();
             //Make a role
             let role = new Role(testRole);
             await ignoreError(role.delete(api));
             await ignoreError(role.create(api));
             //Grant credential
             let ccred = await noThrow(ds.addCredential(api, testRole, 'postgres', dbPassword));
-            expect(ccred.error).toBe(false);
+            expect(ccred).toSucceed();
             //grant role to user
             let r2 = await noThrow(role.grantTo(api, admin, false));
-            expect(r2.errors).toBe(false);
+            expect(r2).toSucceed();
             let r3 = await noThrow(role.grantTo(api, grantee, false));
-            expect(r3.errors).toBe(false);
+            expect(r3).toSucceed();
             // Grant ALL
             let p1 = await noThrow(new DatasourcePermission()
                 .on(ds.name, "*", "*", "")
                 .permissions([DB_PERMISSION.CREATE_TABLE, DB_PERMISSION.DROP_TABLE])
                 .grantee(admin)
                 .grant(api));
-            expect(p1.errors).toBe(false);
+            expect(p1).toSucceed();
             let p2 = await noThrow(new DatasourcePermission()
                 .on(ds.name, "*", "*", "*")
                 .permissions([DB_PERMISSION.INSERT, DB_PERMISSION.SELECT, DB_PERMISSION.DELETE])
                 .grantee(testRole)
                 .grant(api));
-            expect(p2.errors).toBe(false);
+            expect(p2).toSucceed();
             let p3 = await noThrow(new DatasourcePermission()
                 .on(ds.name, "*", "", "")
                 .permission(DB_PERMISSION.MASKED)
                 .grantee(testRole)
                 .grant(api));
-            expect(p3.errors).toBe(false);
+            expect(p3).toSucceed();
 
         }
     });
@@ -161,12 +161,12 @@ describe("sql-masking-policy crud tests", () => {
             let apiAsAdmin = new MamoriService(host, INSECURE);
             await apiAsAdmin.login(admin, adminpw);
             let x = await noThrow(ServerSession.setPassthrough(apiAsAdmin, dsName));
-            expect(x.errors).toBe(false);
+            expect(x).toSucceed();
 
             let apiAsAPIUser = new MamoriService(host, INSECURE);
             await apiAsAPIUser.login(grantee, granteepw);
             let x2 = await noThrow(ServerSession.setPassthrough(apiAsAPIUser, dsName));
-            expect(x2.errors).toBe(false);
+            expect(x2).toSucceed();
             let schemaName = 'testschema' + testbatch;
             try {
                 //Create the schema, table and insert data
@@ -183,7 +183,7 @@ describe("sql-masking-policy crud tests", () => {
                 let q7 = await noThrow(o.create(api));
                 expect(q7.errors).toBeUndefined();
                 let q8 = await noThrow(o.addColumnRule(api, dsName + ".postgres." + schemaName + ".tab1", "col1", "masked by full()"));
-                expect(q8.errors).toBe(false);
+                expect(q8).toSucceed();
                 let q9 = await noThrow(o.listColumnRules(api));
                 expect(q9.totalCount).toBe(1);
 
@@ -193,7 +193,7 @@ describe("sql-masking-policy crud tests", () => {
                 expect(q13[0].col1).toBe("value1");
 
                 let q11 = await noThrow(o.grantTo(api, testRole));
-                expect(q11.errors).toBe(false);
+                expect(q11).toSucceed();
                 let q12 = await noThrow(apiAsAdmin.select("select * from " + schemaName + ".TAB1"));
                 expect(q12[0].col1).toBe("XXXXXX");
                 let q14 = await noThrow(apiAsAPIUser.select("select * from " + schemaName + ".TAB1"));

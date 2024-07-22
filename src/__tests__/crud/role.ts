@@ -53,7 +53,7 @@ describe("role tests", () => {
 
         await ignoreError(k.delete(api));
         let res = await noThrow(k.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
 
         //Ensure key returned properly
         let x = (await noThrow(Role.getAll(api))).filter((o: any) => o.roleid == k.roleid);
@@ -65,7 +65,7 @@ describe("role tests", () => {
         expect(x2.length).toBe(0);
         //Grant to user
         let x3 = await noThrow(k.grantTo(api, grantee, false));
-        expect(x3.errors).toBe(false);
+        expect(x3).toSucceed();
         //Ensure user can see the role
         let x4 = (await noThrow(k.getGrantees(apiAsAPIUser)))
         expect(x4.length).toBe(1);
@@ -73,13 +73,13 @@ describe("role tests", () => {
         let resDel2 = await ignoreError(k.delete(apiAsAPIUser));
         expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
         let x5 = await noThrow(k.revokeFrom(api, grantee));
-        expect(x5.errors).toBe(false);
+        expect(x5).toSucceed();
         //Ensure the role was revoked
         let x6 = (await noThrow(k.getGrantees(apiAsAPIUser)))
         expect(x6.length).toBe(0);
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
-        expect(resDel.error).toBe(false);
+        expect(resDel).toSucceed();
 
     });
 
@@ -98,18 +98,18 @@ describe("role tests", () => {
 
         //Grant to user
         let x3 = await noThrow(k.grantTo(api, grantee, false, Role.optionValidFor(TIME_UNIT.MINUTES, 30)));
-        expect(x3.errors).toBe(false);
+        expect(x3).toSucceed();
         //Ensure user can see the role
         let x4 = await noThrow(k.getGrantees(api));
         expect(x4.length).toBe(1);
         let x5 = await noThrow(k.revokeFrom(api, grantee));
-        expect(x5.errors).toBe(false);
+        expect(x5).toSucceed();
         //Ensure the role was revoked
         let x6 = await noThrow(k.getGrantees(api));
         expect(x6.length).toBe(0);
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
-        expect(resDel.error).toBe(false);
+        expect(resDel).toSucceed();
 
     });
 
@@ -122,14 +122,14 @@ describe("role tests", () => {
         let k = new Role(roleName);
         await ignoreError(k.delete(api));
         let res = await noThrow(k.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         //Ensure role created
         let x = (await noThrow(Role.getAll(api))).filter((o: any) => o.roleid == k.roleid);
         expect(x.length).toBe(1);
         //Grant passthrough to role
         let grant = new DatasourcePermission().on("*", "", "", "").permission(DB_PERMISSION.PASSTHROUGH).grantee(roleName);
         let resp = await noThrow(grant.grant(api));
-        expect(resp.errors).toBe(false);
+        expect(resp).toSucceed();
         //CONFIRM ROLE HAS THE PERMISSION
         let filter0 = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, DB_PERMISSION.PASSTHROUGH]];
         let r0 = await grant.list(api, filter0);
@@ -139,7 +139,7 @@ describe("role tests", () => {
         expect(r1.totalCount).toBe(0);
         // Delete the role
         let rd = await noThrow(k.delete(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         //CONFIRM ROLE NO LONGER HAS THE PERMISSION
         let r2 = await grant.list(api, filter0);
         expect(r2.totalCount).toBe(0);

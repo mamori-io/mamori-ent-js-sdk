@@ -65,7 +65,7 @@ describe("DB Credential CRUD tests", () => {
         let c = new io_db_credential.DBCredential().withDatasource(dsName).withUsername("postgres");
         let cred = io_db_credential.DBCredential.build(c.toJSON());
         let r = await io_utils.noThrow(cred.create(api, dbPassword));
-        expect(r.error).toBe(false);
+        expect(r).toSucceed();
 
         let r2 = await io_utils.noThrow(io_db_credential.DBCredential.getByName(api, dsName, "postgres", "@"));
         expect(r2.auth_id).toBeDefined();
@@ -75,13 +75,13 @@ describe("DB Credential CRUD tests", () => {
         let nrole = new io_role.Role(rname);
         await io_utils.ignoreError(nrole.delete(api));
         let rx = await io_utils.noThrow(nrole.create(api));
-        expect(rx.error).toBe(false);
+        expect(rx).toSucceed();
         let credPermission = new io_permission.CredentialPermission();
         credPermission.withDatasource(dsName).withLoginName("postgres").grantee(rname);
         let rx2 = await io_utils.noThrow(credPermission.grant(api));
-        expect(rx2.errors).toBe(false);
+        expect(rx2).toSucceed();
         let rx3 = await io_utils.noThrow(credPermission.revoke(api));
-        expect(rx3.errors).toBe(false);
+        expect(rx3).toSucceed();
         let res = await credPermission.list(api);
         expect(res.data.length).toBe(0);
         //Clean up role
@@ -95,17 +95,17 @@ describe("DB Credential CRUD tests", () => {
 
         await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"))
         let xx1 = await io_utils.noThrow(xx.restore(api, keyName));
-        expect(xx1.error).toBe(false);
+        expect(xx1).toSucceed();
         await helper.EncryptionKey.cleanupAESEncryptionKey(api, keyName);
         let x = await io_utils.noThrow(cred.delete(api));
-        expect(x.error).toBe(false);
+        expect(x).toSucceed();
     });
 
     dbtest('db cred requestable', async () => {
         await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, "postgres", "@"));
         let cred = new io_db_credential.DBCredential().withDatasource(dsName).withUsername("postgres");
         let r = await io_utils.noThrow(cred.create(api, dbPassword));
-        expect(r.error).toBe(false);
+        expect(r).toSucceed();
         // ROLE
         let policyName = "test_req_cred_policy_" + testbatch;
         let endorsementRole = "test_role_for_" + policyName;
@@ -122,7 +122,7 @@ describe("DB Credential CRUD tests", () => {
             requestable.resource_type, grantee, dsName, policyName, requestable.resource_login));
         //CREATE
         let r1 = await io_utils.noThrow(requestable.create(api));
-        expect(r1.error).toBe(false);
+        expect(r1).toSucceed();
         //CONFIRM
         let l = await io_utils.noThrow(io_requestable_resource.RequestableResource.getByName(api,
             requestable.resource_type, grantee, dsName, policyName, requestable.resource_login));

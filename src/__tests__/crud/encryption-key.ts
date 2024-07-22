@@ -56,7 +56,7 @@ describe("encryption key tests", () => {
         //Create
         k.ofType(KEY_TYPE.AES);
         let res = await noThrow(k.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
 
         //Ensure key returned properly
         let x = (await noThrow(Key.getAll(api))).filter((key: any) => key.name == k.name)[0];
@@ -88,7 +88,7 @@ describe("encryption key tests", () => {
 
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
-        expect(resDel.error).toBe(false);
+        expect(resDel).toSucceed();
     });
 
     test('rsa pair as admin', async () => {
@@ -142,9 +142,9 @@ describe("encryption key tests", () => {
 
         //Delete the data source
         let resDel = await noThrow(kpub.delete(api));
-        expect(resDel.error).toBe(false);
+        expect(resDel).toSucceed();
         let resDel2 = await noThrow(kpriv.delete(api));
-        expect(resDel2.error).toBe(false);
+        expect(resDel2).toSucceed();
     });
 
     test('ssh rsa 01', async () => {
@@ -187,7 +187,7 @@ describe("encryption key tests", () => {
 
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
-        expect(resDel.error).toBe(false);
+        expect(resDel).toSucceed();
 
     });
 
@@ -231,7 +231,7 @@ describe("encryption key tests", () => {
 
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
-        expect(resDel.error).toBe(false);
+        expect(resDel).toSucceed();
     });
 
     test('ssh ecdsa 01', async () => {
@@ -277,7 +277,7 @@ describe("encryption key tests", () => {
 
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
-        expect(resDel.error).toBe(false);
+        expect(resDel).toSucceed();
     });
 
     test('ssh ed25519 01', async () => {
@@ -320,7 +320,7 @@ describe("encryption key tests", () => {
 
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
-        expect(resDel.error).toBe(false);
+        expect(resDel).toSucceed();
     });
 
 

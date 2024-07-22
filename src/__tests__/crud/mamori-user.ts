@@ -32,7 +32,7 @@ describe("mamori user tests", () => {
         let k = new User(grantee).withEmail(grantee + "@ace.com").withFullName("Test User");
         await ignoreError(k.delete(api));
         let res = await noThrow(k.create(api, granteepw));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         let x = await noThrow(User.get(api, grantee));
         expect(x.username).toBe(grantee);
         //Test connection
@@ -43,11 +43,11 @@ describe("mamori user tests", () => {
         //Update email
         k.email = "testit@test.com";
         let x2 = await noThrow(k.update(api));
-        expect(x2.error).toBe(false);
+        expect(x2).toSucceed();
         let x3 = await noThrow(User.get(api, grantee));
         expect(x3.email).toBe("testit@test.com");
         let d = await noThrow(k.delete(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
     });
 
     //spaces, periods, dashes, and underscores
@@ -56,7 +56,7 @@ describe("mamori user tests", () => {
         let k = new User(uname).withEmail(grantee + "@ace.com").withFullName("Test User");
         await ignoreError(k.delete(api));
         let res = await noThrow(k.create(api, granteepw));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         let x = await noThrow(User.get(api, uname));
         expect(x.username).toBe(uname);
         //Test connection
@@ -67,11 +67,11 @@ describe("mamori user tests", () => {
         //Update email
         k.email = "testit@test.com";
         let x2 = await noThrow(k.update(api));
-        expect(x2.error).toBe(false);
+        expect(x2).toSucceed();
         let x3 = await noThrow(User.get(api, uname));
         expect(x3.email).toBe("testit@test.com");
         let d = await noThrow(k.delete(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
     });
 
 

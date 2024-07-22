@@ -49,14 +49,14 @@ describe("on-demand policy crud tests", () => {
         let agentU = new io_user.User(agent).withEmail(agent + "@ace.com").withFullName("Agent User");
         await io_utils.ignoreError(agentU.delete(api));
         let res = await io_utils.noThrow(agentU.create(api, agentpw));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
 
 
         //Policy User
         let policyU = new io_user.User(grantee).withEmail(agent + "@ace.com").withFullName("Policy User");
         await io_utils.ignoreError(policyU.delete(api));
         let res2 = await io_utils.noThrow(policyU.create(api, granteepw));
-        expect(res2.error).toBe(false);
+        expect(res2).toSucceed();
  
 
         //create roles
@@ -102,13 +102,13 @@ describe("on-demand policy crud tests", () => {
 
         await io_utils.noThrow(k.delete(api));
         let x = await io_utils.noThrow(k.create(api));
-        expect(x.error).toBe(false);
+        expect(x).toSucceed();
 
         let x3 = await io_utils.noThrow(io_ondemandpolicies.OnDemandPolicy.get(api, name));
         expect(x3.name).toBeDefined();
 
         let x2 = await io_utils.noThrow(k.delete(api));
-        expect(x2.error).toBe(false);
+        expect(x2).toSucceed();
 
     });
 
@@ -132,7 +132,7 @@ describe("on-demand policy crud tests", () => {
         }
 
         let x2 = await io_utils.noThrow(k.delete(api));
-        expect(x2.error).toBe(false);
+        expect(x2).toSucceed();
 
     });
 

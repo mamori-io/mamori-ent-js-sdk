@@ -73,7 +73,7 @@ describe("ssh login tests", () => {
 
         //Grant to User
         let x3 = await io_utils.noThrow(k.grantTo(api, grantee));
-        expect(x3.errors).toBe(false);
+        expect(x3).toSucceed();
         //Ensure user can see the object
         let x4 = (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
         expect(x4.length).toBe(1);
@@ -83,7 +83,7 @@ describe("ssh login tests", () => {
         expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
 
         let x5 = await io_utils.noThrow(k.revokeFrom(api, grantee));
-        expect(x5.errors).toBe(false);
+        expect(x5).toSucceed();
         //Ensure the key was revoked
         let x6 = (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
         expect(x6.length).toBe(0);
@@ -116,7 +116,7 @@ describe("ssh login tests", () => {
 
         //Grant to User
         let x3 = await io_utils.noThrow(k.grantTo(api, grantee));
-        expect(x3.errors).toBe(false);
+        expect(x3).toSucceed();
         //Ensure user can see the object
         let x4 = (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
         expect(x4.length).toBe(1);
@@ -126,7 +126,7 @@ describe("ssh login tests", () => {
         expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
 
         let x5 = await io_utils.noThrow(k.revokeFrom(api, grantee));
-        expect(x5.errors).toBe(false);
+        expect(x5).toSucceed();
         //Ensure the key was revoked
         let x6 = (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
         expect(x6.length).toBe(0);
@@ -159,7 +159,7 @@ describe("ssh login tests", () => {
 
         //Grant to User
         let x3 = await io_utils.noThrow(k.grantTo(api, grantee));
-        expect(x3.errors).toBe(false);
+        expect(x3).toSucceed();
         //Ensure user can see the object
         let x4 = (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
         expect(x4.length).toBe(1);
@@ -169,7 +169,7 @@ describe("ssh login tests", () => {
         expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
 
         let x5 = await io_utils.noThrow(k.revokeFrom(api, grantee));
-        expect(x5.errors).toBe(false);
+        expect(x5).toSucceed();
         //Ensure the key was revoked
         let x6 = (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
         expect(x6.length).toBe(0);
@@ -205,7 +205,7 @@ describe("ssh login tests", () => {
         //
         let r1 = await io_utils.noThrow(requestable.create(api));
 
-        expect(r1.error).toBe(false);
+        expect(r1).toSucceed();
 
         let r2 = await io_utils.noThrow(io_requestable_resource.RequestableResource.getByName(api,
             requestable.resource_type, grantee, resource, policyName));

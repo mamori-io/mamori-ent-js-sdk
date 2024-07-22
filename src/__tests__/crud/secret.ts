@@ -121,7 +121,7 @@ describe("Secret CRUD tests", () => {
             requestable.resource_type, grantee, resource, policyName));
         //
         let r1 = await io_utils.noThrow(requestable.create(api));
-        expect(r1.error).toBe(false);
+        expect(r1).toSucceed();
 
         let r2 = await io_utils.noThrow(io_requestable_resource.RequestableResource.getByName(api,
             requestable.resource_type, grantee, resource, policyName));
@@ -131,7 +131,7 @@ describe("Secret CRUD tests", () => {
         await io_utils.noThrow(policy.delete(api));
         await io_utils.ignoreError(new io_role.Role(endorsementRole).delete(api));
         let r = await io_utils.noThrow(io_secret.Secret.deleteByName(api, resource));
-        expect(r.error).toBe(false);
+        expect(r).toSucceed();
     });
 
 

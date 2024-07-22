@@ -49,7 +49,7 @@ describe("on-demand policy crud tests", () => {
             .withRuleSEXP("(SOURCE-IP 127.0.0.1)")
             .withAlert(requestAlert.name);
         let x = await io_utils.noThrow(policy.create(api));
-        expect(x.error).toBe(false);
+        expect(x).toSucceed();
 
         //Test select
         let x2 = await io_utils.noThrow(io_policy.ConnectionPolicy.listBefore(api, { description: name }));
@@ -63,18 +63,18 @@ describe("on-demand policy crud tests", () => {
         //Test delete
         policy.id = x4.id;
         let x5 = await io_utils.noThrow(policy.delete(api));
-        expect(x5.error).toBe(false);
+        expect(x5).toSucceed();
 
         //Test FROM JSON
         let p2 = io_policy.ConnectionPolicy.build(x4);
         let x6 = await io_utils.noThrow(p2.create(api));
-        expect(x6.error).toBe(false);
+        expect(x6).toSucceed();
         let x7 = await io_utils.noThrow(io_policy.ConnectionPolicy.listBefore(api, { description: name }));
         expect(x7.length).toBe(1);
 
         let p3 = io_policy.ConnectionPolicy.build(x7[0]);
         let x8 = await io_utils.noThrow(p3.delete(api));
-        expect(x8.error).toBe(false);
+        expect(x8).toSucceed();
 
     });
 
@@ -96,7 +96,7 @@ describe("on-demand policy crud tests", () => {
             .withRuleSEXP("(REFERENCES-TABLE 'mamori')")
             .withAlert(requestAlert.name);
         let x = await io_utils.noThrow(policy.create(api));
-        expect(x.error).toBe(false);
+        expect(x).toSucceed();
 
         //Test select
         let x2 = await io_utils.noThrow(io_policy.StatementPolicy.list(api, { description: name }));
@@ -110,18 +110,18 @@ describe("on-demand policy crud tests", () => {
         //Test delete
         policy.id = x4.id;
         let x5 = await io_utils.noThrow(policy.delete(api));
-        expect(x5.error).toBe(false);
+        expect(x5).toSucceed();
 
         //Test FROM JSON
         let p2 = io_policy.StatementPolicy.build(x4);
         let x6 = await io_utils.noThrow(p2.create(api));
-        expect(x6.error).toBe(false);
+        expect(x6).toSucceed();
         let x7 = await io_utils.noThrow(io_policy.StatementPolicy.list(api, { description: name }));
         expect(x7.length).toBe(1);
 
         let p3 = io_policy.StatementPolicy.build(x7[0]);
         let x8 = await io_utils.noThrow(p3.delete(api));
-        expect(x8.error).toBe(false);
+        expect(x8).toSucceed();
     });
 
 });

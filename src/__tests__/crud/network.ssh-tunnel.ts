@@ -81,7 +81,7 @@ describe("network ssh tunnel tests", () => {
         expect(x2.length).toBe(0);
         //Grant to User
         let x3 = await noThrow(k.grantTo(api, grantee));
-        expect(x3.errors).toBe(false);
+        expect(x3).toSuccceed();
         //Ensure user can see the object
         let x4 = (await noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
         expect(x4.length).toBe(1);
@@ -91,7 +91,7 @@ describe("network ssh tunnel tests", () => {
         expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
 
         let x5 = await noThrow(k.revokeFrom(api, grantee));
-        expect(x5.errors).toBe(false);
+        expect(x5).toSucceed();
         //Ensure the key was revoked
         let x6 = (await noThrow(SshLogin.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
         expect(x6.length).toBe(0);
