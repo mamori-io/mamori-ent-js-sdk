@@ -1,7 +1,7 @@
 import { MamoriService } from '../../api';
 import { io_https, io_datasource, io_utils, io_role, io_db_credential } from '../../api';
 import { setPassthroughPermissions, createNewPassthroughSession, createPGDatabaseUser, dropPGDatabaseUser } from '../../__utility__/ds';
-import '../../__utility__/jest/error_matcher'
+import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
