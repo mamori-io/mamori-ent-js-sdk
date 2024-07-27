@@ -66,7 +66,7 @@ describe("IP resource CRUD tests", () => {
 
 
     test('ip resource requestable', async () => {
-        let resource = "test_ip_rsc_" + testbatch;
+        let resource = "test.ip.rsc." + testbatch;
         let cidr = "10.0.200.0/24";
         let ports = "443,80";
         let r = new io_ipresource.IpResource(resource).withCIDR(cidr).withPorts(ports);
