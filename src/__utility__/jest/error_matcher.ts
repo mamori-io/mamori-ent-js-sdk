@@ -1,7 +1,7 @@
 import { expect } from '@jest/globals';
 import type { MatcherFunction } from 'expect';
 
-const toSucceed: MatcherFunction<[]> = function(response: any) {
+const toSucceed: MatcherFunction<[]> = function (response: any) {
     if (Array.isArray(response) || response.error === false || response.errors === false) {
         return {
             pass: true,
@@ -12,7 +12,10 @@ const toSucceed: MatcherFunction<[]> = function(response: any) {
     var msg: string;
     if (response.response && response.response.data) {
         msg = response.response.data.message
-    } else {
+    } else if (Array.isArray(response.result)) {
+        msg = response.result[0];
+    }
+    else {
         msg = response.message;
     }
 
