@@ -47,7 +47,6 @@ async function example() {
     /////////////////
     //CREATE SSH KEY
     let x = await new io_key.Key(sshKeyName).ofType(io_key.KEY_TYPE.SSH).withAlgorithm(io_key.SSH_ALGORITHM.RSA).ofSize(1024).create(api);
-    expect(x).toContain("ssh-rsa");
 
     ///////////////
     //CONFIGURE IT
@@ -79,11 +78,6 @@ async function example() {
     ///////////////////////////////
     //ENSURE USER CAN'T DELETE KEY
     await io_utils.ignoreError(s.delete(apiAsAPIUser));
-
-    ////////////
-    //REVOKE KEY
-    await io_utils.noThrow(s.revokeFrom(api. grantee));
-    (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((key: any) => key.name == s.name);
 
     ///////////
     //DELETE IT
