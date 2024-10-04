@@ -1,8 +1,7 @@
 import { MamoriService } from '../../api';
 import { io_https, io_permission, io_role, io_utils, io_serversession, io_user, io_sqlmaskingpolicies } from "../../api";
 import * as helper from '../../__utility__/test-helper';
-
-
+import '../../__utility__/jest/error_matcher'
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -40,7 +39,7 @@ describe("masking policy tests", () => {
         });
         //Grant roles with db permissions
         let p = await io_utils.noThrow(new io_permission.RolePermission().role(credential_role).grantee(grantee).grant(api));
-        expect(p.errors).toBe(false);
+        expect(p).toSucceed();
 
         //CREATE THE ROLE WITH DB ACCESS
         //MASKED PASSTHROUGH,SELECT, CALL, EXECUTE SQL BLOCK
@@ -52,6 +51,7 @@ describe("masking policy tests", () => {
             .grantee(accessRoleName)
             .grant(api));
 
+
         let grant2 = await io_utils.noThrow(new io_permission.DatasourcePermission()
             .permissions([io_permission.DB_PERMISSION.SELECT, io_permission.DB_PERMISSION.CALL, io_permission.DB_PERMISSION.EXECUTE_SQL_BLOCK])
             .on('*', '*', '*', '*')
@@ -59,7 +59,7 @@ describe("masking policy tests", () => {
             .grant(api));
 
         let p2 = await io_utils.noThrow(new io_permission.RolePermission().role(accessRoleName).grantee(grantee).grant(api));
-        expect(p2.errors).toBe(false);
+        expect(p2).toSucceed()
     });
 
     afterAll(async () => {
@@ -74,17 +74,28 @@ describe("masking policy tests", () => {
         let testID = "orach1711";
         let dsname = oracle_ds;
         let dbname = "orclpdb1";
-        let schemaName = testID + '_' + testbatch;
+
+        let adminApi = new MamoriService(host, INSECURE);
+        await adminApi.login(username, password);
+        try {
+            let rows: any = await adminApi.select("select databasename from sys.datasources where systemname='" + dsname + "'");
+            expect(rows).toSucceed();
+            dbname = rows[0].databasename;
+        } finally {
+            adminApi.logout();
+        }
+
+        let schemaName = 'm' + testbatch;
         let rules = [{ objecturi: dsname + "." + dbname + "." + schemaName + ".tab1", column: "col1", mask: "masked by full()" }];
         let policyName = testID + '_policy_' + testbatch;
+
         //Create the object
         let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(host, username, password, dsname);
         try {
-
-            let prep = await io_utils.noThrow(helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName));
+            await io_utils.noThrow(helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName));
             //console.log("DML %o", prep);
             //create the masking policy
-            let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await io_utils.noThrow(helper.DBHelper.addMaskingPolicy(api, policyName, rules));
+            let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy = await helper.DBHelper.addMaskingPolicy(api, policyName, rules);
             //grant the policy to the user
             await io_utils.noThrow(mpolicy.grantTo(api, user.username));
             let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
@@ -92,17 +103,19 @@ describe("masking policy tests", () => {
 
                 //ISSUE ORACLE QUERY AND CONFIRM DATA IS MASKED
                 let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x1).toSucceed();
                 expect(x1.length).toBeGreaterThan(0);
                 expect(x1[0].col1).toContain("XXXX");
                 //GRANT TO USER
                 let permission = new io_permission.MamoriPermission().permission(io_permission.MAMORI_PERMISSION.ALL_PRIVILEGES).grantee(user.username);
                 let x2 = await io_utils.noThrow(permission.grant(api));
-                expect(x2.errors).toBe(false);
+                expect(x2).toSucceed();
                 let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x3).toSucceed();
                 expect(x3.length).toBeGreaterThan(0);
                 expect(x3[0].col1).toContain("XXXX");
                 let x4 = await io_utils.noThrow(permission.revoke(api));
-                expect(x4.errors).toBe(false);
+                expect(x4).toSucceed();
 
             } finally {
                 await apiUser.logout();
@@ -121,7 +134,18 @@ describe("masking policy tests", () => {
         let testID = "orach7309";
         let dsname = oracle_ds;
         let dbname = "orclpdb1";
-        let schemaName = testID + '_' + testbatch;
+
+        let adminApi = new MamoriService(host, INSECURE);
+        await adminApi.login(username, password);
+        try {
+            let rows: any = await adminApi.select("select databasename from sys.datasources where systemname='" + dsname + "'");
+            expect(rows).toSucceed();
+            dbname = rows[0].databasename;
+        } finally {
+            adminApi.logout();
+        }
+
+        let schemaName = 'm' + testbatch;
         //let rules = [{ objecturi: dsname + "." + dbname + "." + schemaName + ".tab1", column: "col1", mask: "masked by full()" }];
         let policyName = testID + '_policy_' + testbatch;
         //Create the object
@@ -138,15 +162,18 @@ describe("masking policy tests", () => {
             try {
                 //GET ALL ROWS
                 let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x1).toSucceed();
                 expect(x1.length).toBeGreaterThan(1);
                 //GRANT RESTRICTION ON SELECT
                 await io_utils.noThrow(perm.grant(api))
                 let x2 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x1).toSucceed();
                 expect(x2.length).toBe(1);
                 //REVOKE
                 await io_utils.noThrow(perm.revoke(api));
                 //GET ALL DATA
                 let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                expect(x1).toSucceed();
                 expect(x3.length).toBeGreaterThan(1);
             } finally {
                 await apiUser.logout();
