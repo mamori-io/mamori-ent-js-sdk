@@ -126,11 +126,11 @@ describe("role tests", () => {
         let x = (await noThrow(Role.getAll(api))).filter((o: any) => o.roleid == k.roleid);
         expect(x.length).toBe(1);
         //Grant passthrough to role
-        let grant = new DatasourcePermission().on("*", "", "", "").permission(DB_PERMISSION.PASSTHROUGH).grantee(roleName);
+        let grant = new DatasourcePermission().on("*", "", "", "").permission(DB_PERMISSION.PROTECTED).grantee(roleName);
         let resp = await noThrow(grant.grant(api));
         expect(resp).toSucceed();
         //CONFIRM ROLE HAS THE PERMISSION
-        let filter0 = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, DB_PERMISSION.PASSTHROUGH]];
+        let filter0 = [["permissiontype", FILTER_OPERATION.EQUALS_STRING, DB_PERMISSION.PROTECTED]];
         let r0 = await grant.list(api, filter0);
         expect(r0.totalCount).toBe(1);
         //CONFIRM ADMIN DOES NOT HAVE THE PERMISSIONS

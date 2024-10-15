@@ -1,6 +1,7 @@
 import { assert } from "console";
 import { io_permission, io_serversession, io_sqlmaskingpolicies, MamoriService, io_role, io_ondemandpolicies, io_key } from "../api";
 import { io_utils, io_https } from "../api";
+import './jest/error_matcher'
 
 const childProcess = require("child_process");
 
@@ -10,28 +11,28 @@ const childProcess = require("child_process");
  * @example const output = await execute("ls -alh");
  */
 export function execute(command: string): Promise<string> {
-  /**
-   * @param {Function} resolve A function that resolves the promise
-   * @param {Function} reject A function that fails the promise
-   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
-   */
-    return new Promise(function(resolve: any, reject: any) {
     /**
-     * @param {Error} error An error triggered during the execution of the childProcess.exec command
-     * @param {string|Buffer} standardOutput The result of the shell command execution
-     * @param {string|Buffer} standardError The error resulting of the shell command execution
-     * @see https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback
+     * @param {Function} resolve A function that resolves the promise
+     * @param {Function} reject A function that fails the promise
+     * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
      */
-	childProcess.exec(command, function(error: any, standardOutput: any, standardError: any) {
-	    if (error) {
-		reject(error);
+    return new Promise(function(resolve: any, reject: any) {
+        /**
+         * @param {Error} error An error triggered during the execution of the childProcess.exec command
+         * @param {string|Buffer} standardOutput The result of the shell command execution
+         * @param {string|Buffer} standardError The error resulting of the shell command execution
+         * @see https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback
+         */
+        childProcess.exec(command, function(error: any, standardOutput: any, standardError: any) {
+            if (error) {
+                reject(error);
 
-		return;
-	    }
+                return;
+            }
 
-	    resolve(standardOutput);
-	});
-  });
+            resolve(standardOutput);
+        });
+    });
 }
 
 
@@ -84,7 +85,7 @@ export class DBHelper {
             await apiAsAdmin.logout();
             // it is done this way so we can see the error in the output
             //console.log("***** Passthrough Initiating - user:%s datasource:%s", username, datasource);
-            expect(setPassthroughSession).toBe({});
+            expect(setPassthroughSession).toSucceed();
         } else {
             // console.log("***** Passthrough OK - user:%s datasource:%s", username, datasource);
         }
@@ -98,7 +99,7 @@ export class DBHelper {
             , "GRANT DBA TO " + schemaName + "01 "
             , "DROP USER " + schemaName + " CASCADE"
             , "DROP USER " + schemaName + " CASCADE"
-            , "CREATE USER  " + schemaName + " no authentication "
+            , "CREATE USER  " + schemaName + " identified by mamoritest6351"
             , "ALTER USER  " + schemaName + " quota unlimited on users"
             , "CREATE TABLE " + schemaName + ".TAB1 (col1 varchar2(50),col2 varchar2(50))"
             , "INSERT INTO " + schemaName + ".TAB1 (col1,col2) values ('value1','value21')"
@@ -148,7 +149,7 @@ export class DBHelper {
         expect(q7.errors).toBeUndefined();
         for (let rule of rules) {
             let q8 = await io_utils.noThrow(o.addColumnRule(api, rule.objecturi, rule.column, rule.mask));
-            expect(q8.errors).toBe(false);
+            expect(q8).toSucceed()
         }
         let q9 = await io_utils.noThrow(o.listColumnRules(api));
         expect(q9.totalCount).toBe(rules.length);
@@ -171,10 +172,8 @@ export class Policy {
         policy.withScript(["GRANT :privileges ON :resource_name TO :applicant VALID for :time minutes;"]);
         await io_utils.noThrow(policy.delete(api));
         let r = await io_utils.noThrow(policy.create(api));
-        if (r.error !== false) {
-            // it is done like this so we can see the error
-            expect(r).toBe({});
-        }
+        expect(r).toSucceed();
+
         return policy;
     }
 }
