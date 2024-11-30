@@ -180,6 +180,47 @@ describe("ssh login tests", () => {
 
     });
 
+    test('ssh name with .- ', async () => {
+        let k = new SshLogin("test-ssh-login-." + testbatch);
+        await io_utils.ignoreError(k.delete(api));
+        //Create
+        k.at("localhost", "22");
+        k.withKeyCredentials("root", sshKeyName);
+
+        k = k.fromJSON(k.toJSON())
+        let res = await io_utils.noThrow(k.create(api));
+        expect(res.status).toBe("ok");
+
+        //Ensure item returned properly
+        let x = (await io_utils.noThrow(SshLogin.getAll(api))).filter((o: any) => o.name == k.name)[0];
+        expect(x.private_key_name).toBe(sshKeyName);
+
+        //Ensure non-admins can't see any rows
+        let x2 = (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
+        expect(x2.length).toBe(0);
+
+        //Grant to User
+        let x3 = await io_utils.noThrow(k.grantTo(api, grantee));
+        expect(x3).toSucceed();
+        //Ensure user can see the object
+        let x4 = (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((o: any) => o.name == k.name);
+        expect(x4.length).toBe(1);
+
+        //Ensure user can't delete a key
+        let resDel2 = await io_utils.ignoreError(k.delete(apiAsAPIUser));
+        expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
+
+        let x5 = await io_utils.noThrow(k.revokeFrom(api, grantee));
+        expect(x5).toSucceed();
+        //Ensure the key was revoked
+        let x6 = (await io_utils.noThrow(SshLogin.getAll(apiAsAPIUser))).filter((key: any) => key.name == k.name);
+        expect(x6.length).toBe(0);
+
+        //Delete the data source
+        let resDel = await io_utils.noThrow(k.delete(api));
+        expect(resDel.status).toBe("ok");
+
+    });
 
     test('ssh requestable', async () => {
         let resource = "test_rdp_login" + testbatch;
@@ -217,10 +258,6 @@ describe("ssh login tests", () => {
         await io_utils.ignoreError(k.delete(api));
         //
     });
-
-
-
-
 
 
 });

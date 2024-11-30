@@ -90,6 +90,46 @@ describe("remote desktop login tests", () => {
         //
     });
 
+    test('rmd-rdp login with .-', async () => {
+        let o = new io_remotedesktop.RemoteDesktopLogin("test_rdp-.-" + testbatch, io_remotedesktop.REMOTE_DESKTOP_PROTOCOL.RDP);
+        await io_utils.ignoreError(o.delete(api));
+        o.at("host", "port").withLoginMode(io_remotedesktop.LOGIN_PROMPT_MODE.MAMORI_PROMPT);
+        //verify to and from json
+        let k = o.fromJSON(o.toJSON());
+        let res = await io_utils.noThrow(k.create(api));
+        expect(res).toSucceed();
+        //Get Details Call
+        let x = await io_utils.noThrow(io_remotedesktop.RemoteDesktopLogin.getByName(api, k.name));
+        expect(x._id).toBeDefined();
+        //let x2 = await noThrow(RemoteDesktopLogin.getByName(apiAsAPIUser, k.name));
+        //expect(x2.errors).toBe(true);
+        //List Call
+        let x3 = await io_utils.noThrow(io_remotedesktop.RemoteDesktopLogin.list(api, 0, 10, [["name", "=", k.name]]));
+        expect(x3.data.length).toBe(1);
+        let x4 = await io_utils.noThrow(io_remotedesktop.RemoteDesktopLogin.list(apiAsAPIUser, 0, 10, [["name", "=", k.name]]));
+        expect(x4.data.length).toBe(0);
+        //Grant permission to user
+        let x5 = await io_utils.noThrow(k.grantTo(api, grantee));
+        expect(x5).toSucceed();
+        //
+        let x6 = await io_utils.noThrow(io_remotedesktop.RemoteDesktopLogin.list(apiAsAPIUser, 0, 10, [["name", "=", k.name]]));
+        expect(x6.data.length).toBe(1);
+        //Ensure user can't delete a key
+        let resDel2 = await io_utils.ignoreError(k.delete(apiAsAPIUser));
+        expect(resDel2.response.status).toBeGreaterThanOrEqual(400);
+
+        let x7 = await io_utils.noThrow(k.revokeFrom(api, grantee));
+        expect(x7).toSucceed();
+
+        let x8 = await io_utils.noThrow(io_remotedesktop.RemoteDesktopLogin.list(apiAsAPIUser, 0, 10, [["name", "=", k.name]]));
+        expect(x8.data.length).toBe(0);
+
+        //Delete
+        let x9 = await io_utils.noThrow(k.delete(api));
+        expect(x9).toSucceed();
+        //
+    });
+
 
     test('rmd-rdp requestable', async () => {
         let resource = "test_02_rdp_login" + testbatch;
