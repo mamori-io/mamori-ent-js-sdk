@@ -15,7 +15,7 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("rdp permission tests", () => {
 
     let api: MamoriService;
-    let rdpLogin = "test_fake_rdp_login" + testbatch;
+    let rdpLogin = "test_fake-rdp.login" + testbatch;
     let grantee = "test_apiuser_rdp." + testbatch;
     let granteepw = "J{J'vMy72n\/a@C+W6(6A,4_vdQ'}D";
 

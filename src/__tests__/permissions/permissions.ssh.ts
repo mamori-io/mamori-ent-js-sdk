@@ -15,7 +15,7 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
 describe("ssh permission tests", () => {
 
     let api: MamoriService;
-    let sshLogin = "test_fake_ssh_login" + testbatch;
+    let sshLogin = "test_fake-ssh.-login" + testbatch;
     let grantee = "test_apiuser_ssh." + testbatch;
     let granteepw = "J{J'vMy72BnpKsn\/a@C+W6(6A,4_vdQ'}D";
 
