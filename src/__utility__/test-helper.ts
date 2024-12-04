@@ -1,5 +1,4 @@
-import { assert } from "console";
-import { io_permission, io_serversession, io_sqlmaskingpolicies, MamoriService, io_role, io_ondemandpolicies, io_key } from "../api";
+import { io_serversession, io_sqlmaskingpolicies, MamoriService, MamoriWebsocketClient, io_role, io_ondemandpolicies, io_key } from "../api";
 import { io_utils, io_https } from "../api";
 import './jest/error_matcher'
 
@@ -64,11 +63,11 @@ export class DBHelper {
     }
 
 
-    static async runSQLStatements(api: MamoriService, statements: any[]): Promise<any> {
+    static async runSQLStatements(client: MamoriWebsocketClient, statements: any[]): Promise<any> {
         let res: any = {};
         let ndx = 1;
         for (let sql of statements) {
-            let o = await io_utils.noThrow(api.select(sql));
+            let o = await io_utils.noThrow(client.query(sql));
             res["query_" + ndx] = o;
             res["query_" + ndx].sql = sql;
             ndx++;
@@ -76,23 +75,15 @@ export class DBHelper {
         return res;
     }
 
-    static async preparePassthroughSession(host: string, username: string, password: string, datasource: string): Promise<MamoriService> {
-        let INSECURE = new io_https.Agent({ rejectUnauthorized: false })
-        let apiAsAdmin = new MamoriService(host, INSECURE);
-        await apiAsAdmin.login(username, password);
-        let setPassthroughSession = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiAsAdmin, datasource));
-        if (setPassthroughSession.errors) {
-            await apiAsAdmin.logout();
-            // it is done this way so we can see the error in the output
-            //console.log("***** Passthrough Initiating - user:%s datasource:%s", username, datasource);
-            expect(setPassthroughSession).toSucceed();
-        } else {
-            // console.log("***** Passthrough OK - user:%s datasource:%s", username, datasource);
-        }
-        return apiAsAdmin;
+    static async preparePassthroughSession(host: string, username: string, password: string, datasource: string): Promise<MamoriWebsocketClient> {
+        let client = new MamoriWebsocketClient();
+
+        await client.connect(host.replace(/^http/, "ws") + "/websockets/query", username, password);
+        await client.query("set passthrough '" + datasource + "' true");
+        return client;
     }
 
-    static async prepareOracleObjects(api: MamoriService, schemaName: string) {
+    static async prepareOracleObjects(api: MamoriWebsocketClient, schemaName: string) {
         let statements = ["alter session set \"_ORACLE_SCRIPT\"=true"
             , "DROP USER " + schemaName + "01 CASCADE"
             , "CREATE USER  " + schemaName + "01 identified by mamoritest6351"
@@ -114,7 +105,7 @@ export class DBHelper {
         return this.runSQLStatements(api, statements);
     }
 
-    static async prepareSSObjects(api: MamoriService, schemaName: string) {
+    static async prepareSSObjects(api: MamoriWebsocketClient, schemaName: string) {
         let statements = ["DROP TABLE " + schemaName + ".TAB1"
             , "DROP SCHEMA " + schemaName
             , "CREATE SCHEMA " + schemaName
@@ -131,13 +122,13 @@ export class DBHelper {
         return this.runSQLStatements(api, statements);
     }
 
-    static async cleanUpSchemaSS(api: MamoriService, schemaName: string) {
+    static async cleanUpSchemaSS(api: MamoriWebsocketClient, schemaName: string) {
         let statements = ["DROP TABLE " + schemaName + ".TAB1"
             , "DROP SCHEMA " + schemaName];
         let results = await this.runSQLStatements(api, statements);
     }
 
-    static async cleanUpSchemaOracle(api: MamoriService, schemaName: string) {
+    static async cleanUpSchemaOracle(api: MamoriWebsocketClient, schemaName: string) {
         let statements = ["DROP USER " + schemaName + " CASCADE", "DROP USER " + schemaName + "01 CASCADE"];
         let results = await this.runSQLStatements(api, statements);
     }

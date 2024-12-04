@@ -44,7 +44,6 @@ import * as io_db_credential from "./db-credential";
 import * as eventable from './eventable';
 import * as io_utility_helper from "./__utility__/test-helper";
 import * as io_utility_ds from "./__utility__/ds";
-//import { Channel, Socket } from "./phoenix";
 
 export {
     Datasource
@@ -220,14 +219,6 @@ export class MamoriService extends eventable.Eventable {
     private _claims: any;
     private _session_id: Nullable<string> = null;
 
-    //private _ws_token: Nullable<string> = null;
-    //private _socket: Nullable<Socket> = null;
-    //private _channels: StringIndexed<Channel> = {};
-    //private channelRouteChangeCallbacks: any = {};
-    //private _to_join: any = {};
-    //private _queries: StringIndexed<PromiseHolder> = {};
-    //private _wsOptions: Nullable<any> = null;
-
     private _lastAccess: Nullable<number> = null;
     private _authorization: Nullable<string> = null;
 
@@ -240,7 +231,6 @@ export class MamoriService extends eventable.Eventable {
             baseURL: base,
             httpsAgent: httpsAgent
         });
-        //this._wsOptions = websocketOptions;
     }
 
     get authorization(): Nullable<string> {
@@ -251,8 +241,6 @@ export class MamoriService extends eventable.Eventable {
         this._claims = null;
         this._session_id = null;
         this._lastAccess = null;
-
-        //this.disconnectSocket();
 
         this._authorization = newValue;
         this.trigger("authorization", this);
@@ -283,17 +271,6 @@ export class MamoriService extends eventable.Eventable {
         return this._session_id;
     }
 
-    /* WS_CLEANUP
-    get token(): Nullable<string> {
-        let c = this.claims;
-        if (c) {
-            this._ws_token = c.login_token;
-        }
-
-        return this._ws_token;
-    }
-    */
-
     get restricted(): boolean {
         let c = this.claims;
         if (c) {
@@ -314,6 +291,26 @@ export class MamoriService extends eventable.Eventable {
         }
 
         return false;
+    }
+
+    ws(): MamoriWebsocketClient {
+        return new MamoriWebsocketClient();
+    }
+
+    wsLogin(): Promise<MamoriWebsocketClient> {
+        return new Promise<MamoriWebsocketClient>((resolve, reject) => {
+            if (this.authorization) {
+                this.select("call GENERATE_LOGIN_TOKEN()").then(resp => {
+                    let token = resp.rows[0][0];
+
+                    this.ws().connect(this._base.replace(/^http/, "ws") + "/websockets/query", this.claims.username, token).then(sock => {
+                        resolve(sock);
+                    }).catch(reject);
+                }).catch(reject);
+            } else {
+                reject("not connected");
+            }
+        });
     }
 
     logout(): Promise<void> {
@@ -337,158 +334,6 @@ export class MamoriService extends eventable.Eventable {
     has_priv(name: string): boolean {
         return this.claims.privs.find((v: string) => (v == name) || (v == "ALL PRIVILEGES"));
     }
-
-    // websocket stuff
-    /*
-    private resetSocket(_reason: string) {
-        if (this._socket && this._socket.reconnectTimer) {
-            this._socket.reconnectTimer.callback = () => console.log("nop");
-            this._socket.reconnectTimer.reset();
-        }
-
-        this._socket = null;
-    }
-
-    private connect_socket(): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            let sid = this.token;
-            if (this._socket && !this._socket.isConnected()) {
-                this.resetSocket("Not null but not connected either");
-            }
-            if (!this._socket && sid) {
-                let connected = false;
-                this._channels = {};
-                let ws = this._base.replace(/^http/, "ws").replace(/\/$/, "");
-
-                this._socket = new Socket(ws + "/socket", {
-                    timeout: 90000000,
-                    longpollerTimeout: 90000000,
-                    heartbeatIntervalMs: 30000,
-                    params: { token: sid, options: this._wsOptions }
-                });
-                this._socket.onError((e: any) => {
-                    // console.error("UI websocket error" + JSON.stringify(e));
-                    this.trigger("heartbeat", { error: true });
-                    //this.disconnectSocket();
-                    // this.authorization = null;
-                    if (!connected) {
-                        reject(e);
-                    }
-                });
-                this._socket.onOpen(() => {
-                    resolve();
-                });
-                this._socket.onMessage((m: any) => {
-                    this.trigger("heartbeat", { error: false });
-                });
-                this._socket.onClose(() => {
-                    this._queries = {};
-                    this._to_join = {};
-                    this._channels = {};
-                    //this.resetSocket("Socket closed");
-                });
-
-                try {
-                    this._socket.connect();
-                    this.trigger("heartbeat", { error: false });
-                } catch (err) {
-                    this.trigger("heartbeat", { error: true });
-                    console.error("Exception when connecting UI websocket");
-                    console.error(err);
-                    reject(err);
-                }
-            } else {
-                // we are already connected
-                resolve();
-            }
-        });
-    }
-
-    private disconnectSocket(): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this._queries = {};
-            this._to_join = {};
-
-            Promise.all(Object.values(this._channels).map(ch => new Promise<void>((resolve, reject) => {
-                ch.onClose(resolve);
-                ch.leave();
-            }))).then(() => {
-                this.channelRouteChangeCallbacks = {};
-                if (this._socket) {
-                    try {
-                        if (this._socket.reconnectTimer != null) {
-                            this._socket.reconnectTimer.callback = () => console.log("nop");
-                            this._socket.reconnectTimer.reset();
-                        }
-
-                        this._socket.disconnect(resolve);
-                    }
-                    catch (e) {
-                        reject(e);
-                    }
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-    */
-
-    /* WS-CLEANUP
-    public join(name: string, params: any, routeChangeCallback?: (channel: any) => any): Promise<Channel> {
-        let deferred = this._to_join[name];
-
-        if (!deferred) {
-            deferred = this.connect_socket().then(() => {
-                return new Promise<Channel>((resolve, reject) => {
-                    if (this._socket) {
-                        let channel = this._channels[name];
-                        if (channel) {
-                            delete this._to_join[name];
-                            resolve(channel);
-                        } else {
-                            channel = this._socket.channel(name, params || {});
-
-                            channel.join().receive("ok", (resp: any) => {
-                                delete this._to_join[name];
-                                this._channels[name] = channel;
-                                this.channelRouteChangeCallbacks[name] = routeChangeCallback
-                                    ? routeChangeCallback
-                                    : (channel: Channel) => {
-                                        channel.leave()
-                                    };
-                                channel.onClose(() => {
-                                    delete this._channels[name];
-                                    delete this.channelRouteChangeCallbacks[name];
-                                });
-                                resolve(channel);
-                            }).receive("error", (resp: any) => {
-                                reject(resp);
-                            });
-                        }
-                    } else {
-                        reject("No connection available");
-                    }
-                });
-            });
-
-            this._to_join[name] = deferred;
-        }
-
-
-        return deferred;
-    }
-    processRouteChangeCallbacks() {
-        for (let name of Object.keys(this._channels)) {
-            if (this.channelRouteChangeCallbacks[name]) {
-                this.channelRouteChangeCallbacks[name](this._channels[name]);
-            }
-        }
-    }
-    public onRouteChanged() {
-        this.processRouteChangeCallbacks();
-    }
-    */
 
 
     private calculate_cache_key(url: string, params: any = null): string {
@@ -528,6 +373,7 @@ export class MamoriService extends eventable.Eventable {
                 }
                 // there is a request for this in the cache, but it hasn't resolved yet, or it has failed
                 return cached.deferred;
+
             }
         }
 
@@ -695,155 +541,6 @@ export class MamoriService extends eventable.Eventable {
         return this.callAPI("POST", "/v1/smtp/test", options);
     }
 
-    /*
-    private query_response_handler(message: any, channel: Channel) {
-        if (message.task) {
-            let promised = this._queries[message.task.id];
-            if (promised) {
-                if (message.error) {
-                    promised.reject(message);
-                    // remove the query from the list as it has failed
-                    delete this._queries[message.task.id];
-                } else {
-                    let do_next = false;
-                    if (promised.notify) {
-                        promised.notify(message, (flag: boolean) => {
-                            do_next = flag
-                        });
-                    }
-                    if (message.complete) {
-                        promised.resolve();
-                        // remove the query from the list as it is finished
-                        delete this._queries[message.task.id];
-                    } else {
-                        if (do_next) {
-                            channel.push("next", { task_id: message.task.id });
-                        } else {
-                            channel.push("cancel", { task_id: message.task.id });
-                            // remove the query from the list as it is cancelled
-                            delete this._queries[message.task.id];
-                            promised.resolve();
-                        }
-                    }
-                }
-            }
-        } else {
-            // this shouldn't happen, but just in case
-            console.error(message);
-        }
-    }
-
-    private new_query_job(): Promise<Channel> {
-        return new Promise<Channel>((resolve, reject) => {
-            let channel_name = "session:" + this.session_id;
-            this.join(channel_name, {})
-                .then((channel: Channel) => {
-                    channel.off("query_resp");
-                    channel.on("query_resp", (resp) => {
-                        this.query_response_handler(resp, channel)
-                    });
-                    resolve(channel);
-                })
-                .catch((e: any) => reject(e));
-        });
-    }
-
-    public query(sql: string, options: QueryOptions = {}) {
-        this.ping(); // keep the session alive
-
-        let deferred = new PromiseWithProgress((resolve, reject) => {
-            let msg = Object.assign({ query: sql }, options);
-
-            this.new_query_job()
-                .then((channel: Channel) => {
-                    channel.push("query", msg)
-                        .receive("ok", (resp) => {
-                            this._queries[resp.id] = { resolve: resolve, reject: reject, notify: deferred._progress };
-
-                            if (deferred._progress) {
-                                deferred._progress({ id: resp.id }, (_) => { });
-                            }
-                        })
-                        .receive("error", (resp) => reject(resp));
-                })
-                .catch((e) => reject(e));
-        });
-
-        return deferred;
-    }
-
-    public cancel_query(task_id: string) {
-        return new Promise<void>((resolve, reject) => {
-            let q = this._queries[task_id];
-            if (q) {
-                this.new_query_job().then((channel: Channel) => {
-                    channel.push("cancel", { task_id: task_id })
-                        .receive("ok", (resp) => {
-                            delete this._queries[task_id];
-                            q.reject({ message: "Cancelled" });
-
-                            resolve();
-                        })
-                        .receive("error", (resp) => reject(resp));
-
-                }).catch((e) => reject(e));
-            } else {
-                reject("Unknown query task");
-            }
-        });
-    }
-
-    public close_named_connection(name: string) {
-        return new Promise((resolve, reject) => {
-            this.new_query_job()
-                .then((channel: Channel) => {
-                    channel.push("close", { name: name })
-                        .receive("ok", (resp) => {
-                            resolve(resp);
-                        })
-                        .receive("error", (resp) => reject(resp));
-                })
-                .catch((e) => reject(e));
-        });
-    }
-
-    public query_tasks() {
-        return new Promise((resolve, reject) => {
-            this.new_query_job()
-                .then((channel: Channel) => {
-                    channel.push("tasks", {})
-                        .receive("ok", (resp) => {
-                            resolve(resp);
-                        })
-                        .receive("error", (resp) => reject(resp));
-                })
-                .catch((e) => reject(e));
-        });
-    }
-
-    public simple_query(sql: string, options: QueryOptions = {}): Promise<any[]> {
-        return new Promise<any[]>((resolve, reject) => {
-            let acc: any[] = [];
-
-            this.query(sql, options).progress(chunk => {
-                if (chunk.rows) {
-                    let cols = chunk.meta.map((c: any) => c.name);
-
-                    for (let row of chunk.rows) {
-                        let o: any = {};
-                        cols.map((col: string, idx: number) => o[col] = row[idx]);
-
-                        acc.push(o);
-                    }
-                }
-            }).then(() => {
-                resolve(acc);
-            }).catch((e) => {
-                reject(e);
-            });
-        });
-    }
-    */
     //
     // Administration
     //
@@ -872,41 +569,6 @@ export class MamoriService extends eventable.Eventable {
         return this.callAPI("GET", "/v1/connection_log/" + ssid);
     }
 
-    // public cancel_session(ssid: string) {
-    //     return this.callAPI("GET", "/v1/session/cancel/" + ssid);
-    // }
-
-    // public get_session_info(ssid: string) {
-    //     return this.callAPI("GET", "/v1/session/info/" + ssid);
-    // }
-    /* WS_CLEANUP
-    public active_sessions(show_root: boolean) {
-        return new Promise((resolve, reject) => {
-            this.new_query_job()
-                .then((channel: Channel) => {
-                    channel.push("sessions", { show_root: show_root })
-                        .receive("ok", (resp) => {
-                            let rows = resp.rows.map((row: any[]) => {
-                                return {
-                                    ssid: row[0],
-                                    userid: row[1],
-                                    created_at: row[2],
-                                    last_activity: row[3],
-                                    last_sql: row[4],
-                                    last_sql_id: row[5],
-                                    status: row[6],
-                                    query_count: row[7],
-                                    node: row[8]
-                                };
-                            });
-                            resolve(rows);
-                        })
-                        .receive("error", (resp) => reject(resp));
-                })
-                .catch((e) => reject(e));
-        });
-    }
-    */
     public ssh_session_log(ssid: string, options: any = null) {
         return this.callAPI("GET", "/v1/ssh/" + ssid, options);
     }
@@ -2002,7 +1664,7 @@ export class MamoriService extends eventable.Eventable {
                         }
                     }
                 } else if (msg.command == "_download") {
-                    resolve("//" + document.location.host + "/rdp/stream/" + msg.params[0]);
+                    resolve(this._base + "/rdp/stream/" + msg.params[0]);
                 } else if (msg.command == "error") {
                     reject(msg.params[0]);
                 }

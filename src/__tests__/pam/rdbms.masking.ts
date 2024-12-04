@@ -102,7 +102,7 @@ describe("masking policy tests", () => {
             try {
 
                 //ISSUE ORACLE QUERY AND CONFIRM DATA IS MASKED
-                let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x1 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x1).toSucceed();
                 expect(x1.length).toBeGreaterThan(0);
                 expect(x1[0].col1).toContain("XXXX");
@@ -110,7 +110,7 @@ describe("masking policy tests", () => {
                 let permission = new io_permission.MamoriPermission().permission(io_permission.MAMORI_PERMISSION.ALL_PRIVILEGES).grantee(user.username);
                 let x2 = await io_utils.noThrow(permission.grant(api));
                 expect(x2).toSucceed();
-                let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x3 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x3).toSucceed();
                 expect(x3.length).toBeGreaterThan(0);
                 expect(x3[0].col1).toContain("XXXX");
@@ -118,13 +118,13 @@ describe("masking policy tests", () => {
                 expect(x4).toSucceed();
 
             } finally {
-                await apiUser.logout();
+                await apiUser.disconnect();
                 await io_utils.noThrow(mpolicy.delete(api));
             }
 
         } finally {
             await io_utils.noThrow(helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName));
-            apiAdminPassthrough.logout();
+            apiAdminPassthrough.disconnect();
         }
     });
 
@@ -161,27 +161,27 @@ describe("masking policy tests", () => {
             let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
             try {
                 //GET ALL ROWS
-                let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x1 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x1).toSucceed();
                 expect(x1.length).toBeGreaterThan(1);
                 //GRANT RESTRICTION ON SELECT
                 await io_utils.noThrow(perm.grant(api))
-                let x2 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x2 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x1).toSucceed();
                 expect(x2.length).toBe(1);
                 //REVOKE
                 await io_utils.noThrow(perm.revoke(api));
                 //GET ALL DATA
-                let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x3 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x1).toSucceed();
                 expect(x3.length).toBeGreaterThan(1);
             } finally {
-                await apiUser.logout();
+                await apiUser.disconnect();
             }
 
         } finally {
             await io_utils.noThrow(helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName));
-            apiAdminPassthrough.logout();
+            apiAdminPassthrough.disconnect();
         }
     });
 
@@ -205,24 +205,24 @@ describe("masking policy tests", () => {
             let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
             try {
                 //GET ALL ROWS
-                let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x1 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x1.length).toBeGreaterThan(1);
                 //GRANT RESTRICTION ON SELECT
                 await io_utils.noThrow(perm.grant(api))
-                let x2 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x2 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x2.length).toBe(1);
                 //REVOKE
                 await io_utils.noThrow(perm.revoke(api));
                 //GET ALL DATA
-                let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x3 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x3.length).toBeGreaterThan(1);
             } finally {
-                await apiUser.logout();
+                await apiUser.disconnect();
             }
 
         } finally {
             await io_utils.noThrow(helper.DBHelper.cleanUpSchemaSS(apiAdminPassthrough, schemaName));
-            apiAdminPassthrough.logout();
+            apiAdminPassthrough.disconnect();
         }
     });
 
@@ -245,25 +245,25 @@ describe("masking policy tests", () => {
             let apiUser = await helper.DBHelper.preparePassthroughSession(host, user.username, granteepw, dsname);
             try {
                 //ISSUE  QUERY AND CONFIRM DATA IS MASKED
-                let x1 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x1 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x1.length).toBeGreaterThan(0);
                 expect(x1[0].col1).toContain("XXXX");
                 //GRANT TO USER
                 let permission = new io_permission.MamoriPermission().permission(io_permission.MAMORI_PERMISSION.ALL_PRIVILEGES).grantee(user.username);
                 let x2 = await io_utils.noThrow(permission.grant(api));
                 expect(x2.errors).toBe(false);
-                let x3 = await io_utils.noThrow(apiUser.select("select * from " + schemaName + ".tab1"));
+                let x3 = await io_utils.noThrow(apiUser.queryRows("select * from " + schemaName + ".tab1"));
                 expect(x3.length).toBeGreaterThan(0);
                 expect(x3[0].col1).toContain("XXXX");
                 let x4 = await io_utils.noThrow(permission.revoke(api));
                 expect(x4.errors).toBe(false);
             } finally {
-                await apiUser.logout();
+                await apiUser.disconnect();
                 await io_utils.noThrow(mpolicy.delete(api));
             }
         } finally {
             await io_utils.noThrow(helper.DBHelper.cleanUpSchemaSS(apiAdminPassthrough, schemaName));
-            apiAdminPassthrough.logout();
+            apiAdminPassthrough.disconnect();
         }
     });
 

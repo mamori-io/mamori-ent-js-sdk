@@ -41,7 +41,7 @@ export class MamoriWebsocketClient extends Eventable {
 
             this.authtoken = options.authtoken;
 
-            this.sock = new WebSocket(url);
+            this.sock = new WebSocket(url, { rejectUnauthorized: false });
             this.sock.addEventListener("open", (_event) => {
                 if (this.authtoken) {
                     resolve(this);
@@ -132,23 +132,38 @@ export class MamoriWebsocketClient extends Eventable {
         });
     }
 
+    public websql(sql: string, options: any = {}): Promise<any> {
+        return this.sendRequest({
+            command: "websql",
+            statement: sql,
+            options: options
+        });
+    }
+
+    public websql_config(options: any = {}): Promise<any> {
+        return this.sendRequest({
+            command: "websql_config",
+            options: options
+        });
+    }
+
     public next(id: number): Promise<any> {
         return this.sendRequest({
             command: "next",
-            id: id
+            id: Number(id)
         });
     }
 
     public cancel(id: number): Promise<any> {
         return this.sendRequest({
             command: "cancel",
-            id: id
+            id: Number(id)
         });
     }
 
     public queryRows(sql: string, options: any = {}): Promise<any> {
         return this.query(sql, options).then((result) => {
-            let cols = result.meta.map((c: any) => c.name);
+            let cols = result.meta.map((c: any) => c.name.toLowerCase());
 
             return result.rows.map((data: any) => {
                 let row: any = {};
