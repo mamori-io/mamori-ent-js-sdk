@@ -53,6 +53,20 @@ describe("masking policy tests", () => {
         await api.logout();
     });
 
+    test('check non-admin user active permissions', async () => {
+        let apiUser: MamoriService = new MamoriService(host, INSECURE);
+        try {
+            await apiUser.login(user.username, granteepw);
+            let filter = [["grantee", io_utils.FILTER_OPERATION.EQUALS_STRING, grantee]];
+            let activePermissions = await io_utils.noThrow(io_permission.Permissions.list(apiUser,filter));
+            expect(activePermissions.totalCount).toBe(0);
+            //A new non-admin user should not see any active permissions
+
+        } finally {
+            await apiUser.logout();
+        }
+    });
+
     oratest('set passthrough', async () => {
         let apiUser: MamoriService = new MamoriService(host, INSECURE);
 

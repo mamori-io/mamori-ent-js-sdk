@@ -41,6 +41,7 @@ import * as io_secret from './secret';
 import * as io_http_resource from './http-resource';
 import * as io_requestable_resource from './requestable_resource';
 import * as io_db_credential from "./db-credential";
+import * as io_providers from "./provider";
 import * as eventable from './eventable';
 import * as io_utility_helper from "./__utility__/test-helper";
 import * as io_utility_ds from "./__utility__/ds";
@@ -81,6 +82,7 @@ export {
     , io_db_credential
     , io_utility_helper
     , io_utility_ds
+    , io_providers
 };
 
 
@@ -989,6 +991,10 @@ export class MamoriService extends eventable.Eventable {
 
     public providers() {
         return this.callAPI("GET", "/v1/providers");
+    }
+
+    public get_provider(name:String) {
+        return this.callAPI("GET", "/v1/providers/"+encodeURIComponent(name.toLowerCase()));
     }
 
     public get_provider_options() {
