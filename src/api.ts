@@ -15,7 +15,6 @@ import { SshLogin } from "./ssh-login";
 import { RoleGrant, Role } from "./role";
 import { Runnable } from './runnable';
 import { decodeMessage } from './utils';
-
 import { MamoriWebsocketClient } from './ws_client';
 
 // namespaces
