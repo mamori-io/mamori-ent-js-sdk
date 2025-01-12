@@ -41,11 +41,10 @@ import * as io_requestable_resource from './requestable_resource';
 import * as io_db_credential from "./db-credential";
 import * as io_providers from "./provider";
 import * as eventable from './eventable';
-import * as io_utility_helper from "./__utility__/test-helper";
 import * as io_utility_ds from "./__utility__/ds";
 
 export {
-    Datasource
+      Datasource
     , Key, KEY_TYPE, SSH_ALGORITHM
     , Network
     , SshLogin
@@ -77,7 +76,6 @@ export {
     , io_http_resource
     , io_requestable_resource
     , io_db_credential
-    , io_utility_helper
     , io_utility_ds
     , io_providers
 };
