@@ -57,8 +57,6 @@ async function example() {
     // CREATE IT
     s.at("local host", "22");
     s.withKeyCredentials("root", sshKeyName);
-
-    s = s.fromJSON(s.fromJSON())
     await io_utils.noThrow(s.create(api));
     console.info("creating ssh_login_to_local...%s", s);
 
