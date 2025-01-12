@@ -13,7 +13,6 @@ import { Key, KEY_TYPE, SSH_ALGORITHM } from "./key";
 import { Network, IpSecVpn, OpenVPN, SshTunnel } from "./network";
 import { SshLogin } from "./ssh-login";
 import { RoleGrant, Role } from "./role";
-import { Runnable } from './runnable';
 import { decodeMessage } from './utils';
 import { MamoriWebsocketClient } from './ws_client';
 
@@ -54,7 +53,6 @@ export {
     , IpSecVpn
     , OpenVPN
     , SshTunnel
-    , Runnable
     , eventable
     , MamoriWebsocketClient
     , io_https
