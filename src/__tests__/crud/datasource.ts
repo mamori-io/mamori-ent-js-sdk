@@ -1,7 +1,9 @@
 import { MamoriService } from '../../api';
 import { io_https, io_datasource, io_utils, io_role, io_db_credential } from '../../api';
-import { setPassthroughPermissions, createNewPassthroughSession, createPGDatabaseUser, dropPGDatabaseUser } from '../../__utility__/ds';
+import { setPassthroughPermissions, createPGDatabaseUser, dropPGDatabaseUser } from '../../__utility__/ds';
 import '../../__utility__/jest/error_matcher';
+import * as helper from '../../__utility__/test-helper';
+
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
@@ -22,7 +24,6 @@ describe("datasource tests", () => {
     let api: MamoriService;
     let grantee = "test_apiuser._datasource" + testbatch;
     let granteepw = "J{J'vpKs!$n3213W6(6A,4_vdQ'}D"
-
 
     beforeAll(async () => {
         //console.log("login %s %s", host, username);
@@ -110,7 +111,7 @@ describe("datasource tests", () => {
         expect(ccred).toSucceed();
         //SET PERMISSIONS
         await setPassthroughPermissions(api, uName, dsName);
-        let apiU = await createNewPassthroughSession(host, uName, granteepw, dsName);
+        let apiU = await helper.DBHelper.preparePassthroughSession(host, uName, granteepw, dsName);
         try {
             //MAKE NEW DB LOGIN USER 2
             let pw = "!testPW";
@@ -157,7 +158,7 @@ describe("datasource tests", () => {
             await dropPGDatabaseUser(apiU, loginU2, dsDB);
         } finally {
             //CLEAN UP
-            await io_utils.ignoreError(apiU.logout());
+            apiU.disconnect();
             await io_utils.ignoreError(ds.delete(api));
             await io_utils.ignoreError(api.delete_user(uName));
         }
@@ -238,7 +239,7 @@ describe("datasource tests", () => {
         expect(ccred).toSucceed();
         //SET PERMISSIONS
         await setPassthroughPermissions(api, uName, dsName);
-        let apiU = await createNewPassthroughSession(host, uName, granteepw, dsName);
+        let apiU = await helper.DBHelper.preparePassthroughSession(host, uName, granteepw, dsName);
         try {
             //MAKE NEW DB LOGIN USER 2
             let pw = "!testPW";
@@ -276,7 +277,7 @@ describe("datasource tests", () => {
             await dropPGDatabaseUser(apiU, loginU2, dsDB);
         } finally {
             //CLEAN UP
-            await io_utils.ignoreError(apiU.logout());
+            apiU.disconnect();
             await io_utils.ignoreError(ds.delete(api));
             await io_utils.ignoreError(api.delete_user(uName));
         }

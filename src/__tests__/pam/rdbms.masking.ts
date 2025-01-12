@@ -176,7 +176,7 @@ describe("masking policy tests", () => {
                 expect(x1).toSucceed();
                 expect(x3.length).toBeGreaterThan(1);
             } finally {
-                await apiUser.disconnect();
+                apiUser.disconnect();
             }
 
         } finally {
