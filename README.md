@@ -14,6 +14,17 @@ To run a script:
 yarn ts-node <your script>
 ```
 
+## Examples
+To see and run examples:
+```sh
+//List Examples
+ls -l node_modules/mamori-ent-js-sdk/examples
+
+//To run an example you must copy it to the base directory
+cp node_modules/mamori-ent-js-sdk/examples/secret.ts .
+```
+
+
 Example script: login and list available datasources
 ```js
 // allow for self-signed certificates
