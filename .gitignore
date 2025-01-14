@@ -14,3 +14,4 @@ working/*
 error.json
 .local*.json
 stop
+*_env.sh
