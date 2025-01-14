@@ -55,19 +55,24 @@ describe("datasource tests", () => {
     });
 
     async function wait_for_datasource_to_stabilize(name: string) {
-        let counter = 10;
-        while (counter > 0) {
-            let results = (await io_utils.noThrow(io_datasource.Datasource.read(api, name)));
-            //console.info("reading datasource: %o: %o", name, results);
-            if (results && results.available === "true" && Number(results.available_count) === cluster_nodes.length) {
-                return results;
+        if (cluster_nodes.length > 1) {
+
+            let counter = 10;
+            while (counter > 0) {
+                let results = await io_utils.noThrow(io_datasource.Datasource.read(api, name));
+                //console.info("reading datasource: %o: %o", name, results);
+                if (results && results.available === "true" && Number(results.available_count) === cluster_nodes.length) {
+                    return results;
+                }
+
+                helper.sleep(1000);
+                counter--;
             }
 
-            helper.sleep(1000);
-            counter--;
+            return null;
         }
 
-        return null;
+        return await io_utils.noThrow(io_datasource.Datasource.read(api, name));
     }
 
     dbtest('datasource 001', async () => {
