@@ -146,12 +146,12 @@ describe("role tests", () => {
 
     test('role with keyword', async () => {
 
-        let name = "admin-api-test_role" + testbatch;
+        let name = "admin-api-test_role-with" + testbatch;
         let k = new Role(name);
 
         await ignoreError(k.delete(api));
         let res = await noThrow(k.create(api));
-        expect(res.error).toBe(false);
+        expect(res).toSucceed();
         //Ensure key returned properly
         let x = (await noThrow(Role.getAll(api))).filter((o: any) => o.roleid == k.roleid);
         expect(x.length).toBe(1);
