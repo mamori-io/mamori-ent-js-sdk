@@ -140,6 +140,9 @@ describe("datasource tests", () => {
                 email: "test@test.test"
             }));
             expect(r1).toSucceed();
+
+            await api.select("grant create user on " + dsName + " to " + uName);
+            await api.select("grant drop user on " + dsName + " to " + uName);
             //ADD CREDENTIAL
             let ccred = await io_utils.noThrow(ds.addCredential(api, uName, dsUser, dsDBPW));
             expect(ccred).toSucceed();
@@ -282,7 +285,11 @@ describe("datasource tests", () => {
             //ADD CREDENTIAL
             let ccred = await io_utils.noThrow(ds.addCredential(api, uName, dsUser, dsDBPW));
             expect(ccred).toSucceed();
+
             //SET PERMISSIONS
+            await api.select("grant create user on " + dsName + " to " + uName);
+            await api.select("grant drop user on " + dsName + " to " + uName);
+
             await setPassthroughPermissions(api, uName, dsName);
             let apiU = await helper.DBHelper.preparePassthroughSession(host, uName, granteepw, dsName);
             try {
