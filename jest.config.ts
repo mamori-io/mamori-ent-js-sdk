@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 
 const config: Config = {
     verbose: true,
+    maxWorkers: 1,
     testTimeout: 60000,
     testEnvironment: "node",
     transform: {
