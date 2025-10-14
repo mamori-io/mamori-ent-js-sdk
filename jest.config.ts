@@ -44,6 +44,6 @@ export default async (): Promise<Config> => {
     }
 
 
-    config.maxWorkers ||= 3;
+    config.maxWorkers ||= 1;
     return config;
 };
