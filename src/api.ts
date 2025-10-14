@@ -1857,6 +1857,7 @@ export class MamoriService extends eventable.Eventable {
     request_role: string,
     request_alert: string,
     request_default_message: string,
+    request_default_message_required: string,
     endorse_alert: string,
     endorse_default_message: string,
     endorse_agent_count: any,
@@ -1879,6 +1880,7 @@ export class MamoriService extends eventable.Eventable {
       request_default_message: request_default_message
         ? request_default_message
         : "",
+      request_default_message_required: request_default_message_required ? request_default_message_required : "false",
       endorse_alert: endorse_alert ? endorse_alert : "",
       endorse_default_message: endorse_default_message
         ? endorse_default_message
