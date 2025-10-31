@@ -311,8 +311,7 @@ export class MamoriService extends eventable.Eventable {
       if (this.authorization) {
         this.select("call GENERATE_LOGIN_TOKEN()")
           .then((resp) => {
-            let token = resp.rows[0][0];
-
+            let token = (resp as any)[0].a1;
             this.ws()
               .connect(
                 this._base.replace(/^http/, "ws") + "/websockets/query",
