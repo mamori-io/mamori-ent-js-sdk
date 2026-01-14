@@ -2,6 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { Key, KEY_TYPE, SSH_ALGORITHM } from '../../key';
 import { handleAPIException, noThrow, ignoreError } from '../../utils';
+import * as helper from '../../__utility__/test-helper';
 import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -163,7 +164,6 @@ describe("encryption key tests", () => {
         expect(x.public_key).toContain(publicKeyTest);
         expect(x.private_key).toBeUndefined();
 
-
         //Ensure non-admins can't see any keys
         let x2 = (await noThrow(Key.getAll(apiAsAPIUser))).filter((key: any) => key.name === k.name);
         expect(x2.length).toBe(0);
@@ -321,6 +321,78 @@ describe("encryption key tests", () => {
         //Delete the data source
         let resDel = await noThrow(k.delete(api));
         expect(resDel).toSucceed();
+    });
+
+    test('ssh key export restore 01', async () => {
+        // Step 1: Setup - Create AES Encryption Key
+        let aesKeyName = "test_ssh_export_aes_" + testbatch;
+        await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
+
+        // Step 2: Create SSH Key
+        let sshKeyName = "test_001_" + testbatch;
+        let k = new Key(sshKeyName);
+        await ignoreError(k.delete(api));
+        k.ofType(KEY_TYPE.SSH).withAlgorithm(SSH_ALGORITHM.RSA).ofSize(1024);
+        let res = await noThrow(k.create(api));
+        expect(res).toContain("ssh-rsa");        
+
+        // Step 3: Get Public Key for Verification
+        let allKeys = await noThrow(Key.getAll(api));
+        let originalKey = allKeys.filter((key: any) => key.name === k.name && key.usage === 'PRIVATE')[0];
+        expect(originalKey).toBeDefined();
+        expect(originalKey.type).toBe(KEY_TYPE.SSH);
+        expect(originalKey.public_key).toBeDefined();
+        expect(originalKey.public_key).toContain("ssh-rsa");
+        let originalPublicKey = originalKey.public_key;
+
+        // Step 4: Export SSH Key
+        let exportResult = await noThrow(api.call("EXPORT_KEY_EX", sshKeyName, aesKeyName));
+        // noThrow returns error object on failure, actual data on success
+        if (exportResult.error !== undefined && exportResult.error !== false) {
+            fail("Export failed: " + JSON.stringify(exportResult));
+        }
+        expect(Array.isArray(exportResult)).toBe(true);
+        expect(exportResult.length).toBeGreaterThan(0);
+        let exportedData = exportResult[0];
+        expect(exportedData.value).toBeDefined();
+        expect(exportedData.algorithm).toBe("SSH");
+        expect(exportedData.usage).toBeDefined();
+        let encryptedValue = exportedData.value;
+        let exportedAlgorithm = exportedData.algorithm;
+        let exportedUsage = exportedData.usage;
+
+        // Step 5: Delete SSH Key
+        let deleteResult = await noThrow(k.delete(api));
+        expect(deleteResult).toSucceed();
+
+        // Verify key is deleted
+        let keysAfterDelete = await noThrow(Key.getAll(api));
+        let deletedKey = keysAfterDelete.filter((key: any) => key.name === k.name);
+        expect(deletedKey.length).toBe(0);
+
+        // Step 6: Restore SSH Key
+        let restoreResult = await noThrow(api.call("RESTORE_KEY_EX", sshKeyName, encryptedValue, exportedAlgorithm, exportedUsage, aesKeyName));
+        // noThrow returns error object on failure, actual data on success
+        if (restoreResult.error !== undefined && restoreResult.error !== false) {
+            fail("Restore failed: " + JSON.stringify(restoreResult));
+        }
+        expect(Array.isArray(restoreResult)).toBe(true);
+        expect(restoreResult.length).toBeGreaterThan(0);
+        expect(restoreResult[0].status).toBe("OK");
+
+        // Step 7: Verify Restored Key
+        let keysAfterRestore = await noThrow(Key.getAll(api));
+        let restoredKey = keysAfterRestore.filter((key: any) => key.name === k.name)[0];
+        expect(restoredKey).toBeDefined();
+        expect(restoredKey.type).toBe(KEY_TYPE.SSH);
+        expect(restoredKey.public_key).toBeDefined();
+        expect(restoredKey.public_key).toContain("ssh-rsa");
+        expect(restoredKey.public_key).toBe(originalPublicKey);
+
+        // Step 8: Cleanup
+        let cleanupResult = await noThrow(k.delete(api));
+        expect(cleanupResult).toSucceed();
+        await helper.EncryptionKey.cleanupAESEncryptionKey(api, aesKeyName);
     });
 
 

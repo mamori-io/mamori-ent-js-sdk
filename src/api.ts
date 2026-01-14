@@ -311,8 +311,7 @@ export class MamoriService extends eventable.Eventable {
       if (this.authorization) {
         this.select("call GENERATE_LOGIN_TOKEN()")
           .then((resp) => {
-            let token = resp.rows[0][0];
-
+            let token = (resp as any)[0].a1;
             this.ws()
               .connect(
                 this._base.replace(/^http/, "ws") + "/websockets/query",
@@ -1857,6 +1856,7 @@ export class MamoriService extends eventable.Eventable {
     request_role: string,
     request_alert: string,
     request_default_message: string,
+    request_default_message_required: string,
     endorse_alert: string,
     endorse_default_message: string,
     endorse_agent_count: any,
@@ -1879,6 +1879,7 @@ export class MamoriService extends eventable.Eventable {
       request_default_message: request_default_message
         ? request_default_message
         : "",
+      request_default_message_required: request_default_message_required ? request_default_message_required : "false",
       endorse_alert: endorse_alert ? endorse_alert : "",
       endorse_default_message: endorse_default_message
         ? endorse_default_message
@@ -2206,5 +2207,63 @@ export class MamoriService extends eventable.Eventable {
     return this.callAPI("PUT", "/v1/secrets/" + id + "/reset_alert", {
       alert_at,
     });
+  }
+
+  /**
+   * V2 API: Generic procedure call method
+   * Calls Hub procedures via V2 API endpoint: /v2/call/:procedure_name
+   * V2 API calls go directly to HUB, bypassing Elixir /api prefix
+   * @param procedureName - Name of the procedure to call
+   * @param args - Variable arguments to pass to the procedure
+   * @returns Promise with procedure execution result
+   */
+  public call(procedureName: string, ...args: any[]): Promise<any> {
+    return this.callV2API("POST", "/call/" + procedureName, { args });
+  }
+
+  /**
+   * V2 API: Direct call to HUB V2 endpoints
+   * V2 API calls bypass Elixir and go directly to HUB at /v2/*
+   * @param method - HTTP method (GET, POST, etc.)
+   * @param url - URL path (without /v2 prefix, it's added automatically)
+   * @param params - Request parameters
+   * @returns Promise with API response
+   */
+  public callV2API(
+    method: Method,
+    url: string,
+    params: any = null,
+  ): Promise<any> {
+    var deferred: Promise<any>;
+
+    let that = this;
+    deferred = new Promise(function (resolve: any, reject: any) {
+      let payload: any = {
+        method: method,
+        url: "/v2" + url,
+        headers: {
+          Cookie: that._cookies,
+          "X-CSRF-Token": that._csrf,
+        },
+      };
+
+      if (method == "GET" || method == "DELETE") {
+        payload.params = params;
+        payload.paramsSerializer = MamoriService.serialize;
+      } else {
+        payload.data = params;
+      }
+
+      that._http
+        .request(payload)
+        .then(function (x: any) {
+          resolve(x.data);
+        })
+        .catch(function (error: any) {
+          reject(error);
+        });
+    });
+
+    return deferred;
   }
 }

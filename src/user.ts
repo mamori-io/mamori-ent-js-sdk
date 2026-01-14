@@ -10,6 +10,42 @@ import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 import { prepareFilter } from './utils';
 
+/**
+ * Multi-Factor Authentication (MFA) provider types available for user authentication
+ */
+export enum MFA_PROVIDER {
+    /** No MFA provider */
+    NONE = "none",
+    /** Push-to-TOTP authentication */
+    PUSHTOTP = "pushtotp",
+    /** Push mobile authentication */
+    PUSHMOBILE = "pushmobile",
+    /** Time-based One-Time Password (TOTP) */
+    TOTP = "totp",
+    /** YubiKey authentication */
+    YUBIKEY = "yubikey",
+    /** Online YubiKey authentication */
+    ONLINEYUBIKEY = "onlineyubikey",
+    /** Service account authentication */
+    SERVICE = "service",
+    /** Duo Security authentication */
+    DUO = "duo",
+    /** Unloq authentication */
+    UNLOQ = "unloq",
+    /** SaasPass authentication */
+    SAASPASS = "saaspass",
+    /** Azure AD authentication */
+    AZURE = "azure",
+    /** TechPass authentication */
+    TECHPASS = "techpass",
+    /** Azure OAuth authentication */
+    AZUREOAUTH = "azureoauth",
+    /** Okta authentication */
+    OKTA = "okta",
+    /** PingID authentication */
+    PINGID = "pingid"
+}
+
 
 class UserBase implements ISerializable {
     public constructor() {
@@ -194,6 +230,53 @@ export class User extends UserBase {
         return api.update_user(this.username, {
             email: this.email,
             fullname: this.fullname,
+        });
+    }
+
+    /**
+     * Set the Multi-Factor Authentication (MFA) provider for this user.
+     * @param api  A logged-in MamoriService instance
+     * @param provider  The MFA provider name (use MFA_PROVIDER enum values or string)
+     * @param options  Optional provider-specific options as key-value pairs
+     * @returns Promise that resolves when the MFA provider is set
+     * 
+     * @example
+     * // Set pushtotp as MFA provider using enum
+     * await user.setMFAProvider(api, MFA_PROVIDER.PUSHTOTP);
+     * 
+     * // Set pushtotp with options
+     * await user.setMFAProvider(api, MFA_PROVIDER.PUSHTOTP, { key1: "value1", key2: "value2" });
+     * 
+     * // Set using string
+     * await user.setMFAProvider(api, "pushtotp");
+     * 
+     * // Remove MFA provider
+     * await user.setMFAProvider(api, MFA_PROVIDER.NONE);
+     */
+    public setMFAProvider(api: MamoriService, provider: MFA_PROVIDER | string, options?: { [key: string]: string }): Promise<any> {
+        let userProperties: any = {
+            authenticated_by_primary: {
+                provider: provider,
+                options: options || {}
+            }
+        };
+        return api.update_user(this.username, userProperties);
+    }
+
+    /**
+     * Set this user as a service account with the specified allowed IP address.
+     * Service accounts authenticate based on the source IP address of the connection.
+     * @param api  A logged-in MamoriService instance
+     * @param allowedIp  The IPv4 address that is allowed to authenticate as this service account
+     * @returns Promise that resolves when the service account is configured
+     * 
+     * @example
+     * // Set user as service account with allowed IP
+     * await user.setAsServiceAccount(api, "192.168.1.100");
+     */
+    public setAsServiceAccount(api: MamoriService, allowedIp: string): Promise<any> {
+        return this.setMFAProvider(api, MFA_PROVIDER.SERVICE, {
+            ALLOWED_IP: allowedIp
         });
     }
 

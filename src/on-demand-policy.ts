@@ -123,6 +123,7 @@ export class OnDemandPolicy implements ISerializable {
     request_role: string;
     request_alert: string;
     request_default_message: string;
+    request_default_message_required: string;
     endorse_alert: string;
     endorse_default_message: string;
     endorse_agent_count: string;
@@ -144,6 +145,7 @@ export class OnDemandPolicy implements ISerializable {
         this.request_role = "";
         this.request_alert = "";
         this.request_default_message = "";
+        this.request_default_message_required = "false";
         this.endorse_alert = "";
         this.endorse_default_message = "";
         this.endorse_agent_count = "1";
@@ -197,6 +199,7 @@ export class OnDemandPolicy implements ISerializable {
             this.request_role,
             this.request_alert,
             this.request_default_message,
+            this.request_default_message_required,
             this.endorse_alert,
             this.endorse_default_message,
             this.endorse_agent_count,

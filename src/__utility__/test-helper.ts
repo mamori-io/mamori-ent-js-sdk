@@ -8,7 +8,49 @@ import {
   io_key,
 } from "../api";
 import { io_utils, io_https } from "../api";
+import { noThrow } from "../utils";
 import "./jest/error_matcher";
+
+/**
+ * Execute a SQL query using api.select() and return the resulting array.
+ * This helper normalizes the response to always return an array, handling both
+ * the case where api.select() returns an array directly or a QueryResponse object with .rows.
+ * Includes built-in error handling using noThrow, so errors are caught and returned as part of the result.
+ * 
+ * @param api - The MamoriService instance to use for the query
+ * @param sql - The SQL query string to execute
+ * @returns Promise that resolves to an array of result objects (maps), or an error object if the query fails.
+ *          If an error occurs, the result will have an 'errors' property set to true.
+ * 
+ * @example
+ * const results = await selectQuery(api, "SELECT * FROM users WHERE active = true");
+ * if (results.errors) {
+ *   console.error("Query failed:", results.message);
+ * } else {
+ *   expect(results.length).toBeGreaterThan(0);
+ * }
+ */
+export async function selectQuery(api: MamoriService, sql: string): Promise<any> {
+  const result = await noThrow(api.select(sql));
+  
+  // If there was an error, return the error object as-is
+  if (result.errors) {
+    return result;
+  }
+  
+  // Handle case where result is already an array
+  if (Array.isArray(result)) {
+    return result;
+  }
+  
+  // Handle case where result has .rows property (QueryResponse)
+  if (result && typeof result === 'object' && 'rows' in result) {
+    return result.rows || [];
+  }
+  
+  // Handle case where result might be empty or undefined
+  return result || [];
+}
 
 const childProcess = require("child_process");
 
@@ -47,6 +89,42 @@ export function execute(command: string): Promise<string> {
 
 export function sleep(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+/**
+ * Get the current timestamp from the database to ensure proper timezone handling.
+ * This function queries the database's CURRENT_TIMESTAMP which ensures consistency
+ * with database timezone settings (e.g., UTC+11) rather than using JavaScript's UTC timestamp.
+ * 
+ * @param api - The MamoriService instance to use for the query
+ * @returns Promise that resolves to the database timestamp as a string, or null if the query fails.
+ *          The timestamp format will match the database's timezone format (e.g., '2025-11-04 03:58:06.227269+11')
+ * 
+ * @example
+ * const dbTimestamp = await getDatabaseTimestamp(api);
+ * const query = `SELECT * FROM audit_log WHERE updatetime > '${dbTimestamp}'`;
+ */
+export async function getDatabaseTimestamp(api: MamoriService): Promise<string | null> {
+  const timestampResult = await selectQuery(api, "SELECT CURRENT_TIMESTAMP as tstamp FROM SYS.DUAL");
+  return timestampResult && timestampResult.length > 0 
+    ? String(timestampResult[0].tstamp || timestampResult[0][0] || '')
+    : null;
+}
+
+/**
+ * Calculate lockout duration in seconds from a lockedUntil timestamp
+ * @param lockedUntil - The lockedUntil timestamp (string or Date)
+ * @returns The lockout duration in seconds as a number
+ * @example
+ * const lockedUntil = "2024-01-01T12:00:00Z";
+ * const durationSeconds = calculateLockoutDurationSeconds(lockedUntil);
+ * expect(durationSeconds).toBeGreaterThanOrEqual(20);
+ */
+export function calculateLockoutDurationSeconds(lockedUntil: string | Date): number {
+  const lockedUntilDate = new Date(lockedUntil);
+  const now = new Date();
+  const lockoutDurationMs = lockedUntilDate.getTime() - now.getTime();
+  return lockoutDurationMs / 1000;
 }
 
 export class DBHelper {
