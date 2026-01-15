@@ -61,6 +61,7 @@ export class SshLogin implements ISerializable {
     public password?: string;
     public private_key_name?: string;
     public theme_name?: string;
+    public idle_timeout?: number;
 
     /**
      * @param name  Unique SshLogin name
@@ -74,6 +75,7 @@ export class SshLogin implements ISerializable {
         this.private_key_name = '';
         this.password = '';
         this.theme_name = '';
+        this.idle_timeout = 30;
     }
 
     /**
@@ -151,11 +153,15 @@ export class SshLogin implements ISerializable {
             "ssh://" + this.host + (this.port == 22 ? "" : ":" + this.port);
 
 
+        let privateKeyParam = (this.private_key_name && this.private_key_name.length > 0) 
+            ? "'" + sqlEscape(this.private_key_name) + "'" 
+            : "null";
         let query = "CALL ADD_SSH_LOGIN('" + sqlEscape(this.name) + "', '" +
-            sqlEscape(uri) + "', '" +
-            this.private_key_name + "', '" +
+            sqlEscape(uri) + "', " +
+            privateKeyParam + ", '" +
             sqlEscape(this.password || "") + "','" +
-            sqlEscape(this.theme_name || "") + "')";
+            sqlEscape(this.theme_name || "") + "', '" +
+            sqlEscape("" + (this.idle_timeout || 30)) + "')";
         return api.select(query).then((res: any) => {
             return res[0];
         });
@@ -176,18 +182,23 @@ export class SshLogin implements ISerializable {
         let uri = (this.user && this.user.length > 0) ? "ssh://" + this.user + "@" + this.host + (this.port == 22 ? "" : ":" + this.port) :
             "ssh://" + this.host + (this.port == 22 ? "" : ":" + this.port);
 
+        let privateKeyParam = (this.private_key_name && this.private_key_name.length > 0) 
+            ? "'" + sqlEscape(this.private_key_name) + "'" 
+            : "null";
         return api.select("call update_ssh_login(" +
             sqlEscape(this.id) +
             ", '" +
             sqlEscape(this.name) +
             "', '" +
             sqlEscape(uri) +
-            "', '" +
-            this.private_key_name +
-            "', '" +
+            "', " +
+            privateKeyParam +
+            ", '" +
             sqlEscape(this.password || "") +
             "', '" +
             sqlEscape(this.theme_name || "") +
+            "', '" +
+            sqlEscape("" + (this.idle_timeout || 30)) +
             "')"
         ).then((res: any) => {
             return res[0];
