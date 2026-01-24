@@ -61,6 +61,7 @@ describe("ssh login tests", () => {
 
         k = k.fromJSON(k.toJSON())
         let res = await io_utils.noThrow(k.create(api));
+        console.log("**** %o",res);
         expect(res.status).toBe("ok");
 
         //Ensure item returned properly
