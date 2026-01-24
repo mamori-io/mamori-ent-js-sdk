@@ -124,6 +124,10 @@ export class OnDemandPolicy implements ISerializable {
     request_alert: string;
     request_default_message: string;
     request_default_message_required: string;
+    request_priority_required: string;
+    external_ticket_number_required: string;
+    approval_message_required: string;
+    ticket_number_regex: string;
     endorse_alert: string;
     endorse_default_message: string;
     endorse_agent_count: string;
@@ -134,6 +138,7 @@ export class OnDemandPolicy implements ISerializable {
     approval_expiry: string;
     allow_self_endorse: string;
     request_expiry: string;
+    execute_as: string;
 
     public constructor(name: string, type?: POLICY_TYPES) {
 
@@ -146,6 +151,10 @@ export class OnDemandPolicy implements ISerializable {
         this.request_alert = "";
         this.request_default_message = "";
         this.request_default_message_required = "false";
+        this.request_priority_required = "false";
+        this.external_ticket_number_required = "false";
+        this.approval_message_required = "false";
+        this.ticket_number_regex = "TK-\\d{6}";
         this.endorse_alert = "";
         this.endorse_default_message = "";
         this.endorse_agent_count = "1";
@@ -156,6 +165,7 @@ export class OnDemandPolicy implements ISerializable {
         this.approval_expiry = "24";
         this.request_expiry = "15";
         this.allow_self_endorse = "false";
+        this.execute_as = "";
     }
 
     public clearParameters() {
@@ -200,6 +210,10 @@ export class OnDemandPolicy implements ISerializable {
             this.request_alert,
             this.request_default_message,
             this.request_default_message_required,
+            this.request_priority_required,
+            this.external_ticket_number_required,
+            this.approval_message_required,
+            this.ticket_number_regex,
             this.endorse_alert,
             this.endorse_default_message,
             this.endorse_agent_count,
@@ -209,6 +223,7 @@ export class OnDemandPolicy implements ISerializable {
             this.approval_expiry,
             this.allow_self_endorse == 'true' ? "true" : "false",
             this.request_expiry,
+            this.execute_as,
             this.sqlText);
     }
 

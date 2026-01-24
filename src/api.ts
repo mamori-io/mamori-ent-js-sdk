@@ -1857,6 +1857,10 @@ export class MamoriService extends eventable.Eventable {
     request_alert: string,
     request_default_message: string,
     request_default_message_required: string,
+    request_priority_required: string,
+    external_ticket_number_required: string,
+    approval_message_required: string,
+    ticket_number_regex: string,
     endorse_alert: string,
     endorse_default_message: string,
     endorse_agent_count: any,
@@ -1866,6 +1870,7 @@ export class MamoriService extends eventable.Eventable {
     approval_expiry: string,
     allow_self_endorse: string,
     request_expiry: string,
+    execute_as: string,
     sql: string,
   ) {
     return this.callAPI("POST", "/v1/policies/create_procedure", {
@@ -1880,6 +1885,10 @@ export class MamoriService extends eventable.Eventable {
         ? request_default_message
         : "",
       request_default_message_required: request_default_message_required ? request_default_message_required : "false",
+      request_priority_required: request_priority_required ? request_priority_required : "false",
+      external_ticket_number_required: external_ticket_number_required ? external_ticket_number_required : "false",
+      approval_message_required: approval_message_required ? approval_message_required : "false",
+      ticket_number_regex: ticket_number_regex ? ticket_number_regex : "TK-\\d{6}",
       endorse_alert: endorse_alert ? endorse_alert : "",
       endorse_default_message: endorse_default_message
         ? endorse_default_message
@@ -1891,6 +1900,7 @@ export class MamoriService extends eventable.Eventable {
       approval_expiry: approval_expiry,
       allow_self_endorse: allow_self_endorse ? allow_self_endorse : "false",
       request_expiry: request_expiry,
+      execute_as: execute_as || "",
       sql: sql,
     });
   }
