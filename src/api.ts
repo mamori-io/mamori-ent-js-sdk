@@ -1861,6 +1861,7 @@ export class MamoriService extends eventable.Eventable {
     external_ticket_number_required: string,
     approval_message_required: string,
     ticket_number_regex: string,
+    ticket_number_regex_display_hint: string,
     endorse_alert: string,
     endorse_default_message: string,
     endorse_agent_count: any,
@@ -1889,6 +1890,7 @@ export class MamoriService extends eventable.Eventable {
       external_ticket_number_required: external_ticket_number_required ? external_ticket_number_required : "false",
       approval_message_required: approval_message_required ? approval_message_required : "false",
       ticket_number_regex: ticket_number_regex ? ticket_number_regex : "TK-\\d{6}",
+      ticket_number_regex_display_hint: ticket_number_regex_display_hint || "",
       endorse_alert: endorse_alert ? endorse_alert : "",
       endorse_default_message: endorse_default_message
         ? endorse_default_message

@@ -128,6 +128,7 @@ export class OnDemandPolicy implements ISerializable {
     external_ticket_number_required: string;
     approval_message_required: string;
     ticket_number_regex: string;
+    ticket_number_regex_display_hint: string;
     endorse_alert: string;
     endorse_default_message: string;
     endorse_agent_count: string;
@@ -155,6 +156,7 @@ export class OnDemandPolicy implements ISerializable {
         this.external_ticket_number_required = "false";
         this.approval_message_required = "false";
         this.ticket_number_regex = "TK-\\d{6}";
+        this.ticket_number_regex_display_hint = "";
         this.endorse_alert = "";
         this.endorse_default_message = "";
         this.endorse_agent_count = "1";
@@ -214,6 +216,7 @@ export class OnDemandPolicy implements ISerializable {
             this.external_ticket_number_required,
             this.approval_message_required,
             this.ticket_number_regex,
+            this.ticket_number_regex_display_hint,
             this.endorse_alert,
             this.endorse_default_message,
             this.endorse_agent_count,
