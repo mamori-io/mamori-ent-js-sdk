@@ -334,7 +334,14 @@ export class MamoriService extends eventable.Eventable {
     return new Promise<void>((resolve, reject) => {
       if (this.claims) {
         this._http
-          .request({ method: "DELETE", url: "/sessions/logout" })
+          .request({
+            method: "DELETE",
+            url: "/sessions/logout",
+            headers: {
+              Cookie: this._cookies,
+              "X-CSRF-Token": this._csrf,
+            },
+          })
           .then(() => {
             this.username = undefined;
             this.authorization = null;
