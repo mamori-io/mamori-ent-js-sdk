@@ -14,7 +14,8 @@ describe("Password Reset Feature Tests", () => {
   let api: MamoriService;
   const targetUser = ("t_reset_user_tok" + testbatch).toLowerCase();
   const targetPass = "Aq1!aQ1!aQ1!";
-  const newPassword = "NewP@ssw0rd123!";
+  /** Base for new password; extended with timestamp/session in tests to avoid reuse rejection. */
+  const newPasswordBase = "NewP@ssw0rd";
 
   beforeAll(async () => {
     api = new MamoriService(host, INSECURE);
@@ -280,7 +281,8 @@ describe("Password Reset Feature Tests", () => {
       if (validateResponse.rows && validateResponse.rows[0]) {
         sessionId = validateResponse.rows[0][0]; // Session ID is first column
       }
-      
+      // Unique password per run to avoid "password reuse" rejection
+      const newPassword = `${newPasswordBase}_${Date.now()}_${sessionId ?? "n"}!`;
       // Prepare the perform_reset request
       // Note: session_id is always required (from ResetToken.vue line 298)
       // Even if null, it should be included (the UI always includes it)

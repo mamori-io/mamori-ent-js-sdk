@@ -50,23 +50,11 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     if (!policyResult.errors && policyResult && Array.isArray(policyResult) && policyResult.length > 0) {
       const row = policyResult[0];
       const requirementValue = row.requirement;
-      if (requirementValue) {
-        failedAttemptsLimit = parseInt(String(requirementValue), 10);
-        console.log(`DEBUG beforeAll: Retrieved failed_attempts_limit from server: ${failedAttemptsLimit}`);
-      } else {
-        console.log(`DEBUG beforeAll: requirement field not found in result, using default: 10`);
-      }
+      failedAttemptsLimit = parseInt(String(requirementValue), 10);
     } else {
-      if (policyResult.errors) {
-        console.log(`DEBUG beforeAll: Error retrieving failed_attempts_limit: ${policyResult.message || 'Unknown error'}, using default: 10`);
-      } else {
-        console.log(`DEBUG beforeAll: Password requirements query returned no rows, using default: 10`);
-      }
       failedAttemptsLimit = 10;
     }
     
-    console.log(`DEBUG beforeAll: Using failed_attempts_limit = ${failedAttemptsLimit}`);
-
     // Create test user
     await ignoreError(api.delete_user(testUser));
     await noThrow(
@@ -214,9 +202,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
       }
 
       // Final verification: account should now be LOCKED after reaching the limit
-      const finalUserInfo = await getUserInfo(username);
-      console.log("**** AI-DEBUG triggerLockoutWithVerification: finalUserInfo %o", finalUserInfo);
-      
+      const finalUserInfo = await getUserInfo(username);      
       // Account should be LOCKED after reaching the limit
       expect(finalUserInfo.locked_until).toBeTruthy(); // Should have a lockout timestamp
       
@@ -258,7 +244,6 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
 
     // Verify the lockout duration was set correctly
     const currentLockoutDuration = await getLockoutDurationMinutes();
-    console.log("**** AI-DEBUG TC-9714-002: currentLockoutDuration %o", currentLockoutDuration);
     expect(currentLockoutDuration).toBe(lockoutDurationForTesting);
 
     // Unlock user first
@@ -266,13 +251,11 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
 
     // Trigger lockout and capture lockedUntil timestamp
     const lockedUntil = await triggerLockoutWithVerification(testUser, true);
-    console.log("**** AI-DEBUG TC-9714-002: lockedUntil %o", lockedUntil);
     expect(lockedUntil).toBeTruthy();
 
     // Verify lockout duration from getUserInfo (approximately 20 seconds for 0.333 minutes setting)
     const userInfoAfterLock = await getUserInfo(testUser);
     const lockoutDurationSeconds = userInfoAfterLock?.lockout_duration_seconds ?? 0;
-    console.log("**** AI-DEBUG TC-9714-002: lockoutDurationSeconds %o", lockoutDurationSeconds);
 
     // Verify lockout duration is approximately 20 seconds (allow 5 second tolerance)
     expect(lockoutDurationSeconds).toBeGreaterThanOrEqual(20);
@@ -435,9 +418,6 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
        AND username = '${testUser2}'
        AND inserted_at > '${currentTimestamp}'`;
 
-    console.log("**** AI-DEBUG TC-9714-005: baseSQL %o", baseSQL);
-    console.log("**** AI-DEBUG TC-9714-005: emailAlertSQL %o", emailAlertSQL);
-
     // Step 3: Initial check - Audit log entries should be 0 before lockout
     const initialAuditResult = await helper.selectQuery(api, baseSQL);
     const initialCount = initialAuditResult && initialAuditResult.length > 0 ? parseInt(String(initialAuditResult[0].cnt || initialAuditResult[0].count || 0), 10) : 0;
@@ -453,16 +433,12 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
 
     // Step 5: After lockout check - Audit log entries should have at least 1 lock row
     const afterLockAuditResult = await helper.selectQuery(api, baseSQL);
-    console.log("**** AI-DEBUG TC-9714-005: afterLockAuditResult %o", afterLockAuditResult);
     const afterLockCount = afterLockAuditResult && afterLockAuditResult.length > 0 ? parseInt(String(afterLockAuditResult[0].cnt || afterLockAuditResult[0].count || 0), 10) : 0;
-    console.log("**** AI-DEBUG TC-9714-005: afterLockCount %o", afterLockCount);
     expect(afterLockCount).toBeGreaterThan(0); // Should have at least one lock row
 
     // After lockout check - Email alert entries (may be 0 if email alerts not configured)
     const afterAlertResult = await helper.selectQuery(api, emailAlertSQL);
-    console.log("**** AI-DEBUG TC-9714-005: afterAlertResult %o", afterAlertResult);  
     const afterAlertCount = afterAlertResult && afterAlertResult.length > 0 ? parseInt(String(afterAlertResult[0].cnt || afterAlertResult[0].count || 0), 10) : 0;
-    console.log("**** AI-DEBUG TC-9714-005: afterAlertCount %o", afterAlertCount);
     expect(afterAlertCount).toBeGreaterThanOrEqual(0); // May be 0 if email alerts not configured
   
     // Step 6: Cleanup - Unlock account

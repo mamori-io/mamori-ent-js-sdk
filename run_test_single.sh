@@ -1,5 +1,6 @@
 #!/bin/bash
 
+yarn test system
 yarn test pam
 yarn test permissions
 yarn test crud/alert
