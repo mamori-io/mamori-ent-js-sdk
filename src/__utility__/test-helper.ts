@@ -105,7 +105,7 @@ export function sleep(milliseconds: number) {
  * const query = `SELECT * FROM audit_log WHERE updatetime > '${dbTimestamp}'`;
  */
 export async function getDatabaseTimestamp(api: MamoriService): Promise<string | null> {
-  const timestampResult = await selectQuery(api, "SELECT CURRENT_TIMESTAMP as tstamp FROM SYS.DUAL");
+  const timestampResult = await selectQuery(api, "SELECT CURRENT_TIMESTAMP_TZ as tstamp FROM SYS.DUAL");
   return timestampResult && timestampResult.length > 0 
     ? String(timestampResult[0].tstamp || timestampResult[0][0] || '')
     : null;

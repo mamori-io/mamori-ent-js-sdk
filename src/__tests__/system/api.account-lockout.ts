@@ -20,6 +20,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
 
   let api: MamoriService;
   const testUser = ("t_lockout_user_" + testbatch).toLowerCase();
+  const testUser2 = ("t_lockout_user_2_" + testbatch).toLowerCase();
   const testPassword = "Aq1!aQ1!aQ1!";
   const wrongPassword = "WrongPassword123!";
   const lockoutDurationForTesting = "1"; // 20 seconds (0.333 minutes)
@@ -45,8 +46,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
       api,
       "select requirement from mamori.mamorisys.security.password_requirements where requirement_desc = 'failed_attempts_limit' and not deleted"
     );
-    console.log("DEBUG beforeAll: policyResult %o", policyResult);
-    
+
     if (!policyResult.errors && policyResult && Array.isArray(policyResult) && policyResult.length > 0) {
       const row = policyResult[0];
       const requirementValue = row.requirement;
@@ -78,18 +78,32 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
         email: "lockout_test@test.test",
       }),
     );
+
+    // Create test user 2
+    await ignoreError(api.delete_user(testUser2));
+    await noThrow(
+      api.create_user({
+        username: testUser2,
+        password: testPassword,
+        fullname: testUser2,
+        identified_by: "password",
+        email: "lockout_test_2@test.test",
+      }),
+    );
   });
 
   afterAll(async () => {
     if (api) {
       // Unlock test user if locked
       await ignoreError(api.unlock_user(testUser));
+      await ignoreError(api.unlock_user(testUser2));
 
       // Reset lockout duration to original value
       await ignoreError(api.set_system_properties({ "mamori.security.auto_lockout.minutes": originalLockoutDuration }));
 
       // Clean up test user
       await ignoreError(api.delete_user(testUser));
+      await ignoreError(api.delete_user(testUser2));
       await api.logout();
     }
   });
@@ -97,8 +111,8 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
   /**
    * Helper function to unlock test user
    */
-  async function unlockTestUser() {
-    await ignoreError(api.unlock_user(testUser));
+  async function unlockTestUser(username: string) {
+    await ignoreError(api.unlock_user(username));
   }
 
   /**
@@ -113,12 +127,12 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
   /**
    * Helper function to get user info from database
    */
-  async function getUserInfo(): Promise<any> {
+  async function getUserInfo(username: string): Promise<any> {
     const result = await helper.selectQuery(
       api,
-      `SELECT failed_attempts, locked_until, account_disabled 
+      `SELECT failed_attempts, locked_until, account_disabled, DATEDIFF(SECOND,current_timestamp,locked_until) as lockout_duration_seconds 
        FROM mamori.mamorisys.security.users 
-       WHERE LOWER(username) = LOWER('${testUser}') 
+       WHERE LOWER(username) = LOWER('${username}') 
        AND NOT deleted`
     );
     if (result.errors) {
@@ -133,6 +147,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
         failed_attempts: row.failed_attempts ? parseInt(String(row.failed_attempts), 10) : 0,
         locked_until: row.locked_until,
         account_disabled: accountDisabled,
+        lockout_duration_seconds: row.lockout_duration_seconds != null ? parseInt(String(row.lockout_duration_seconds), 10) : null,
       };
       return userInfo;
     }
@@ -169,20 +184,20 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
    * @param verifyIntermediateSteps - If true, verifies counter increments and non-lockout state after each attempt before the limit
    * @returns If verifyIntermediateSteps is true, returns the locked_until timestamp; otherwise returns the full user info
    */
-  async function triggerLockoutWithVerification(verifyIntermediateSteps: boolean = false): Promise<any> {
+  async function triggerLockoutWithVerification(username: string, verifyIntermediateSteps: boolean = false): Promise<any> {
     const apiTest = new MamoriService(host, INSECURE);
     
     try {
       // Make attempts up to (limit - 1) - these should increment counter but NOT lock
       for (let i = 0; i < failedAttemptsLimit - 1; i++) {
-        const loginResult = await noThrow(apiTest.login(testUser, wrongPassword));
+        const loginResult = await noThrow(apiTest.login(username, wrongPassword));
         if (!loginResult.errors) {
           fail("Login should have failed");
         }
 
         // Optionally verify failed_attempts counter increments and account is NOT locked yet
         if (verifyIntermediateSteps) {
-          const userInfo = await getUserInfo();
+          const userInfo = await getUserInfo(username);
           expect(userInfo).toBeTruthy();
           
           // Account should NOT be locked yet (we're below the limit)
@@ -193,13 +208,14 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
       }
 
       // Now make the final attempt that should trigger lockout (attempt #failedAttemptsLimit)
-      const finalLoginResult = await noThrow(apiTest.login(testUser, wrongPassword));
+      const finalLoginResult = await noThrow(apiTest.login(username, wrongPassword));
       if (!finalLoginResult.errors) {
         fail("Login should have failed");
       }
 
       // Final verification: account should now be LOCKED after reaching the limit
-      const finalUserInfo = await getUserInfo();
+      const finalUserInfo = await getUserInfo(username);
+      console.log("**** AI-DEBUG triggerLockoutWithVerification: finalUserInfo %o", finalUserInfo);
       
       // Account should be LOCKED after reaching the limit
       expect(finalUserInfo.locked_until).toBeTruthy(); // Should have a lockout timestamp
@@ -220,14 +236,14 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
    */
   test("TC-9714-001: Failed login attempt counting", async () => {
     // Unlock user first
-    await unlockTestUser();
+    await unlockTestUser(testUser);
 
     try {
       // Trigger lockout with intermediate verification to test counting mechanism
-      await triggerLockoutWithVerification(true);
+      await triggerLockoutWithVerification(testUser, true);
     } finally {
       // Cleanup: Unlock account
-      await unlockTestUser();
+      await unlockTestUser(testUser);
       // No need to reset lockout duration since we didn't change it
     }
   });
@@ -242,17 +258,21 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
 
     // Verify the lockout duration was set correctly
     const currentLockoutDuration = await getLockoutDurationMinutes();
+    console.log("**** AI-DEBUG TC-9714-002: currentLockoutDuration %o", currentLockoutDuration);
     expect(currentLockoutDuration).toBe(lockoutDurationForTesting);
 
     // Unlock user first
-    await unlockTestUser();
+    await unlockTestUser(testUser);
 
     // Trigger lockout and capture lockedUntil timestamp
-    const lockedUntil = await triggerLockoutWithVerification(true);
+    const lockedUntil = await triggerLockoutWithVerification(testUser, true);
+    console.log("**** AI-DEBUG TC-9714-002: lockedUntil %o", lockedUntil);
     expect(lockedUntil).toBeTruthy();
 
-    // Verify lockout duration is approximately 20 seconds (0.333 minutes)
-    const lockoutDurationSeconds = helper.calculateLockoutDurationSeconds(lockedUntil);
+    // Verify lockout duration from getUserInfo (approximately 20 seconds for 0.333 minutes setting)
+    const userInfoAfterLock = await getUserInfo(testUser);
+    const lockoutDurationSeconds = userInfoAfterLock?.lockout_duration_seconds ?? 0;
+    console.log("**** AI-DEBUG TC-9714-002: lockoutDurationSeconds %o", lockoutDurationSeconds);
 
     // Verify lockout duration is approximately 20 seconds (allow 5 second tolerance)
     expect(lockoutDurationSeconds).toBeGreaterThanOrEqual(20);
@@ -273,7 +293,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     }
 
     // Cleanup: Unlock account
-    await unlockTestUser();
+    await unlockTestUser(testUser);
 
     // Reset lockout duration
     await api.set_system_properties({ "mamori.security.auto_lockout.minutes": originalLockoutDuration });
@@ -288,14 +308,14 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     await api.set_system_properties({ "mamori.security.auto_lockout.minutes": 1 });
 
     // Unlock user first
-    await unlockTestUser();
+    await unlockTestUser(testUser);
 
     // Trigger lockout
-    let lockedUntil = await triggerLockoutWithVerification(true);
+    let lockedUntil = await triggerLockoutWithVerification(testUser, true);
     expect(lockedUntil).toBeTruthy();
 
     // Verify account is locked
-    let userInfo = await getUserInfo();
+    let userInfo = await getUserInfo(testUser);
     expect(userInfo.locked_until).toBeTruthy();
 
     // Verify login fails during lockout period
@@ -309,8 +329,8 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
       await ignoreError(apiTest1.logout());
     }
 
-    // Calculate sleep time based on lockedUntil timestamp
-    const lockoutDurationSeconds = helper.calculateLockoutDurationSeconds(lockedUntil);
+    // Sleep until lockout expires using lockout_duration_seconds from getUserInfo
+    const lockoutDurationSeconds = Math.max(0, userInfo?.lockout_duration_seconds ?? 0);
     const timeUntilExpiry = lockoutDurationSeconds * 1000; // Convert to milliseconds
     const sleepTime = Math.max(0, timeUntilExpiry) + 3000; // Add 1 second buffer to ensure expiry
     await helper.sleep(sleepTime);
@@ -331,7 +351,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     }
 
     // Verify locked_until is cleared (should be null after expiration)
-    userInfo = await getUserInfo();
+    userInfo = await getUserInfo(testUser);
     expect(userInfo).toBeTruthy(); // User should exist
     expect(userInfo!.locked_until).toBeNull(); // locked_until should be null after expiration
 
@@ -348,13 +368,13 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     await api.set_system_properties({ "mamori.security.auto_lockout.minutes": lockoutDurationForTesting });
 
     // Unlock user first
-    await unlockTestUser();
+    await unlockTestUser(testUser);
 
     // Trigger lockout
-    await triggerLockoutWithVerification(false);
+    await triggerLockoutWithVerification(testUser, false);
 
     // Verify account is locked
-    let userInfo = await getUserInfo();
+    let userInfo = await getUserInfo(testUser);
     expect(userInfo.locked_until).toBeTruthy();
 
     // Verify login fails
@@ -372,7 +392,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     await api.unlock_user(testUser);
 
     // Verify locked_until is cleared
-    userInfo = await getUserInfo();
+    userInfo = await getUserInfo(testUser);
     expect(userInfo.locked_until).toBeFalsy();
 
     // Verify login succeeds immediately
@@ -397,12 +417,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
    */
   test("TC-9714-005: Audit log entries for lockout", async () => {
     // Step 1: Setup - Unlock user first
-    await unlockTestUser();
-
-    // Step 2: Define baseSQL query for AUDIT_LOG
-    // Get timestamp AFTER unlock with small delay to ensure we only capture new entries
-    await helper.sleep(100); // Small delay to ensure timestamp is after any pending operations
-    
+    await unlockTestUser(testUser2);
     // Get current timestamp from database to ensure proper timezone handling
     const currentTimestamp = await helper.getDatabaseTimestamp(api);
     
@@ -410,15 +425,18 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
        FROM SYS.AUDIT_LOG 
        WHERE querycategory = 'SECURITY'
        and querysubcategory = 'ACCOUNT_LOCKED'
-       AND username = '${testUser}' 
+       AND lower(username) = lower('${testUser2}') 
        AND updatetime > '${currentTimestamp}'`;
 
     let emailAlertSQL = `SELECT count(*) cnt 
        FROM sys.alert_delivery_log
        WHERE transport = 'email' 
        AND destination = 'lockout_test@test.test'
-       AND username = '${testUser}'
+       AND username = '${testUser2}'
        AND inserted_at > '${currentTimestamp}'`;
+
+    console.log("**** AI-DEBUG TC-9714-005: baseSQL %o", baseSQL);
+    console.log("**** AI-DEBUG TC-9714-005: emailAlertSQL %o", emailAlertSQL);
 
     // Step 3: Initial check - Audit log entries should be 0 before lockout
     const initialAuditResult = await helper.selectQuery(api, baseSQL);
@@ -431,20 +449,25 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     expect(initialAlertCount).toBe(0);
 
     // Step 4: Trigger lockout
-    await triggerLockoutWithVerification(false);
+    await triggerLockoutWithVerification(testUser2, false);
 
     // Step 5: After lockout check - Audit log entries should have at least 1 lock row
     const afterLockAuditResult = await helper.selectQuery(api, baseSQL);
+    console.log("**** AI-DEBUG TC-9714-005: afterLockAuditResult %o", afterLockAuditResult);
     const afterLockCount = afterLockAuditResult && afterLockAuditResult.length > 0 ? parseInt(String(afterLockAuditResult[0].cnt || afterLockAuditResult[0].count || 0), 10) : 0;
+    console.log("**** AI-DEBUG TC-9714-005: afterLockCount %o", afterLockCount);
     expect(afterLockCount).toBeGreaterThan(0); // Should have at least one lock row
 
     // After lockout check - Email alert entries (may be 0 if email alerts not configured)
     const afterAlertResult = await helper.selectQuery(api, emailAlertSQL);
+    console.log("**** AI-DEBUG TC-9714-005: afterAlertResult %o", afterAlertResult);  
     const afterAlertCount = afterAlertResult && afterAlertResult.length > 0 ? parseInt(String(afterAlertResult[0].cnt || afterAlertResult[0].count || 0), 10) : 0;
+    console.log("**** AI-DEBUG TC-9714-005: afterAlertCount %o", afterAlertCount);
     expect(afterAlertCount).toBeGreaterThanOrEqual(0); // May be 0 if email alerts not configured
   
     // Step 6: Cleanup - Unlock account
-    await unlockTestUser();
+    await unlockTestUser(testUser2);
+    
   });
 });
 
