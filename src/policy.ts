@@ -78,6 +78,7 @@ export class PolicyBase implements ISerializable {
     enabled: string;
     description: string;
     alert: string;
+    event_handler: string;
     type: POLICY_TYPES;
     rule_type: POLICY_RULE_TYPE;
     rule_sexp: string;
@@ -93,6 +94,7 @@ export class PolicyBase implements ISerializable {
         this.id = '';
         this.enabled = 'true';
         this.alert = '';
+        this.event_handler = '';
         this.action = POLICY_ACTIONS.DENY;
         this.rule_type = POLICY_RULE_TYPE.WHEN;
     }
@@ -146,6 +148,11 @@ export class PolicyBase implements ISerializable {
         return this;
     }
 
+    public withEventHandler(eventHandler: string): PolicyBase {
+        this.event_handler = eventHandler ?? '';
+        return this;
+    }
+
     private prepare(id?: string): any {
         let rec: any = {
             type: this.type,
@@ -155,6 +162,9 @@ export class PolicyBase implements ISerializable {
             alert: this.alert,
             enabled: this.enabled == 'true'
         };
+        if (this.event_handler !== undefined && this.event_handler !== '') {
+            rec.event_handler = this.event_handler;
+        }
         if (id && id != '') {
             rec.id = Number(id);
         }

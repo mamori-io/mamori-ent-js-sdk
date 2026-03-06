@@ -706,13 +706,14 @@ export class MamoriService extends eventable.Eventable {
   public update_access_rule(
     id: number,
     type: string,
-    clause: string,
+    clause: string | object,
     position: number,
     alert: string,
     description: string,
     enabled: boolean,
+    event_handler?: string,
   ) {
-    let rec = {
+    let rec: any = {
       id: id,
       type: type,
       clause: clause,
@@ -721,19 +722,22 @@ export class MamoriService extends eventable.Eventable {
       alert: alert,
       enabled: enabled,
     };
-
+    if (event_handler !== undefined) {
+      rec.event_handler = event_handler;
+    }
     return this.callAPI("PUT", "/v1/access_rules/" + id, rec);
   }
 
   public create_access_rule(
     type: string,
-    clause: string,
+    clause: string | object,
     position: number,
     alert: string,
     description: string,
     enabled: boolean,
+    event_handler?: string,
   ) {
-    let rec = {
+    let rec: any = {
       type: type,
       clause: clause,
       description: description,
@@ -741,7 +745,9 @@ export class MamoriService extends eventable.Eventable {
       alert: alert,
       enabled: enabled,
     };
-
+    if (event_handler !== undefined) {
+      rec.event_handler = event_handler;
+    }
     return this.callAPI("POST", "/v1/access_rules", rec);
   }
 

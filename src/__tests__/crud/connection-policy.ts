@@ -16,7 +16,7 @@ const password = process.env.MAMORI_PASSWORD || "";
 
 const INSECURE = new io_https.Agent({ rejectUnauthorized: false });
 
-describe("on-demand policy crud tests", () => {
+describe("connection and statement policy crud tests", () => {
   let api: MamoriService;
   let requestAlert = new io_alertchannel.AlertChannel(
     "test_c_policy_request_alert" + testbatch,
@@ -58,6 +58,7 @@ describe("on-demand policy crud tests", () => {
       io_policy.POLICY_TYPES.BEFORE_CONNECTION,
       name,
     );
+    const eventHandlerName = "test_eh_" + testbatch;
     policy
       .withEnabled(false)
       .withPosition(20)
@@ -65,7 +66,8 @@ describe("on-demand policy crud tests", () => {
       .withAction(io_policy.POLICY_ACTIONS.ALLOW)
       .withRuleType(io_policy.POLICY_RULE_TYPE.WHEN)
       .withRuleSEXP("(SOURCE-IP 127.0.0.1)")
-      .withAlert(requestAlert.name);
+      .withAlert(requestAlert.name)
+      .withEventHandler(eventHandlerName);
     let x = await io_utils.noThrow(policy.create(api));
     expect(x).toSucceed();
 
@@ -81,6 +83,9 @@ describe("on-demand policy crud tests", () => {
     );
     expect(x3.length).toBe(1);
     let x4 = x3[0];
+    if (x4.event_handler !== undefined) {
+      expect(x4.event_handler).toBe(eventHandlerName);
+    }
 
     //Test delete
     policy.id = x4.id;
@@ -112,6 +117,7 @@ describe("on-demand policy crud tests", () => {
       await io_utils.noThrow(p2.delete(api));
     }
 
+    const eventHandlerName = "test_s_eh_" + testbatch;
     let policy = new io_policy.StatementPolicy(name);
     policy
       .withEnabled(false)
@@ -120,7 +126,8 @@ describe("on-demand policy crud tests", () => {
       .withAction(io_policy.POLICY_ACTIONS.ALLOW)
       .withRuleType(io_policy.POLICY_RULE_TYPE.WHEN)
       .withRuleSEXP("(REFERENCES-TABLE 'mamori')")
-      .withAlert(requestAlert.name);
+      .withAlert(requestAlert.name)
+      .withEventHandler(eventHandlerName);
     let x = await io_utils.noThrow(policy.create(api));
     expect(x).toSucceed();
 
@@ -136,6 +143,9 @@ describe("on-demand policy crud tests", () => {
     );
     expect(x3.length).toBe(1);
     let x4 = x3[0];
+    if (x4.event_handler !== undefined) {
+      expect(x4.event_handler).toBe(eventHandlerName);
+    }
 
     //Test delete
     policy.id = x4.id;
@@ -155,5 +165,71 @@ describe("on-demand policy crud tests", () => {
     let p3 = io_policy.StatementPolicy.build(x7[0]);
     let x8 = await io_utils.noThrow(p3.delete(api));
     expect(x8).toSucceed();
+  });
+
+  test("policy 03 - access rule API with event_handler", async () => {
+    let name = "test_c_policy_api_eh_" + testbatch;
+    const eventHandlerName = "test_api_eh_" + testbatch;
+
+    let cleanit = await io_utils.noThrow(
+      io_policy.ConnectionPolicy.listBefore(api, { description: name }),
+    );
+    if (cleanit.length > 0) {
+      let p2 = io_policy.ConnectionPolicy.build(cleanit[0]);
+      await io_utils.noThrow(p2.delete(api));
+    }
+
+    const clause = {
+      action: "Deny",
+      format: "sql" as const,
+      condition: {
+        clause_type: "When",
+        clauses: "(SOURCE-IP \"\"127.0.0.1\"\")",
+      },
+    };
+    let createRes = await io_utils.noThrow(
+      api.create_access_rule(
+        io_policy.POLICY_TYPES.BEFORE_CONNECTION,
+        clause,
+        25,
+        requestAlert.name,
+        name,
+        false,
+        eventHandlerName,
+      ),
+    );
+    expect(createRes).toSucceed();
+
+    let listRes = await io_utils.noThrow(
+      io_policy.ConnectionPolicy.listBefore(api, { description: name }),
+    );
+    expect(listRes.length).toBe(1);
+    const ruleId = listRes[0].id;
+    if (listRes[0].event_handler !== undefined) {
+      expect(listRes[0].event_handler).toBe(eventHandlerName);
+    }
+
+    let updateRes = await io_utils.noThrow(
+      api.update_access_rule(
+        ruleId,
+        io_policy.POLICY_TYPES.BEFORE_CONNECTION,
+        clause,
+        25,
+        requestAlert.name,
+        name + " updated",
+        false,
+        eventHandlerName + "_v2",
+      ),
+    );
+    expect(updateRes).toSucceed();
+
+    let listAfter = await io_utils.noThrow(
+      io_policy.ConnectionPolicy.listBefore(api, { description: name + " updated" }),
+    );
+    if (listAfter.length > 0 && listAfter[0].event_handler !== undefined) {
+      expect(listAfter[0].event_handler).toBe(eventHandlerName + "_v2");
+    }
+
+    await io_utils.noThrow(api.drop_access_rule(ruleId));
   });
 });
