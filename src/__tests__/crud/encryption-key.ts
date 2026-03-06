@@ -108,7 +108,8 @@ describe("encryption key tests", () => {
         expect(res).toContain("-----BEGIN PUBLIC KEY----");
 
         //Ensure key returned properly
-        let x = (await noThrow(Key.getAll(api))).filter((key: any) => key.name.includes(k.name) && key.usage === 'PUBLIC')[0];
+        let y = await noThrow(Key.getAll(api));
+        let x = (y as any[]).filter((key: any) => key.name.includes(k.name) && key.usage === 'PUBLIC')[0];
         expect(x.type).toBe(KEY_TYPE.RSA);
         expect(x.public_key).toContain("-----BEGIN PUBLIC KEY-----");
         expect(x.private_key).toBeUndefined();
