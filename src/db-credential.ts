@@ -28,22 +28,28 @@ export class DBCredential implements ISerializable {
     public static list(api: MamoriService, from: number, to: number, filter?: any): Promise<any> {
         let filters = prepareFilter(filter);
         let payload = filter ? { skip: from, take: to, filter: filters } : { skip: from, take: to };
-        return api.callAPI("PUT", "/v1/search/granted_datasource_access", payload).then(result => {
+        return api.callAPI("PUT", "/v1/search/datasource-credentials", payload).then(result => {
             return result.data.map((item: any) => {
-                let s = DBCredential.build(item);
+                let normalizedItem = {
+                    ...item,
+                    // Search responses can use aliases that do not match model properties.
+                    systemname: item.systemname ?? item.datasource,
+                    accessname: item.accessname ?? item.remoteusername,
+                };
+                let s = DBCredential.build(normalizedItem);
                 return s;
             })
         });
     }
 
     public static listFor(api: MamoriService, from: number, to: number, datasource: any, username: any, grantee: any): Promise<any> {
-        let filter = grantee ? [["grantee", "equals", grantee]] : [];
+        let filter = []; //grantee ? [["grantee", "equals", grantee]] : [];
         if (datasource) {
-            filter.push(["systemname", "equals", datasource]);
+            filter.push(["datasource", "equals", datasource]);
         }
-        if (username) {
-            filter.push(["accessname", "equals", username]);
-        }
+        //if (username) {
+        //    filter.push(["ds_credential_remoteusername", "equals", username]);
+        //}
         return this.list(api, from, to, filter);
     }
 
@@ -73,12 +79,16 @@ export class DBCredential implements ISerializable {
 
     public static deleteByName(api: MamoriService, datasource: any, username: any, grantee: any): Promise<any> {
         return new Promise((resolve, reject) => {
+            console.log("!!!!!!  -deleteByName  DELETING CREDENTIAL BY NAME %o",datasource, username, grantee);
             DBCredential.getByName(api, datasource, username, grantee).then(res => {
+                console.log("!!!!!! - getByName RESULT %o",res);
                 if (res) {
                     (res as DBCredential).delete(api).then(r => {
+                        console.log("!!!!!! -deleteByName - DELETING CREDENTIAL BY NAME RESULT %o",r);
                         resolve({ error: false, item: res });
                     });
                 } else {
+                    console.log("!!!!!! -deleteByName - DELETING CREDENTIAL BY NAME RESULT %o",{ error: false, item: null, message: "resource not found" });
                     resolve({ error: false, item: null, message: "resource not found" });
                 }
             }).catch(e => {

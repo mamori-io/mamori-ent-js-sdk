@@ -40,7 +40,8 @@ describe("datasource permission tests", () => {
         });
 
         // make sure the ds does not already exist
-        await io_utils.noThrow((new io_datasource.Datasource(dsName)).delete(api));
+        let cr = await io_utils.noThrow((new io_datasource.Datasource(dsName)).delete(api));
+        console.log("!!!!!! - DELETING DATA SOURCE RESULT %o",cr);
 
         // create the ds we need for this test
         let ds = new io_datasource.Datasource(dsName);
@@ -51,6 +52,7 @@ describe("datasource permission tests", () => {
             .withDatabase('mamorisys')
             .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
         let res = await io_utils.noThrow(ds.create(api));
+        console.log("!!!!!! - CREATING DATA SOURCE RESULT %o",res);
         if (res.error !== false) {
             expect(res).toBe({});
         }
@@ -61,11 +63,14 @@ describe("datasource permission tests", () => {
     });
 
     dbtest('grant mixed case role grant - #9306', async () => {
-        await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, dbUsername, "@"));
+        console.log("!!!!!! TEST STARTED");
+        let xx = await io_utils.noThrow(io_db_credential.DBCredential.deleteByName(api, dsName, dbUsername, "@"));
+        console.log("!!!!!! - DELETED CREDENTIAL RESULT %o",xx);
         let c = new io_db_credential.DBCredential().withDatasource(dsName).withUsername(dbUsername);
         let cred = io_db_credential.DBCredential.build(c.toJSON());
+        console.log("!!!!!! - CREATING CREDENTIAL RESULT %o",cred);
         let r = await io_utils.noThrow(cred.create(api, dbPassword));
-
+        console.log("!!!!!! - CREATIED CREDENTIAL RESULT %o",r);
         expect(r).toSucceed();
 
         let name = "admin-api-test_role" + testbatch;
@@ -106,7 +111,6 @@ describe("datasource permission tests", () => {
             }
         }
         expect(systemFound).toBeTruthy();
-
     });
 
 });
