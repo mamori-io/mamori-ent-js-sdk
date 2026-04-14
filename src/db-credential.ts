@@ -79,16 +79,12 @@ export class DBCredential implements ISerializable {
 
     public static deleteByName(api: MamoriService, datasource: any, username: any, grantee: any): Promise<any> {
         return new Promise((resolve, reject) => {
-            console.log("!!!!!!  -deleteByName  DELETING CREDENTIAL BY NAME %o",datasource, username, grantee);
             DBCredential.getByName(api, datasource, username, grantee).then(res => {
-                console.log("!!!!!! - getByName RESULT %o",res);
                 if (res) {
                     (res as DBCredential).delete(api).then(r => {
-                        console.log("!!!!!! -deleteByName - DELETING CREDENTIAL BY NAME RESULT %o",r);
                         resolve({ error: false, item: res });
                     });
                 } else {
-                    console.log("!!!!!! -deleteByName - DELETING CREDENTIAL BY NAME RESULT %o",{ error: false, item: null, message: "resource not found" });
                     resolve({ error: false, item: null, message: "resource not found" });
                 }
             }).catch(e => {
