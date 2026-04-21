@@ -1646,6 +1646,13 @@ export class MamoriService extends eventable.Eventable {
     );
   }
 
+  public enable_user(username: string) {
+    return this.callAPI(
+      "PUT",
+      "/v1/users/" + encodeURIComponent(username.toLowerCase()) + "/enable",
+    );
+  }
+
   public unlock_user(username: string) {
     return this.callAPI(
       "PUT",

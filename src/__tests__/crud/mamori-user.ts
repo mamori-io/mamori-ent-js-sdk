@@ -130,7 +130,38 @@ describe("mamori user tests", () => {
         expect(res).toSucceed();
     });
 
-    test('mamori user 03 - MFA export restore', async () => {
+    test('mamori user 03 - disable then enable account', async () => {
+        let uname = (grantee + "_disable_enable").toLowerCase();
+        let k = new User(uname).withEmail(uname + "@ace.com").withFullName("Disable Enable User");
+        await ignoreError(k.delete(api));
+
+        let createResult = await noThrow(k.create(api, granteepw));
+        expect(createResult).toSucceed();
+
+        let disableResult = await noThrow(k.disableAccount(api));
+        expect(disableResult).toSucceed();
+
+        let apiAsUser = new MamoriService(host, INSECURE);
+        let disabledLogin = await noThrow(apiAsUser.login(uname, granteepw));
+        expect(disabledLogin.errors).toBe(true);
+        await ignoreError(apiAsUser.logout());
+
+        let enableResult = await noThrow(k.enableAccount(api));
+        expect(enableResult).toSucceed();
+
+        let apiAsEnabledUser = new MamoriService(host, INSECURE);
+        let enabledLogin = await noThrow(apiAsEnabledUser.login(uname, granteepw));
+        expect(enabledLogin.username).toBe(uname);
+        await ignoreError(apiAsEnabledUser.logout());
+
+        let unlockResult = await noThrow(k.unlockAccount(api));
+        expect(unlockResult).toSucceed();
+
+        let deleteResult = await noThrow(k.delete(api));
+        expect(deleteResult).toSucceed();
+    });
+
+    test('mamori user 04 - MFA export restore', async () => {
         // Step 1: Create a new user
         let testUser = grantee + "_mfa_test";
         let k = new User(testUser).withEmail(testUser + "@ace.com").withFullName("MFA Test User");

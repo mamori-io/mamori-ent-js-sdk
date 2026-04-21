@@ -126,11 +126,15 @@ class UserBase implements ISerializable {
         });
     }
 
-    public lock(api: MamoriService): Promise<any> {
+    public disableAccount(api: MamoriService): Promise<any> {
         return api.disable_user(this.username);
     }
 
-    public unlock(api: MamoriService): Promise<any> {
+    public enableAccount(api: MamoriService): Promise<any> {
+        return api.enable_user(this.username);
+    }
+
+    public unlockAccount(api: MamoriService): Promise<any> {
         return api.unlock_user(this.username);
     }
 }
