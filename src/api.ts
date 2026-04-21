@@ -42,6 +42,7 @@ import * as io_db_credential from "./db-credential";
 import * as io_providers from "./provider";
 import * as eventable from "./eventable";
 import * as io_utility_ds from "./__utility__/ds";
+const { version: SDK_VERSION } = require("../package.json");
 
 export {
   Datasource,
@@ -575,6 +576,10 @@ export class MamoriService extends eventable.Eventable {
     return this.callAPI("GET", "/v1/ping").then((resp) => {
       return resp.pong;
     });
+  }
+
+  public api_version(): string {
+    return SDK_VERSION;
   }
 
   public change_password(old_password: string, new_password: string) {

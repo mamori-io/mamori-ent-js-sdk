@@ -17,4 +17,10 @@ describe("serialization", () => {
 
     expect(encoded).toBe("a%5Bone%5D=1&a%5Btwo%5D=2&a%5Bthree%5D=3&b%5B%5D=1&b%5B%5D=2&b%5B%5D=3");
   });
+
+  test("api version returns SDK version", () => {
+    let api = new MamoriService("https://example.invalid");
+
+    expect(api.api_version()).toBe(require("../../../package.json").version);
+  });
 });
