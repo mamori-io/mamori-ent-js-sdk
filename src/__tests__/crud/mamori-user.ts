@@ -11,8 +11,30 @@ const testbatch = process.env.MAMORI_TEST_BATCH || '';
 const host = process.env.MAMORI_SERVER || '';
 const username = process.env.MAMORI_USERNAME || '';
 const password = process.env.MAMORI_PASSWORD || '';
+const host2 = process.env.MAMORI_SERVER2 || '';
+const username2 = process.env.MAMORI_USERNAME2 || '';
+const password2 = process.env.MAMORI_PASSWORD2 || '';
+/** Runs only when MAMORI_SERVER2, MAMORI_USERNAME2, and MAMORI_PASSWORD2 are all set. */
+const dualServerTest = host2 && username2 && password2 ? test : test.skip;
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
+
+/**
+ * `noThrow(api.call(...))` resolves to a JSON array on success; on HTTP/API failure axios rejects and
+ * {@link handleAPIException} returns `{ errors: true, ... }` (not `error`). Use this so failures fail fast with detail.
+ */
+function assertProcedureCallOk(label: string, r: unknown): asserts r is any[] {
+    if (r == null || typeof r !== "object") {
+        fail(`${label}: unexpected response: ` + JSON.stringify(r));
+    }
+    const o = r as Record<string, unknown>;
+    if (o.errors === true) {
+        fail(`${label} failed: ` + JSON.stringify(r));
+    }
+    if (!Array.isArray(r)) {
+        fail(`${label}: expected array result, got: ` + JSON.stringify(r));
+    }
+}
 
 /**
  * Generate a TOTP code from a base32-encoded secret
@@ -244,6 +266,180 @@ describe("mamori user tests", () => {
         
     });
 
+    test('mamori user 05 - password hash export restore', async () => {
+        let testUser = grantee + "_pwd_ex_test";
+        const origPw = "OriginalTestPw9x";
+        const newPw = "ChangedTestPw9x";
+        let k = new User(testUser).withEmail(testUser + "@ace.com").withFullName("Password EX Test User");
+        await ignoreError(k.delete(api));
+        let createResult = await noThrow(k.create(api, origPw));
+        expect(createResult).toSucceed();
 
+        let activateResult = await noThrow(api.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"));
+        expect(activateResult).toSucceed();
+
+        let aesKeyName = "test_user_05_pwd_aes_key_" + testbatch;
+        await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
+
+        let exportResult = await noThrow(api.call("EXPORT_USER_PASSWORD_EX", testUser, aesKeyName));
+        assertProcedureCallOk("EXPORT_USER_PASSWORD_EX", exportResult);
+        expect(exportResult.length).toBeGreaterThan(0);
+        let encryptedValue = exportResult[0].value;
+        expect(encryptedValue).toBeDefined();
+
+        let alterPw = await noThrow(api.select("ALTER USER " + testUser + " IDENTIFIED BY '" + newPw + "'"));
+        expect(alterPw).toSucceed();
+
+        {
+            let apiNewPw = new MamoriService(host, INSECURE);
+            let loginNew = await noThrow(apiNewPw.login(testUser, newPw));
+            expect(loginNew.username).toBe(testUser);
+            await ignoreError(apiNewPw.logout());
+        }
+        {
+            let badOld = await noThrow(new MamoriService(host, INSECURE).login(testUser, origPw));
+            expect(badOld.errors).toBe(true);
+        }
+
+        let restoreResult = await noThrow(api.call("RESTORE_USER_PASSWORD_EX", testUser, encryptedValue, aesKeyName));
+        if (restoreResult.error !== undefined && restoreResult.error !== false) {
+            fail("RESTORE_USER_PASSWORD_EX failed: " + JSON.stringify(restoreResult));
+        }
+        expect(Array.isArray(restoreResult)).toBe(true);
+        expect(restoreResult[0].status).toBe("OK");
+
+        {
+            let apiRestored = new MamoriService(host, INSECURE);
+            let loginOrig = await noThrow(apiRestored.login(testUser, origPw));
+            expect(loginOrig.username).toBe(testUser);
+            await ignoreError(apiRestored.logout());
+        }
+        {
+            let badNew = await noThrow(new MamoriService(host, INSECURE).login(testUser, newPw));
+            expect(badNew.errors).toBe(true);
+        }
+
+        let cleanupResult = await noThrow(k.delete(api));
+        expect(cleanupResult).toSucceed();
+        await helper.EncryptionKey.cleanupAESEncryptionKey(api, aesKeyName);
+    });
+
+    test('mamori user 06 - password EX restore rejects wrong username', async () => {
+        let testUser = grantee + "_pwd_ex_mismatch";
+        const origPw = "MismatchTestPw9x";
+        let k = new User(testUser).withEmail(testUser + "@ace.com").withFullName("Pwd EX mismatch test");
+        await ignoreError(k.delete(api));
+        let createResult = await noThrow(k.create(api, origPw));
+        expect(createResult).toSucceed();
+
+        let activateResult = await noThrow(api.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"));
+        expect(activateResult).toSucceed();
+
+        let aesKeyName = "test_user_06_pwd_aes_key_" + testbatch;
+        await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
+
+        let exportResult = await noThrow(api.call("EXPORT_USER_PASSWORD_EX", testUser, aesKeyName));
+        if (exportResult.error !== undefined && exportResult.error !== false) {
+            fail("EXPORT_USER_PASSWORD_EX failed: " + JSON.stringify(exportResult));
+        }
+        let encryptedValue = exportResult[0].value;
+
+        let badRestore = await noThrow(
+            api.call("RESTORE_USER_PASSWORD_EX", testUser + "_wrong_user", encryptedValue, aesKeyName),
+        );
+        expect(badRestore.errors).toBe(true);
+
+        let cleanupResult = await noThrow(k.delete(api));
+        expect(cleanupResult).toSucceed();
+        await helper.EncryptionKey.cleanupAESEncryptionKey(api, aesKeyName);
+    });
+
+    // Requires MAMORI_SERVER2, MAMORI_USERNAME2, MAMORI_PASSWORD2; skipped otherwise.
+    dualServerTest('mamori user 07 - cross-server password EX restore', async () => {
+        const api2 = new MamoriService(host2, INSECURE);
+        await api2.login(username2, password2);
+
+        const testUser = grantee + "_xsite_pwd";
+        // Strong distinct passwords (upper, lower, numeric, punctuation) for both servers' policies
+        const sourcePw = "XsiteSourceTestPw9x!A";
+        const targetPw = "XsiteTargetTestPw9x!B";
+        const k = new User(testUser).withEmail(testUser + "@ace.com").withFullName("Cross-site PWD Test User");
+        const aesKeyName = grantee + "_xsite_pwd_aes_" + testbatch;
+
+        try {
+            await ignoreError(k.delete(api));
+            await ignoreError(k.delete(api2));
+
+            await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
+            await helper.EncryptionKey.setupAESEncryptionKey(api2, aesKeyName);
+
+            let createSource = await noThrow(k.create(api, sourcePw));
+            expect(createSource).toSucceed();
+            let createTarget = await noThrow(k.create(api2, targetPw));
+            expect(createTarget).toSucceed();
+
+            let actSource = await noThrow(api.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"));
+            expect(actSource).toSucceed();
+            let actTarget = await noThrow(api2.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"));
+            expect(actTarget).toSucceed();
+
+            {
+                let apiAsUser = new MamoriService(host, INSECURE);
+                let loginSource = await noThrow(apiAsUser.login(testUser, sourcePw));
+                expect(loginSource.username).toBe(testUser);
+                await ignoreError(apiAsUser.logout());
+            }
+            {
+                let apiAsUser2 = new MamoriService(host2, INSECURE);
+                let loginTarget = await noThrow(apiAsUser2.login(testUser, targetPw));
+                expect(loginTarget.username).toBe(testUser);
+                await ignoreError(apiAsUser2.logout());
+            }
+
+            let exportResult = await noThrow(api.call("EXPORT_USER_PASSWORD_EX", testUser, aesKeyName));
+            if (exportResult.error !== undefined && exportResult.error !== false) {
+                fail("EXPORT_USER_PASSWORD_EX failed: " + JSON.stringify(exportResult));
+            }
+            expect(Array.isArray(exportResult)).toBe(true);
+            expect(exportResult.length).toBeGreaterThan(0);
+            let encryptedValue = exportResult[0].value;
+            expect(encryptedValue).toBeDefined();
+
+            let restoreResult = await noThrow(
+                api2.call("RESTORE_USER_PASSWORD_EX", testUser, encryptedValue, aesKeyName),
+            );
+            if (restoreResult.error !== undefined && restoreResult.error !== false) {
+                fail("RESTORE_USER_PASSWORD_EX failed: " + JSON.stringify(restoreResult));
+            }
+            expect(Array.isArray(restoreResult)).toBe(true);
+            expect(restoreResult[0].status).toBe("OK");
+
+            let postRestoreActivate = await noThrow(
+                api2.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"),
+            );
+            expect(postRestoreActivate).toSucceed();
+
+            {
+                let apiRestored = new MamoriService(host2, INSECURE);
+                let loginWithSourcePw = await noThrow(apiRestored.login(testUser, sourcePw));
+                expect(loginWithSourcePw.errors).toBeFalsy();
+                expect(loginWithSourcePw.username).toBe(testUser);
+                await ignoreError(apiRestored.logout());
+            }
+            {
+                let badTargetPw = await noThrow(new MamoriService(host2, INSECURE).login(testUser, targetPw));
+                expect(badTargetPw.errors).toBe(true);
+            }
+
+            let delSource = await noThrow(k.delete(api));
+            expect(delSource).toSucceed();
+            let delTarget = await noThrow(k.delete(api2));
+            expect(delTarget).toSucceed();
+            await helper.EncryptionKey.cleanupAESEncryptionKey(api, aesKeyName);
+            await helper.EncryptionKey.cleanupAESEncryptionKey(api2, aesKeyName);
+        } finally {
+            await ignoreError(api2.logout());
+        }
+    });
 
 });
