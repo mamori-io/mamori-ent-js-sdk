@@ -350,6 +350,7 @@ export class EncryptionKey {
     await io_utils.ignoreError(k.delete(api));
     let res = await io_utils.noThrow(k.create(api));
     expect(res.error).toBe(false);
+    await sleep(1000);
   }
 
   static async cleanupAESEncryptionKey(api: MamoriService, keyName: string) {

@@ -2,7 +2,7 @@ import { MamoriService } from '../../api';
 import * as https from 'https';
 import { User, MFA_PROVIDER } from '../../user';
 import { DatasourcePermission, DB_PERMISSION, TIME_UNIT } from '../../permission';
-import { handleAPIException, noThrow, ignoreError } from '../../utils';
+import { handleAPIException, noThrow, ignoreError, addUniqueExtension } from '../../utils';
 import * as helper from '../../__utility__/test-helper';
 import '../../__utility__/jest/error_matcher';
 import * as crypto from 'crypto';
@@ -232,7 +232,7 @@ describe("mamori user tests", () => {
         }
         
         // Step 3: Create AES Encryption Key
-        let aesKeyName = "test_user_03_aes_key_" + testbatch;
+        let aesKeyName = addUniqueExtension("test_user_03_aes_key_" + testbatch);
         await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
 
         // Step 3.5: Activate the user before exporting options
@@ -291,7 +291,7 @@ describe("mamori user tests", () => {
         );
 
         //create aes key
-        let aesKeyName = "test_user_05_pwd_aes_key_" + testbatch;
+        let aesKeyName = addUniqueExtension("test_user_05_pwd_aes_key_" + testbatch);
         await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
         //export password
         let exportResult = await noThrow(k.exportPassword(api, aesKeyName));
@@ -352,7 +352,7 @@ describe("mamori user tests", () => {
             "Pwd EX mismatch test",
         );
 
-        let aesKeyName = "test_user_06_pwd_aes_key_" + testbatch;
+        let aesKeyName = addUniqueExtension("test_user_06_pwd_aes_key_" + testbatch);
         await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
 
         let exportResult = await noThrow(k.exportPassword(api, aesKeyName));
@@ -378,7 +378,7 @@ describe("mamori user tests", () => {
         // Strong distinct passwords (upper, lower, numeric, punctuation) for both servers' policies
         const sourcePw = "XsiteSourceTestPw9x!A";
         const targetPw = "XsiteTargetTestPw9x!B";
-        const aesKeyName = grantee + "_xsite_pwd_aes_" + testbatch;
+        const aesKeyName = addUniqueExtension(grantee + "_xsite_pwd_aes_" + testbatch);
         const xsiteEmail = testUser + "@ace.com";
         const xsiteFullName = "Cross-site PWD Test User";
 

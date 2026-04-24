@@ -81,6 +81,14 @@ export function sqlEscape(s: string): string {
     return s.replace(/'/g, "''");
 }
 
+/**
+ * Append a time-based HHMMSS suffix to make identifiers unique across test runs.
+ */
+export function addUniqueExtension(value: string): string {
+    const hhmmss = new Date().toTimeString().slice(0, 8).replace(/:/g, "");
+    return value + "_" + hhmmss;
+}
+
 export function handleAPIException(e: any): any {
     let payload: any = {};
     if (e.message) {
