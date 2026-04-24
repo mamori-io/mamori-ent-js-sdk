@@ -243,6 +243,17 @@ export class MamoriService extends eventable.Eventable {
     });
   }
 
+  /**
+   * New client for the same base URL and HTTPS agent, without the current session.
+   * Use for a separate login (e.g. validating another user’s password) without disturbing this instance.
+   */
+  public createClient(): MamoriService {
+    return new MamoriService(
+      this._base,
+      this._http.defaults.httpsAgent as io_https.Agent | undefined,
+    );
+  }
+
   get authorization(): Nullable<string> {
     return this._authorization;
   }

@@ -6,7 +6,7 @@
  * mamori.io reserves all rights to this software and no rights and/or licenses are granted to any party
  * unless a separate, written license is agreed to and signed by mamori.io.
  */
-import { MamoriService } from './api';
+import { LoginResponse, MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 import { prepareFilter } from './utils';
 
@@ -136,6 +136,45 @@ class UserBase implements ISerializable {
 
     public unlockAccount(api: MamoriService): Promise<any> {
         return api.unlock_user(this.username);
+    }
+
+    /**
+     * Export this user’s password hash encrypted with the named AES key (hub procedure `EXPORT_USER_PASSWORD_EX`).
+     */
+    public exportPassword(api: MamoriService, aesKeyName: string): Promise<any> {
+        return api.call("EXPORT_USER_PASSWORD_EX", this.username, aesKeyName);
+    }
+
+    /**
+     * Restore this user’s password from an encrypted export blob (hub procedure `RESTORE_USER_PASSWORD_EX`).
+     * @param forUsername  If provided, passed as the procedure’s user argument instead of `this.username` (e.g. mismatch tests).
+     */
+    public restorePassword(
+        api: MamoriService,
+        encryptedValue: any,
+        aesKeyName: string,
+        forUsername?: string,
+    ): Promise<any> {
+        return api.call("RESTORE_USER_PASSWORD_EX", forUsername ?? this.username, encryptedValue, aesKeyName);
+    }
+
+    /**
+     * Mark this directory user validated, then log in with the given password on a separate client and log that client out.
+     * @param api  Logged-in service (e.g. admin) used to run `ALTER USER … SET VALIDATED`.
+     * @param password  Plain password for this user.
+     * @param otpPassword  Optional MFA one-time password for `MamoriService.login`.
+     */
+    public validateLogin(api: MamoriService, password: string, otpPassword?: string): Promise<LoginResponse> {
+        const name = this.username;
+        return api.select("ALTER USER " + name + " SET VALIDATED = TRUE").then(() => {
+            const client = api.createClient();
+            return client.login(name, password, otpPassword).then((loginResult) =>
+                client
+                    .logout()
+                    .then(() => loginResult)
+                    .catch(() => loginResult),
+            );
+        });
     }
 }
 

@@ -15,7 +15,7 @@ const host2 = process.env.MAMORI_SERVER2 || '';
 const username2 = process.env.MAMORI_USERNAME2 || '';
 const password2 = process.env.MAMORI_PASSWORD2 || '';
 /** Runs only when MAMORI_SERVER2, MAMORI_USERNAME2, and MAMORI_PASSWORD2 are all set. */
-const dualServerTest = host2 && username2 && password2 ? test : test.skip;
+const dualServerTest = false;//host2 && username2 && password2 ? test : test.skip;
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
@@ -25,14 +25,14 @@ const INSECURE = new https.Agent({ rejectUnauthorized: false });
  */
 function assertProcedureCallOk(label: string, r: unknown): asserts r is any[] {
     if (r == null || typeof r !== "object") {
-        fail(`${label}: unexpected response: ` + JSON.stringify(r));
+        throw new Error(`${label}: unexpected response: ` + JSON.stringify(r));
     }
     const o = r as Record<string, unknown>;
     if (o.errors === true) {
-        fail(`${label} failed: ` + JSON.stringify(r));
+        throw new Error(`${label} failed: ` + JSON.stringify(r));
     }
     if (!Array.isArray(r)) {
-        fail(`${label}: expected array result, got: ` + JSON.stringify(r));
+        throw new Error(`${label}: expected array result, got: ` + JSON.stringify(r));
     }
 }
 
@@ -88,6 +88,26 @@ function generateTOTP(secret: string): string {
     // Generate 6-digit code
     const otp = binary % 1000000;
     return otp.toString().padStart(6, '0');
+}
+
+/**
+ * Deletes any existing user, creates with password, sets VALIDATED, and verifies by logging in.
+ * @returns The {@link User} handle for follow-up (e.g. delete).
+ */
+async function createActiveValidatedUser(
+    api: MamoriService,
+    userName: string,
+    password: string,
+    email: string,
+    fullName: string,
+): Promise<User> {
+    const k = new User(userName).withEmail(email).withFullName(fullName);
+    await ignoreError(k.delete(api));
+    const createResult = await noThrow(k.create(api, password));
+    expect(createResult).toSucceed();
+    const loginResult = await noThrow(k.validateLogin(api, password));
+    expect(loginResult.username).toBe(userName);
+    return k;
 }
 
 describe("mamori user tests", () => {
@@ -217,11 +237,7 @@ describe("mamori user tests", () => {
 
         // Step 3.5: Activate the user before exporting options
         let exportResult = await noThrow(api.call("EXPORT_USER_AUTH_PROVIDER_OPTIONS_EX", testUser, "pushtotp", aesKeyName));
-        // noThrow returns error object on failure, actual data on success
-        if (exportResult.error !== undefined && exportResult.error !== false) {
-            fail("Export failed: " + JSON.stringify(exportResult));
-        }
-        expect(Array.isArray(exportResult)).toBe(true);
+        assertProcedureCallOk("EXPORT_USER_AUTH_PROVIDER_OPTIONS_EX", exportResult);
         expect(exportResult.length).toBeGreaterThan(0);
         let exportedData = exportResult[0];
         expect(exportedData.value).toBeDefined();
@@ -237,12 +253,7 @@ describe("mamori user tests", () => {
 
         // Step 6: Restore user auth provider options
         let restoreResult = await noThrow(api.call("RESTORE_USER_AUTH_PROVIDER_OPTIONS_EX", testUser, "pushtotp", encryptedValue, aesKeyName, null));
-        
-        // noThrow returns error object on failure, actual data on success
-        if (restoreResult.error !== undefined && restoreResult.error !== false) {
-            fail("Restore failed: " + JSON.stringify(restoreResult));
-        }
-        expect(Array.isArray(restoreResult)).toBe(true);
+        assertProcedureCallOk("RESTORE_USER_AUTH_PROVIDER_OPTIONS_EX", restoreResult);
         expect(restoreResult.length).toBeGreaterThan(0);
         expect(restoreResult[0].status).toBe("OK");
 
@@ -270,23 +281,25 @@ describe("mamori user tests", () => {
         let testUser = grantee + "_pwd_ex_test";
         const origPw = "OriginalTestPw9x";
         const newPw = "ChangedTestPw9x";
-        let k = new User(testUser).withEmail(testUser + "@ace.com").withFullName("Password EX Test User");
-        await ignoreError(k.delete(api));
-        let createResult = await noThrow(k.create(api, origPw));
-        expect(createResult).toSucceed();
 
-        let activateResult = await noThrow(api.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"));
-        expect(activateResult).toSucceed();
+        let k = await createActiveValidatedUser(
+            api,
+            testUser,
+            origPw,
+            testUser + "@ace.com",
+            "Password EX Test User",
+        );
 
+        //create aes key
         let aesKeyName = "test_user_05_pwd_aes_key_" + testbatch;
         await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
-
-        let exportResult = await noThrow(api.call("EXPORT_USER_PASSWORD_EX", testUser, aesKeyName));
+        //export password
+        let exportResult = await noThrow(k.exportPassword(api, aesKeyName));
         assertProcedureCallOk("EXPORT_USER_PASSWORD_EX", exportResult);
         expect(exportResult.length).toBeGreaterThan(0);
         let encryptedValue = exportResult[0].value;
         expect(encryptedValue).toBeDefined();
-
+        //
         let alterPw = await noThrow(api.select("ALTER USER " + testUser + " IDENTIFIED BY '" + newPw + "'"));
         expect(alterPw).toSucceed();
 
@@ -301,11 +314,8 @@ describe("mamori user tests", () => {
             expect(badOld.errors).toBe(true);
         }
 
-        let restoreResult = await noThrow(api.call("RESTORE_USER_PASSWORD_EX", testUser, encryptedValue, aesKeyName));
-        if (restoreResult.error !== undefined && restoreResult.error !== false) {
-            fail("RESTORE_USER_PASSWORD_EX failed: " + JSON.stringify(restoreResult));
-        }
-        expect(Array.isArray(restoreResult)).toBe(true);
+        let restoreResult = await noThrow(k.restorePassword(api, encryptedValue, aesKeyName));
+        assertProcedureCallOk("RESTORE_USER_PASSWORD_EX", restoreResult);
         expect(restoreResult[0].status).toBe("OK");
 
         {
@@ -319,33 +329,38 @@ describe("mamori user tests", () => {
             expect(badNew.errors).toBe(true);
         }
 
+        //**********************
+        //   cleanup
+        //**********************
+        //delete user
         let cleanupResult = await noThrow(k.delete(api));
         expect(cleanupResult).toSucceed();
+        //cleanup aes key
         await helper.EncryptionKey.cleanupAESEncryptionKey(api, aesKeyName);
+
+
     });
 
-    test('mamori user 06 - password EX restore rejects wrong username', async () => {
+   test('mamori user 06 - password EX restore rejects wrong username', async () => {
         let testUser = grantee + "_pwd_ex_mismatch";
         const origPw = "MismatchTestPw9x";
-        let k = new User(testUser).withEmail(testUser + "@ace.com").withFullName("Pwd EX mismatch test");
-        await ignoreError(k.delete(api));
-        let createResult = await noThrow(k.create(api, origPw));
-        expect(createResult).toSucceed();
-
-        let activateResult = await noThrow(api.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"));
-        expect(activateResult).toSucceed();
+        let k = await createActiveValidatedUser(
+            api,
+            testUser,
+            origPw,
+            testUser + "@ace.com",
+            "Pwd EX mismatch test",
+        );
 
         let aesKeyName = "test_user_06_pwd_aes_key_" + testbatch;
         await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
 
-        let exportResult = await noThrow(api.call("EXPORT_USER_PASSWORD_EX", testUser, aesKeyName));
-        if (exportResult.error !== undefined && exportResult.error !== false) {
-            fail("EXPORT_USER_PASSWORD_EX failed: " + JSON.stringify(exportResult));
-        }
+        let exportResult = await noThrow(k.exportPassword(api, aesKeyName));
+        assertProcedureCallOk("EXPORT_USER_PASSWORD_EX", exportResult);
         let encryptedValue = exportResult[0].value;
 
         let badRestore = await noThrow(
-            api.call("RESTORE_USER_PASSWORD_EX", testUser + "_wrong_user", encryptedValue, aesKeyName),
+            k.restorePassword(api, encryptedValue, aesKeyName, testUser + "_wrong_user"),
         );
         expect(badRestore.errors).toBe(true);
 
@@ -355,7 +370,7 @@ describe("mamori user tests", () => {
     });
 
     // Requires MAMORI_SERVER2, MAMORI_USERNAME2, MAMORI_PASSWORD2; skipped otherwise.
-    dualServerTest('mamori user 07 - cross-server password EX restore', async () => {
+    test('mamori user 07 - cross-server password EX restore', async () => {
         const api2 = new MamoriService(host2, INSECURE);
         await api2.login(username2, password2);
 
@@ -363,61 +378,38 @@ describe("mamori user tests", () => {
         // Strong distinct passwords (upper, lower, numeric, punctuation) for both servers' policies
         const sourcePw = "XsiteSourceTestPw9x!A";
         const targetPw = "XsiteTargetTestPw9x!B";
-        const k = new User(testUser).withEmail(testUser + "@ace.com").withFullName("Cross-site PWD Test User");
         const aesKeyName = grantee + "_xsite_pwd_aes_" + testbatch;
+        const xsiteEmail = testUser + "@ace.com";
+        const xsiteFullName = "Cross-site PWD Test User";
 
         try {
-            await ignoreError(k.delete(api));
-            await ignoreError(k.delete(api2));
-
             await helper.EncryptionKey.setupAESEncryptionKey(api, aesKeyName);
             await helper.EncryptionKey.setupAESEncryptionKey(api2, aesKeyName);
 
-            let createSource = await noThrow(k.create(api, sourcePw));
-            expect(createSource).toSucceed();
-            let createTarget = await noThrow(k.create(api2, targetPw));
-            expect(createTarget).toSucceed();
+            let k = await createActiveValidatedUser(
+                api,
+                testUser,
+                sourcePw,
+                xsiteEmail,
+                xsiteFullName,
+            );
+            await createActiveValidatedUser(
+                api2,
+                testUser,
+                targetPw,
+                xsiteEmail,
+                xsiteFullName,
+            );
 
-            let actSource = await noThrow(api.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"));
-            expect(actSource).toSucceed();
-            let actTarget = await noThrow(api2.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"));
-            expect(actTarget).toSucceed();
-
-            {
-                let apiAsUser = new MamoriService(host, INSECURE);
-                let loginSource = await noThrow(apiAsUser.login(testUser, sourcePw));
-                expect(loginSource.username).toBe(testUser);
-                await ignoreError(apiAsUser.logout());
-            }
-            {
-                let apiAsUser2 = new MamoriService(host2, INSECURE);
-                let loginTarget = await noThrow(apiAsUser2.login(testUser, targetPw));
-                expect(loginTarget.username).toBe(testUser);
-                await ignoreError(apiAsUser2.logout());
-            }
-
-            let exportResult = await noThrow(api.call("EXPORT_USER_PASSWORD_EX", testUser, aesKeyName));
-            if (exportResult.error !== undefined && exportResult.error !== false) {
-                fail("EXPORT_USER_PASSWORD_EX failed: " + JSON.stringify(exportResult));
-            }
-            expect(Array.isArray(exportResult)).toBe(true);
+            let exportResult = await noThrow(k.exportPassword(api, aesKeyName));
+            assertProcedureCallOk("EXPORT_USER_PASSWORD_EX", exportResult);
             expect(exportResult.length).toBeGreaterThan(0);
             let encryptedValue = exportResult[0].value;
             expect(encryptedValue).toBeDefined();
 
-            let restoreResult = await noThrow(
-                api2.call("RESTORE_USER_PASSWORD_EX", testUser, encryptedValue, aesKeyName),
-            );
-            if (restoreResult.error !== undefined && restoreResult.error !== false) {
-                fail("RESTORE_USER_PASSWORD_EX failed: " + JSON.stringify(restoreResult));
-            }
-            expect(Array.isArray(restoreResult)).toBe(true);
+            let restoreResult = await noThrow(k.restorePassword(api2, encryptedValue, aesKeyName));
+            assertProcedureCallOk("RESTORE_USER_PASSWORD_EX", restoreResult);
             expect(restoreResult[0].status).toBe("OK");
-
-            let postRestoreActivate = await noThrow(
-                api2.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"),
-            );
-            expect(postRestoreActivate).toSucceed();
 
             {
                 let apiRestored = new MamoriService(host2, INSECURE);
