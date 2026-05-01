@@ -188,9 +188,27 @@ export class DBCredential implements ISerializable {
             { datasource: this.systemname, username: this.accessname, password: password, reset_days: this.credential_reset_days });
     }
 
+    /**
+     * Restore this datasource credential from an encrypted export blob produced by
+     * `exportPassword` (hub procedure `RESTORE_DATASOURCE_CREDENTIAL_EX`).
+     *
+     * Note: the procedure does not accept `reset_days` / validity dates, so any
+     * `credential_reset_days` on this object is not re-applied. Set those
+     * separately if needed. The procedure also does not validate the credential
+     * against the remote system before storing it.
+     *
+     * @param api      Logged-in service.
+     * @param keyName  Name of the AES key (must match the key used for export).
+     */
     public restore(api: MamoriService, keyName: string): Promise<any> {
-        let payload = { datasource: this.systemname, username: this.accessname, password: this.password, reset_days: this.credential_reset_days, aes_key: keyName };
-        return api.callAPI("POST", "/v1/grantee/" + encodeURIComponent(this.grantee) + "/datasource_authorization", payload);
+        return api.call(
+            "RESTORE_DATASOURCE_CREDENTIAL_EX",
+            this.systemname,
+            this.accessname,
+            this.grantee,
+            this.password,
+            keyName,
+        );
     }
 
     public delete(api: MamoriService): Promise<any> {
