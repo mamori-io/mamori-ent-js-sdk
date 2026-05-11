@@ -43,13 +43,16 @@ export class DBCredential implements ISerializable {
     }
 
     public static listFor(api: MamoriService, from: number, to: number, datasource: any, username: any, grantee: any): Promise<any> {
-        let filter = []; //grantee ? [["grantee", "equals", grantee]] : [];
+        let filter: any[] = [];
         if (datasource) {
             filter.push(["datasource", "equals", datasource]);
         }
-        //if (username) {
-        //    filter.push(["ds_credential_remoteusername", "equals", username]);
-        //}
+        if (grantee) {
+            filter.push(["grantee", "equals", grantee]);
+        }
+        if (username) {
+            filter.push(["remoteusername", "equals", username]);
+        }
         return this.list(api, from, to, filter);
     }
 
