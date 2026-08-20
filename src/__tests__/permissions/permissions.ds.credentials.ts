@@ -1,7 +1,7 @@
 import { MamoriService } from '../../api';
-import { io_https, io_utils, io_role, io_datasource, io_serversession } from '../../api';
+import { io_https, io_utils, io_role, io_datasource } from '../../api';
 import { setPassthroughPermissions } from '../../__utility__/ds';
-import { selectQuery, sleep } from '../../__utility__/test-helper';
+import { sleep, DBHelper } from '../../__utility__/test-helper';
 import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -94,35 +94,32 @@ describe("grantee datasource credential access", () => {
         return dsAccess.some((row: any) => row.systemname === dsName);
     }
 
-    async function withUserSession(fn: (apiUser: MamoriService) => Promise<void>) {
-        let apiUser = new MamoriService(host, INSECURE);
-        try {
-            await apiUser.login(grantee, granteepw);
-            await fn(apiUser);
-        } finally {
-            await io_utils.ignoreError(apiUser.logout());
-        }
-    }
-
     async function assertCanConnectAndSelect() {
         expect(await hasGrantedDsAccess(grantee)).toBe(true);
-        await withUserSession(async (apiUser) => {
-            let pt = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiUser, dsName));
-            expect(pt).toSucceed();
-            let rows = await selectQuery(apiUser, "select current_user as username");
-            expect(rows.errors).toBeUndefined();
+        // Use a websocket passthrough session so SELECT runs on the DB connection
+        // (passthrough + SELECT permission + credential).
+        let sess = await io_utils.noThrow(DBHelper.preparePassthroughSession(host, grantee, granteepw, dsName));
+        expect(sess.errors).toBeUndefined();
+        try {
+            let rows = await io_utils.noThrow(sess.queryRows("select current_user as username"));
+            expect(rows).toSucceed();
             expect(rows.length).toBeGreaterThan(0);
-            let connectedUser = String(rows[0].username || rows[0].USERNAME || '');
+            let connectedUser = String(rows[0].username || rows[0].USERNAME || rows[0].current_user || '');
             expect(connectedUser.toLowerCase()).toBe(dbUsername.toLowerCase());
-        });
+        } finally {
+            if (sess && typeof sess.disconnect === 'function') {
+                sess.disconnect();
+            }
+        }
     }
 
     async function assertCannotConnect() {
         expect(await hasGrantedDsAccess(grantee)).toBe(false);
-        await withUserSession(async (apiUser) => {
-            let pt = await io_utils.noThrow(io_serversession.ServerSession.setPassthrough(apiUser, dsName));
-            expect(pt.errors).toBe(true);
-        });
+        let sess = await io_utils.noThrow(DBHelper.preparePassthroughSession(host, grantee, granteepw, dsName));
+        if (sess && typeof sess.disconnect === 'function') {
+            sess.disconnect();
+        }
+        expect(sess.errors).toBe(true);
     }
 
     async function dropRole(roleid: string) {
