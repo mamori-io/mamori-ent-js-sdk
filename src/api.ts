@@ -40,6 +40,7 @@ import * as io_http_resource from "./http-resource";
 import * as io_requestable_resource from "./requestable_resource";
 import * as io_db_credential from "./db-credential";
 import * as io_providers from "./provider";
+import * as io_eventhandler from "./event-handler";
 import * as eventable from "./eventable";
 import * as io_utility_ds from "./__utility__/ds";
 const { version: SDK_VERSION } = require("../package.json");
@@ -82,6 +83,7 @@ export {
   io_db_credential,
   io_utility_ds,
   io_providers,
+  io_eventhandler,
 };
 
 type ApiCacheEntry = { deferred: Promise<any>; resolved: boolean; value?: any };
@@ -450,34 +452,6 @@ export class MamoriService extends eventable.Eventable {
       that._http
         .request(payload)
         .then(function (x: any) {
-          // #region agent log
-          fetch(
-            "http://localhost:7714/ingest/cc135ddf-50b7-4eb4-8977-2ecc1d422e03",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "811f45",
-              },
-              body: JSON.stringify({
-                sessionId: "811f45",
-                hypothesisId: "H1",
-                location: "api.ts:callAPI:then",
-                message: "axios_ok",
-                data: {
-                  httpStatus: x.status,
-                  url: payload.url,
-                  method: payload.method,
-                  dataKeys:
-                    x.data && typeof x.data === "object" && !Array.isArray(x.data)
-                      ? Object.keys(x.data).slice(0, 12)
-                      : null,
-                },
-                timestamp: Date.now(),
-              }),
-            },
-          ).catch(function () {});
-          // #endregion
           if (callback) {
             callback(x.data, resolve, reject);
           } else {
@@ -485,37 +459,6 @@ export class MamoriService extends eventable.Eventable {
           }
         })
         .catch(function (error: any) {
-          // #region agent log
-          fetch(
-            "http://localhost:7714/ingest/cc135ddf-50b7-4eb4-8977-2ecc1d422e03",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "811f45",
-              },
-              body: JSON.stringify({
-                sessionId: "811f45",
-                hypothesisId: "H1",
-                location: "api.ts:callAPI:catch",
-                message: "axios_error",
-                data: {
-                  url: error.config && error.config.url,
-                  method: error.config && error.config.method,
-                  httpStatus:
-                    error.response && error.response.status,
-                  responseDataKeys:
-                    error.response &&
-                    error.response.data &&
-                    typeof error.response.data === "object"
-                      ? Object.keys(error.response.data)
-                      : null,
-                },
-                timestamp: Date.now(),
-              }),
-            },
-          ).catch(function () {});
-          // #endregion
           reject(error);
         });
     });
