@@ -129,6 +129,7 @@ export class OnDemandPolicy implements ISerializable {
     approval_message_required: string;
     ticket_number_regex: string;
     ticket_number_regex_display_hint: string;
+    ticket_number_validation: string;
     endorse_alert: string;
     endorse_default_message: string;
     endorse_agent_count: string;
@@ -157,6 +158,7 @@ export class OnDemandPolicy implements ISerializable {
         this.approval_message_required = "false";
         this.ticket_number_regex = "TK-\\d{6}";
         this.ticket_number_regex_display_hint = "";
+        this.ticket_number_validation = "";
         this.endorse_alert = "";
         this.endorse_default_message = "";
         this.endorse_agent_count = "1";
@@ -174,8 +176,15 @@ export class OnDemandPolicy implements ISerializable {
         this.parameters = [];
     }
 
-    public addParameter(name: string, description: string, defaultValue: string): any[] {
-        this.parameters.push({ name: name, description: description, default_value: defaultValue });
+    public addParameter(name: string, description: string, defaultValue: string, dataType?: string, options?: any): any[] {
+        let rec: any = { name: name, description: description, default_value: defaultValue };
+        if (dataType) {
+            rec.data_type = dataType;
+        }
+        if (options) {
+            rec.options = options;
+        }
+        this.parameters.push(rec);
         return this.parameters;
     }
 
@@ -217,6 +226,7 @@ export class OnDemandPolicy implements ISerializable {
             this.approval_message_required,
             this.ticket_number_regex,
             this.ticket_number_regex_display_hint,
+            this.ticket_number_validation,
             this.endorse_alert,
             this.endorse_default_message,
             this.endorse_agent_count,
