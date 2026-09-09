@@ -279,8 +279,9 @@ describe("mamori user tests", () => {
 
     test('mamori user 05 - password hash export restore', async () => {
         let testUser = grantee + "_pwd_ex_test";
-        const origPw = "OriginalTestPw9x";
-        const newPw = "ChangedTestPw9x";
+        // Strong passwords (upper, lower, numeric, punctuation) for password_character_type_minimum = 4
+        const origPw = "OriginalTestPw9x!";
+        const newPw = "ChangedTestPw9x!";
 
         let k = await createActiveValidatedUser(
             api,
@@ -343,7 +344,7 @@ describe("mamori user tests", () => {
 
    test('mamori user 06 - password EX restore rejects wrong username', async () => {
         let testUser = grantee + "_pwd_ex_mismatch";
-        const origPw = "MismatchTestPw9x";
+        const origPw = "MismatchTestPw9x!";
         let k = await createActiveValidatedUser(
             api,
             testUser,
