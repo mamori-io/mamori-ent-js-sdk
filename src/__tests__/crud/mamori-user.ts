@@ -15,7 +15,7 @@ const host2 = process.env.MAMORI_SERVER2 || '';
 const username2 = process.env.MAMORI_USERNAME2 || '';
 const password2 = process.env.MAMORI_PASSWORD2 || '';
 /** Runs only when MAMORI_SERVER2, MAMORI_USERNAME2, and MAMORI_PASSWORD2 are all set. */
-const dualServerTest = false;//host2 && username2 && password2 ? test : test.skip;
+const dualServerTest = host2 && username2 && password2 ? test : test.skip;
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
@@ -371,7 +371,7 @@ describe("mamori user tests", () => {
     });
 
     // Requires MAMORI_SERVER2, MAMORI_USERNAME2, MAMORI_PASSWORD2; skipped otherwise.
-    test('mamori user 07 - cross-server password EX restore', async () => {
+    dualServerTest('mamori user 07 - cross-server password EX restore', async () => {
         const api2 = new MamoriService(host2, INSECURE);
         await api2.login(username2, password2);
 
