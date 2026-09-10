@@ -84,7 +84,7 @@ describe("event handler getSecret", () => {
             handlerName,
             io_eventhandler.EVENT_HANDLER_TYPE.POLICY_DATA,
             body
-        );
+        ).withCapabilities(["REVEAL SECRET"]);
         let createdHandler = await io_utils.noThrow(handler.create(api));
         expect(createdHandler.errors).not.toBe(true);
 
@@ -97,6 +97,7 @@ describe("event handler getSecret", () => {
         );
         expect(storedHandler).toBeTruthy();
         handler.id = storedHandler.id;
+        handler.capabilities = ["REVEAL SECRET"];
 
         // 4. Test the event handler and assert it returns valid true
         let payload = {

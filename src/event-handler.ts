@@ -19,6 +19,9 @@ export enum EVENT_HANDLER_TYPE {
     REQUEST = "request",
 }
 
+/** Declared on the handler row; null = legacy unrestricted. */
+export type EventHandlerCapabilities = string[] | null;
+
 export class EventHandler implements ISerializable {
 
     public static list(api: MamoriService, from: number, to: number, filter?: any): Promise<any> {
@@ -53,6 +56,8 @@ export class EventHandler implements ISerializable {
     type: string;
     language: string;
     body: string;
+    /** null = legacy unrestricted; [] = deny high-risk mamori.* ops */
+    capabilities: EventHandlerCapabilities;
 
     public constructor(name: string, type: string, body: string = "") {
         this.name = name;
@@ -60,6 +65,7 @@ export class EventHandler implements ISerializable {
         this.body = body;
         this.language = "text/javascript";
         this.id = undefined;
+        this.capabilities = null;
     }
 
     fromJSON(record: any) {
@@ -68,6 +74,7 @@ export class EventHandler implements ISerializable {
                 this[prop] = record[prop];
             }
         }
+        this.capabilities = normalizeCapabilities(record.capabilities);
         return this;
     }
 
@@ -84,24 +91,37 @@ export class EventHandler implements ISerializable {
         return this;
     }
 
+    public withCapabilities(capabilities: EventHandlerCapabilities): EventHandler {
+        this.capabilities = capabilities;
+        return this;
+    }
+
     public create(api: MamoriService): Promise<any> {
-        return api.callAPI("POST", "/v1/event_handlers", {
+        let payload: any = {
             id: "",
             name: this.name,
             type: this.type,
             body: this.body,
             language: this.language,
-        });
+        };
+        if (this.capabilities != null) {
+            payload.capabilities = this.capabilities;
+        }
+        return api.callAPI("POST", "/v1/event_handlers", payload);
     }
 
     public update(api: MamoriService): Promise<any> {
-        return api.callAPI("PUT", "/v1/event_handlers/" + this.id, {
+        let payload: any = {
             id: this.id,
             name: this.name,
             type: this.type,
             body: this.body,
             language: this.language,
-        });
+        };
+        if (this.capabilities != null) {
+            payload.capabilities = this.capabilities;
+        }
+        return api.callAPI("PUT", "/v1/event_handlers/" + this.id, payload);
     }
 
     public delete(api: MamoriService): Promise<any> {
@@ -130,6 +150,32 @@ export class EventHandler implements ISerializable {
         if (script) {
             rec.body = script;
         }
+        if (this.capabilities != null) {
+            rec.capabilities = this.capabilities;
+        }
         return api.callAPI("POST", "/v1/event_handlers/test", rec);
     }
+}
+
+function normalizeCapabilities(raw: any): EventHandlerCapabilities {
+    if (raw === undefined || raw === null || raw === "") {
+        return null;
+    }
+    if (Array.isArray(raw)) {
+        return raw.map((v) => String(v));
+    }
+    if (typeof raw === "string") {
+        try {
+            let parsed = JSON.parse(raw);
+            if (parsed === null) {
+                return null;
+            }
+            if (Array.isArray(parsed)) {
+                return parsed.map((v) => String(v));
+            }
+        } catch (_e) {
+            return null;
+        }
+    }
+    return null;
 }

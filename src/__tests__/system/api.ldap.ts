@@ -95,4 +95,32 @@ describe("LDAP API tests", () => {
     assertRows("LDAP_FIND_USER missing", r);
     expect(r.length).toBe(0);
   });
+
+  // These fail on Hub that concatenates the username into the LDAP filter
+  // unescaped (* remains a wildcard / ) closes the assertion). They pass once
+  // %USERNAME% is RFC 4515-escaped (literal * and ) match no directory user).
+  ldapTest("LDAP_FIND_USER does not treat * as an LDAP wildcard", async () => {
+    const r = await noThrow(api.call("LDAP_FIND_USER", "*"));
+    assertRows("LDAP_FIND_USER *", r);
+    expect(r.length).toBe(0);
+  });
+
+  ldapTest(
+    "LDAP_FIND_USER does not close the filter with a trailing )(objectClass=*",
+    async () => {
+      const injected = adUser + ")(objectClass=*";
+      const r = await noThrow(api.call("LDAP_FIND_USER", injected));
+      assertRows("LDAP_FIND_USER filter breakout", r);
+      expect(r.length).toBe(0);
+    }
+  );
+
+  ldapTest(
+    "LDAP_FIND_USER does not match every entry via *)(objectClass=*",
+    async () => {
+      const r = await noThrow(api.call("LDAP_FIND_USER", "*)(objectClass=*"));
+      assertRows("LDAP_FIND_USER objectClass injection", r);
+      expect(r.length).toBe(0);
+    }
+  );
 });
