@@ -15,6 +15,7 @@ import { SshLogin } from "./ssh-login";
 import { RoleGrant, Role } from "./role";
 import { decodeMessage } from "./utils";
 import { MamoriWebsocketClient } from "./ws_client";
+import { ConnectionLog } from "./connection-log";
 
 // namespaces
 import * as io_https from "https";
@@ -41,6 +42,7 @@ import * as io_requestable_resource from "./requestable_resource";
 import * as io_db_credential from "./db-credential";
 import * as io_providers from "./provider";
 import * as io_eventhandler from "./event-handler";
+import * as io_connectionlog from "./connection-log";
 import * as eventable from "./eventable";
 import * as io_utility_ds from "./__utility__/ds";
 const { version: SDK_VERSION } = require("../package.json");
@@ -52,6 +54,7 @@ export {
   SSH_ALGORITHM,
   Network,
   SshLogin,
+  ConnectionLog,
   Role,
   RoleGrant,
   IpSecVpn,
@@ -84,6 +87,7 @@ export {
   io_utility_ds,
   io_providers,
   io_eventhandler,
+  io_connectionlog,
 };
 
 type ApiCacheEntry = { deferred: Promise<any>; resolved: boolean; value?: any };
@@ -644,12 +648,140 @@ export class MamoriService extends eventable.Eventable {
   // Activity monitoring
   //
 
-  public connection_info(ssid: string) {
-    return this.callAPI("GET", "/v1/connection_log/" + ssid);
+  public connection_info(ssid: string, options: { ssh_streams?: boolean } | null = null) {
+    let url = "/v1/connection_log/" + encodeURIComponent(ssid);
+    if (options && options.ssh_streams) {
+      url += "?ssh_streams=y";
+    }
+    return this.callAPI("GET", url);
+  }
+
+  public search_connection_log(options: any) {
+    return this.callAPI("PUT", "/v1/search/connection_log", options);
   }
 
   public ssh_session_log(ssid: string, options: any = null) {
-    return this.callAPI("GET", "/v1/ssh/" + ssid, options);
+    return this.callAPI("GET", "/v1/ssh/" + encodeURIComponent(ssid), options);
+  }
+
+  public ssh_video_options() {
+    return this.callAPI("GET", "/v1/ssh/video/options");
+  }
+
+  /**
+   * Authenticated request returning response body as text (e.g. SSE payloads).
+   * `url` is under `/api` (pass `/v1/...`).
+   */
+  public async callAPIText(
+    method: Method,
+    url: string,
+    params: any = null,
+    timeoutMs: number = 30 * 60 * 1000,
+  ): Promise<string> {
+    let payload: any = {
+      method: method,
+      url: "/api" + url,
+      headers: {
+        Cookie: this._cookies,
+        "X-CSRF-Token": this._csrf,
+        Accept: "text/event-stream, text/plain, */*",
+      },
+      responseType: "text",
+      timeout: timeoutMs,
+    };
+
+    if (method == "GET" || method == "DELETE") {
+      payload.params = params;
+      payload.paramsSerializer = MamoriService.serialize;
+    } else {
+      payload.data = params;
+    }
+
+    let response = await this._http.request(payload);
+    return typeof response.data === "string"
+      ? response.data
+      : String(response.data ?? "");
+  }
+
+  /**
+   * Authenticated request returning a Node readable stream (chunked SSE).
+   * `url` is under `/api` (pass `/v1/...`).
+   */
+  public async callAPIStream(
+    method: Method,
+    url: string,
+    params: any = null,
+    timeoutMs: number = 30 * 60 * 1000,
+  ): Promise<NodeJS.ReadableStream> {
+    let payload: any = {
+      method: method,
+      url: "/api" + url,
+      headers: {
+        Cookie: this._cookies,
+        "X-CSRF-Token": this._csrf,
+        Accept: "text/event-stream, text/plain, */*",
+      },
+      responseType: "stream",
+      timeout: timeoutMs,
+    };
+
+    if (method == "GET" || method == "DELETE") {
+      payload.params = params;
+      payload.paramsSerializer = MamoriService.serialize;
+    } else {
+      payload.data = params;
+    }
+
+    let response = await this._http.request(payload);
+    return response.data as NodeJS.ReadableStream;
+  }
+
+  /**
+   * Authenticated binary GET/POST. `url` may be `/v1/...` or a full `/api/v1/...` path.
+   */
+  public async callAPIBinary(
+    method: Method,
+    url: string,
+    params: any = null,
+    timeoutMs: number = 30 * 60 * 1000,
+  ): Promise<Buffer> {
+    let apiUrl = url;
+    if (apiUrl.indexOf("/api/") === 0) {
+      apiUrl = apiUrl.substring("/api".length);
+    }
+    // Strip query into params for axios when present on path
+    let query: any = params;
+    let path = apiUrl;
+    let q = apiUrl.indexOf("?");
+    if (q >= 0) {
+      path = apiUrl.substring(0, q);
+      let search = new URLSearchParams(apiUrl.substring(q + 1));
+      query = query || {};
+      search.forEach((value, key) => {
+        query[key] = value;
+      });
+    }
+
+    let payload: any = {
+      method: method,
+      url: "/api" + path,
+      headers: {
+        Cookie: this._cookies,
+        "X-CSRF-Token": this._csrf,
+      },
+      responseType: "arraybuffer",
+      timeout: timeoutMs,
+    };
+
+    if (method == "GET" || method == "DELETE") {
+      payload.params = query;
+      payload.paramsSerializer = MamoriService.serialize;
+    } else {
+      payload.data = query;
+    }
+
+    let response = await this._http.request(payload);
+    return Buffer.from(response.data);
   }
 
   //
