@@ -486,6 +486,7 @@ export class MamoriService extends eventable.Eventable {
     username: string,
     password: string,
     otp_password?: string,
+    application: string = "Mamori API",
   ): Promise<LoginResponse> {
     //this.disconnectSocket();
     // fetch the root document to get a session cookie and the CSRF token for the session
@@ -516,6 +517,7 @@ export class MamoriService extends eventable.Eventable {
               username: username.toLowerCase(),
               password: password,
               otp_password: otp_password,
+              application: application,
             },
             headers: {
               Cookie: this._cookies,
@@ -658,6 +660,10 @@ export class MamoriService extends eventable.Eventable {
 
   public search_connection_log(options: any) {
     return this.callAPI("PUT", "/v1/search/connection_log", options);
+  }
+
+  public search_connection_events(options: any) {
+    return this.callAPI("PUT", "/v1/search/connection_events", options);
   }
 
   public ssh_session_log(ssid: string, options: any = null) {
@@ -1594,9 +1600,9 @@ export class MamoriService extends eventable.Eventable {
   //     return this.callAPI("GET", "/v1/license/stats");
   // }
 
-  // public get_qr_code(id: string) {
-  //     return this.callAPI("GET", "/ua/qrcheck/" + id);
-  // }
+  public get_qr_code(id: string) {
+    return this.callAPI("GET", "/ua/qrcheck/" + encodeURIComponent(id));
+  }
 
   public create_backup() {
     return this.callAPI("GET", "/v1/backup");
@@ -1622,9 +1628,14 @@ export class MamoriService extends eventable.Eventable {
     return this.callAPI("GET", "/v1/users" + query);
   }
 
-  // public user_has_pending_validation(username: string) {
-  //     return this.callAPI("GET", "/ua/pending/" + encodeURIComponent(username.toLowerCase()));
-  // }
+  public user_has_pending_validation() {
+    return this.callAPI("GET", "/v1/my/validation");
+  }
+
+  /** Pending MFA challenge sessions for the current login (Login.vue checkMFAStatus). */
+  public get_my_pending_sessions() {
+    return this.callAPI("GET", "/v1/my/sessions");
+  }
 
   public users_search(query: any) {
     return this.callAPI("PUT", "/v1/search/users", query);
@@ -1659,6 +1670,73 @@ export class MamoriService extends eventable.Eventable {
 
   public create_user(options: any) {
     return this.callAPI("POST", "/v1/users", options);
+  }
+
+  //
+  // Scoped MFA apply (ch10588)
+  //
+
+  /** List the current user's MFA apply rows. */
+  public list_my_mfa_apply() {
+    return this.callAPI("GET", "/v1/my/mfa_apply");
+  }
+
+  /** Start self-service scoped MFA enrollment (returns QR guid when created). */
+  public enroll_scoped_mfa(provider_name?: string) {
+    return this.callAPI("POST", "/v1/my/mfa_apply/enroll", {
+      provider_name: provider_name || "",
+    });
+  }
+
+  /** Admin: list MFA apply rows for a user. */
+  public list_user_mfa_apply(username: string) {
+    return this.callAPI(
+      "GET",
+      "/v1/users/" + encodeURIComponent(username) + "/mfa_apply",
+    );
+  }
+
+  /** Admin: set scoped MFA provider + applies for a user. */
+  public set_user_scoped_mfa(
+    username: string,
+    provider: string,
+    mfa_applies: string[],
+  ) {
+    return this.callAPI(
+      "PUT",
+      "/v1/users/" + encodeURIComponent(username) + "/mfa_apply",
+      {
+        provider,
+        mfa_applies,
+      },
+    );
+  }
+
+  /** Admin: delete scoped MFA applies for a user. */
+  public delete_user_scoped_mfa(username: string, mfa_applies: string[]) {
+    return this.callAPI(
+      "DELETE",
+      "/v1/users/" + encodeURIComponent(username) + "/mfa_apply",
+      {
+        mfa_applies,
+      },
+    );
+  }
+
+  /** Admin: reset scoped MFA secrets / QR for a user. */
+  public reset_user_scoped_mfa(
+    username: string,
+    provider: string,
+    mfa_applies: string[],
+  ) {
+    return this.callAPI(
+      "POST",
+      "/v1/users/" + encodeURIComponent(username) + "/mfa_apply/reset",
+      {
+        provider,
+        mfa_applies,
+      },
+    );
   }
 
   public delete_user(username: string) {

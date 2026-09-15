@@ -8,6 +8,10 @@
  * Optional fixtures (tests skip when absent):
  *   MAMORI_SSH_SSID, MAMORI_SSH_STREAM_ID — force SSH video encode target
  *   MAMORI_RDP_RECORDING_ID — RDP recording id for download URL test
+ *
+ * Auth-driven connection log / connection_events asserts (admin after subject login)
+ * live in system/api.replace-device-token.ts and __utility__/auth-test-harness.ts.
+ * This file remains PAM/recording-focused plus a soft ambient extra_properties smoke check.
  */
 import {
   MamoriService,
@@ -50,6 +54,49 @@ describe("connection log tests" + (testbatch ? " " + testbatch : ""), () => {
     let rows = res.data || res;
     if (Array.isArray(rows) && rows.length > 0 && rows[0].ssid) {
       listedSsid = rows[0].ssid;
+    }
+  });
+
+  test("connection log extra_properties auth_method/auth_provider types when present", async () => {
+    let res = await io_utils.noThrow(
+      io_connectionlog.ConnectionLog.list(api, 0, 50),
+    );
+    expect(res.errors).toBeFalsy();
+    let rows = res.data || res;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      console.log("skip extra_properties: no connection log rows");
+      return;
+    }
+    let sawAuthTag = false;
+    for (let row of rows) {
+      let extra = row.extra_properties ?? row.EXTRA_PROPERTIES;
+      if (extra == null || extra === "") {
+        continue;
+      }
+      let parsed: any = extra;
+      if (typeof extra === "string") {
+        try {
+          parsed = JSON.parse(extra);
+        } catch (_e) {
+          continue;
+        }
+      }
+      if (parsed == null || typeof parsed !== "object") {
+        continue;
+      }
+      if (parsed.auth_method != null) {
+        expect(typeof parsed.auth_method).toBe("string");
+        sawAuthTag = true;
+      }
+      if (parsed.auth_provider != null) {
+        expect(typeof parsed.auth_provider).toBe("string");
+        sawAuthTag = true;
+      }
+    }
+    if (!sawAuthTag) {
+      console.log(
+        "soft-ok: no oauth-tagged extra_properties in sample; types not asserted",
+      );
     }
   });
 

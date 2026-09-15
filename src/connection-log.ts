@@ -38,12 +38,34 @@ export class ConnectionLog {
     from: number,
     to: number,
     filter?: any,
+    sort?: { selector: string; desc?: boolean }[],
+  ): Promise<any> {
+    let filters = prepareFilter(filter);
+    let payload: any = { skip: from, take: to };
+    if (filter) {
+      payload.filter = filters;
+    }
+    if (sort && sort.length) {
+      payload.sort = sort;
+    }
+    return api.search_connection_log(payload);
+  }
+
+  /**
+   * Search connection / authentication events (DevExpress-style grid payload).
+   * @param filter [["column","=","value"], ...]
+   */
+  public static listEvents(
+    api: MamoriService,
+    from: number,
+    to: number,
+    filter?: any,
   ): Promise<any> {
     let filters = prepareFilter(filter);
     let payload: any = filter
       ? { skip: from, take: to, filter: filters }
       : { skip: from, take: to };
-    return api.search_connection_log(payload);
+    return api.search_connection_events(payload);
   }
 
   /**

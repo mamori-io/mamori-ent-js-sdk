@@ -57,6 +57,42 @@ describe("Authenication Provider Tests", () => {
         */
     });
 
+    const azureProvider = process.env.MAMORI_AZURE_PROVIDER || "";
+    const azureTest = azureProvider ? test : test.skip;
 
+    azureTest("replace_device_token_workflow option round-trip", async () => {
+        const got = await io_utils.noThrow(api.get_provider(azureProvider));
+        expect(got.errors).toBeFalsy();
+        const props = (got && got.properties) || {};
+        const providerType = got.provider_type || got.type || "azure";
+        const original =
+            props.replace_device_token_workflow != null
+                ? String(props.replace_device_token_workflow)
+                : "false";
+
+        try {
+            const setOn = await io_utils.noThrow(
+                api.update_provider(azureProvider, {
+                    name: azureProvider,
+                    type: providerType,
+                    replace_device_token_workflow: "true",
+                }),
+            );
+            expect(setOn.errors).toBeFalsy();
+
+            const after = await io_utils.noThrow(api.get_provider(azureProvider));
+            expect(after.errors).toBeFalsy();
+            const afterProps = (after && after.properties) || {};
+            expect(String(afterProps.replace_device_token_workflow)).toBe("true");
+        } finally {
+            await io_utils.ignoreError(
+                api.update_provider(azureProvider, {
+                    name: azureProvider,
+                    type: providerType,
+                    replace_device_token_workflow: original === "true" ? "true" : "false",
+                }),
+            );
+        }
+    });
 
 });

@@ -46,6 +46,30 @@ export enum MFA_PROVIDER {
     PINGID = "pingid"
 }
 
+/**
+ * MFA apply scopes (when a user MFA provider row is challenged).
+ * Matches Hub {@code MfaApply} values.
+ */
+export enum MFA_APPLY {
+    PORTAL_OAUTH = "portal_oauth",
+    PORTAL_LOCAL_AUTH = "portal_local_auth",
+    RESOURCE_ACCESS = "resource_access",
+}
+
+/** Default scopes for portal local login + resource access (DB proxy, etc.). */
+export const MFA_SCOPES: MFA_APPLY[] = [
+    MFA_APPLY.PORTAL_LOCAL_AUTH,
+    MFA_APPLY.RESOURCE_ACCESS,
+];
+
+function quoteSqlLiteral(value: string): string {
+    return "'" + String(value).replace(/'/g, "''") + "'";
+}
+
+function joinMfaApplies(applies: Array<MFA_APPLY | string>): string {
+    return applies.map((a) => String(a)).filter((a) => a.length > 0).join(",");
+}
+
 
 class UserBase implements ISerializable {
     public constructor() {
@@ -321,6 +345,139 @@ export class User extends UserBase {
         return this.setMFAProvider(api, MFA_PROVIDER.SERVICE, {
             ALLOWED_IP: allowedIp
         });
+    }
+
+    /**
+     * Assign a scoped MFA provider for the given apply types (Hub {@code SET_USER_SCOPED_MFA}).
+     * Creates one {@code user_auth_providers} row per apply with non-null {@code mfa_apply}.
+     */
+    public setScopedMFA(
+        api: MamoriService,
+        provider: MFA_PROVIDER | string,
+        applies: Array<MFA_APPLY | string> = MFA_SCOPES,
+    ): Promise<any> {
+        const sql =
+            "CALL SYSCS_UTIL.SET_USER_SCOPED_MFA(" +
+            quoteSqlLiteral(this.username) +
+            ", " +
+            quoteSqlLiteral(String(provider)) +
+            ", " +
+            quoteSqlLiteral(joinMfaApplies(applies)) +
+            ")";
+        return api.select(sql);
+    }
+
+    /**
+     * Reset enrollment secrets for scoped MFA rows (Hub {@code RESET_USER_SCOPED_MFA}).
+     * Rows for the given applies remain; secrets / QR are regenerated.
+     */
+    public resetScopedMFA(
+        api: MamoriService,
+        provider: MFA_PROVIDER | string,
+        applies: Array<MFA_APPLY | string> = MFA_SCOPES,
+    ): Promise<any> {
+        const sql =
+            "CALL SYSCS_UTIL.RESET_USER_SCOPED_MFA(" +
+            quoteSqlLiteral(this.username) +
+            ", " +
+            quoteSqlLiteral(String(provider)) +
+            ", " +
+            quoteSqlLiteral(joinMfaApplies(applies)) +
+            ")";
+        return api.select(sql);
+    }
+
+    /**
+     * Delete scoped MFA rows for the given apply types (Hub {@code DELETE_USER_SCOPED_MFA}).
+     */
+    public deleteScopedMFA(
+        api: MamoriService,
+        applies: Array<MFA_APPLY | string> = MFA_SCOPES,
+    ): Promise<any> {
+        const sql =
+            "CALL SYSCS_UTIL.DELETE_USER_SCOPED_MFA(" +
+            quoteSqlLiteral(this.username) +
+            ", " +
+            quoteSqlLiteral(joinMfaApplies(applies)) +
+            ")";
+        return api.select(sql);
+    }
+
+    /**
+     * List {@code SYS.USER_AUTHENTICATION_PROVIDERS} rows for this user (includes {@code MFA_APPLY}).
+     */
+    public listAuthenticationProviders(api: MamoriService): Promise<any> {
+        return api.select(
+            "SELECT * FROM SYS.USER_AUTHENTICATION_PROVIDERS WHERE lower(user_name) = lower(" +
+                quoteSqlLiteral(this.username) +
+                ")",
+        );
+    }
+
+    /**
+     * Self-service: list MFA apply rows for the logged-in user ({@code GET /v1/my/mfa_apply}).
+     * Call with an API session authenticated as this user.
+     */
+    public listMyMfaApply(api: MamoriService): Promise<any> {
+        return api.list_my_mfa_apply();
+    }
+
+    /**
+     * Self-service: enroll scoped MFA ({@code POST /v1/my/mfa_apply/enroll}).
+     * Call with an API session authenticated as this user.
+     */
+    public enrollScopedMfa(api: MamoriService, provider?: string): Promise<any> {
+        return api.enroll_scoped_mfa(provider);
+    }
+
+    /**
+     * Admin HTTP: list MFA apply rows for this user ({@code GET /v1/users/:user/mfa_apply}).
+     */
+    public listUserMfaApply(api: MamoriService): Promise<any> {
+        return api.list_user_mfa_apply(this.username);
+    }
+
+    /**
+     * Admin HTTP: set scoped MFA ({@code PUT /v1/users/:user/mfa_apply}).
+     */
+    public setScopedMfaHttp(
+        api: MamoriService,
+        provider: MFA_PROVIDER | string,
+        applies: Array<MFA_APPLY | string> = MFA_SCOPES,
+    ): Promise<any> {
+        return api.set_user_scoped_mfa(
+            this.username,
+            String(provider),
+            applies.map((a) => String(a)),
+        );
+    }
+
+    /**
+     * Admin HTTP: delete scoped MFA applies ({@code DELETE /v1/users/:user/mfa_apply}).
+     */
+    public deleteScopedMfaHttp(
+        api: MamoriService,
+        applies: Array<MFA_APPLY | string> = MFA_SCOPES,
+    ): Promise<any> {
+        return api.delete_user_scoped_mfa(
+            this.username,
+            applies.map((a) => String(a)),
+        );
+    }
+
+    /**
+     * Admin HTTP: reset scoped MFA ({@code POST /v1/users/:user/mfa_apply/reset}).
+     */
+    public resetScopedMfaHttp(
+        api: MamoriService,
+        provider: MFA_PROVIDER | string,
+        applies: Array<MFA_APPLY | string> = MFA_SCOPES,
+    ): Promise<any> {
+        return api.reset_user_scoped_mfa(
+            this.username,
+            String(provider),
+            applies.map((a) => String(a)),
+        );
     }
 
 }
