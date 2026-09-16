@@ -72,8 +72,10 @@ export function messagesContainAny(events: any[], substrings: string[]): boolean
 export function isNoOauthPortalSessionFailure(msg: string): boolean {
   const m = msg.toLowerCase();
   return (
-    m.indexOf("oauth") >= 0 &&
-    (m.indexOf("portal session") >= 0 || m.indexOf("no active oauth") >= 0)
+    (m.indexOf("oauth") >= 0 &&
+      (m.indexOf("portal session") >= 0 || m.indexOf("no active oauth") >= 0)) ||
+    m.indexOf("first login via oauth") >= 0 ||
+    m.indexOf("enable local and proxy authentication") >= 0
   );
 }
 

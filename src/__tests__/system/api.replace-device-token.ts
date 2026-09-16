@@ -125,13 +125,18 @@ gated(
         );
       }
 
-      // Hub must not open a sibling "Mamori Portal" pool connection after portal-login fails
+      // Hub must not open a live authenticated sibling "Mamori Portal" after portal-login fails.
+      // Connection log includes ended history; only open sessions are the regression signal.
       await sleep(1000);
       const rows = await listConnectionLogForUser(api, azureUser, 40);
       const appOf = (r: any) => String(col(r, "client_application") || "");
       const isAuth = (r: any) => {
         const v = col(r, "authenticated");
         return v === true || v === "t" || String(v).toLowerCase() === "true";
+      };
+      const isOpen = (r: any) => {
+        const end = col(r, "endtime") || col(r, "ENDTIME");
+        return end == null || String(end).trim() === "";
       };
       const recent = rows.slice(0, 8);
       const portalLoginRows = recent.filter(
@@ -142,11 +147,11 @@ gated(
       expect(isAuth(latestPortalLogin)).toBe(false);
 
       const siblingPortal = recent.find(
-        (r) => appOf(r) === "Mamori Portal" && isAuth(r),
+        (r) => appOf(r) === "Mamori Portal" && isAuth(r) && isOpen(r),
       );
       if (siblingPortal) {
         throw new Error(
-          "Expected no authenticated sibling 'Mamori Portal' after failed portal-login; " +
+          "Expected no open authenticated sibling 'Mamori Portal' after failed portal-login; " +
             "got connection id=" +
             String(col(siblingPortal, "id") || col(siblingPortal, "ssid")),
         );
