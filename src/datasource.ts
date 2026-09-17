@@ -100,6 +100,8 @@ export class Datasource implements ISerializable {
     credential_reset_days?: string;
     credential_role?: string;
     connection_string?: string;
+    /** Default auto-commit when opening a WebSQL session. Oracle defaults to false; others true. */
+    webSqlAutoCommitDefault?: boolean;
 
     /**
          * Initialize the object from JSON.
@@ -340,6 +342,17 @@ export class Datasource implements ISerializable {
     }
 
     /**
+     * Default auto-commit for WebSQL sessions on this datasource.
+     * Oracle defaults to false when omitted; other types default to true.
+     * @param value  true/false for WEBSQLAUTOCOMMITDEFAULT
+     * @returns
+     */
+    public withWebSqlAutoCommitDefault(value: boolean): Datasource {
+        this.webSqlAutoCommitDefault = value;
+        return this;
+    }
+
+    /**
      * @param enabled  Optionally enable or disable this datasource
      * @returns
      */
@@ -420,6 +433,9 @@ export class Datasource implements ISerializable {
         }
         if (rec.caseSensitive) {
             res.push("OBJECTNAMECASESENSITIVE 'TRUE'");
+        }
+        if (rec.webSqlAutoCommitDefault != undefined) {
+            res.push("WEBSQLAUTOCOMMITDEFAULT '" + (rec.webSqlAutoCommitDefault ? "TRUE" : "FALSE") + "'");
         }
         if (rec.enabled != undefined) {
             res.push("ENABLED '" + (rec.enabled ? "TRUE" : "FALSE") + "'");

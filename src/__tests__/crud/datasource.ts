@@ -84,7 +84,8 @@ describe("datasource tests", () => {
             .at(dbHost, Number(dbPort))
             .withCredentials(dbUsername, dbPassword)
             .withDatabase('mamorisys')
-            .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
+            .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true')
+            .withWebSqlAutoCommitDefault(true);
         let res = await io_utils.noThrow(ds.create(api));
         expect(res).toSucceed()
         try {
@@ -93,6 +94,11 @@ describe("datasource tests", () => {
             expect(results).not.toBeFalsy();
             expect(results.available).toBe("true");
             expect(results.status).toBeNull();
+
+            let cfg = await io_utils.noThrow(ds.get(api));
+            let websqlOpt = (cfg.options || []).filter((x: any) => x.optionnameddl == 'WEBSQLAUTOCOMMITDEFAULT');
+            expect(websqlOpt.length).toBe(1);
+            expect(String(websqlOpt[0].currentvalue).toLowerCase()).toBe('true');
 
             //Grant a credential to a user
             let ccred = await io_utils.noThrow(ds.addCredential(api, grantee, dbUsername, dbPassword));
@@ -349,7 +355,8 @@ describe("datasource tests", () => {
         ds.ofType("ORACLE", dsDef.driver)
             .at(dsDef.host, dsDef.port)
             .withCredentials(dsDef.uname, dsDef.pw)
-            .withDatabase(dsDef.sid);
+            .withDatabase(dsDef.sid)
+            .withWebSqlAutoCommitDefault(false);
 
         await io_utils.ignoreError(ds.delete(api))
 
@@ -365,7 +372,7 @@ describe("datasource tests", () => {
                 .replace(":HOST", dsDef.host)
                 .replace(":PORT", dsDef.port)
                 .replace(":SID", dsDef.sid);
-            let opt = { connection_string: cs, host: '', port: '' };
+            let opt = { connection_string: cs, host: '', port: '', webSqlAutoCommitDefault: true };
             let r = await io_utils.noThrow(ds.update(api, opt));
             if (r.errors) {
                 throw r.response.data.message;
@@ -376,6 +383,9 @@ describe("datasource tests", () => {
             expect(r5).not.toSucceed();
             let o = r5.options.filter((x: any) => x.optionnameddl == 'CONNECTION_STRING');
             expect(o[0].currentvalue).toBe(cs);
+            let websqlOpt = r5.options.filter((x: any) => x.optionnameddl == 'WEBSQLAUTOCOMMITDEFAULT');
+            expect(websqlOpt.length).toBe(1);
+            expect(String(websqlOpt[0].currentvalue).toLowerCase()).toBe('true');
         } finally {
             await io_utils.ignoreError(ds.delete(api));
         }

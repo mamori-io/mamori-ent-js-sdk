@@ -31,7 +31,8 @@ async function example() {
         .at(targetHost, Number(targePort))
         .withCredentials('postgres', targetDBPassword)
         .withDatabase('mamorisys')
-        .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
+        .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true')
+        .withWebSqlAutoCommitDefault(true);
     let res = await io_utils.noThrow(ds.create(api));
     ////////////
 	//CREATE IT
