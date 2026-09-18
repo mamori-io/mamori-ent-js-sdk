@@ -42,6 +42,8 @@ import * as io_requestable_resource from "./requestable_resource";
 import * as io_db_credential from "./db-credential";
 import * as io_providers from "./provider";
 import * as io_eventhandler from "./event-handler";
+import * as io_script from "./script";
+import * as io_script_flow from "./script-flow";
 import * as io_connectionlog from "./connection-log";
 import * as eventable from "./eventable";
 import * as io_utility_ds from "./__utility__/ds";
@@ -87,6 +89,8 @@ export {
   io_utility_ds,
   io_providers,
   io_eventhandler,
+  io_script,
+  io_script_flow,
   io_connectionlog,
 };
 

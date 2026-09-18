@@ -19,7 +19,9 @@ export enum REQUEST_RESOURCE_TYPE {
     IP_RESOURCE = "IP RESOURCE",
     SSH_LOGIN = "SSH LOGIN",
     ENCRYPTION_KEY = "ENCRYPTION KEY",
-    RESOURCE_GROUP = "RESOURCE GROUP"
+    RESOURCE_GROUP = "RESOURCE GROUP",
+    SCRIPT = "SCRIPT",
+    SCRIPT_FLOW = "SCRIPT FLOW",
 }
 
 export class RequestableResource implements ISerializable {
@@ -219,6 +221,12 @@ export class RequestableResource implements ISerializable {
                 break;
             case REQUEST_RESOURCE_TYPE.RESOURCE_GROUP:
                 return "";
+                break;
+            case REQUEST_RESOURCE_TYPE.SCRIPT:
+                return "EXECUTE SCRIPT";
+                break;
+            case REQUEST_RESOURCE_TYPE.SCRIPT_FLOW:
+                return "EXECUTE SCRIPT FLOW";
                 break;
             default:
                 return "";

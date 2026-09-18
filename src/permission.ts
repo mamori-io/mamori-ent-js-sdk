@@ -23,6 +23,8 @@ export enum PERMISSION_TYPE {
     HTTP_RESOURCE = "http_resource",
     SECRET = "secret",
     CREDENTIAL = "credential",
+    SCRIPT = "script",
+    SCRIPT_FLOW = "script_flow",
 }
 
 export enum TIME_UNIT {
@@ -172,6 +174,10 @@ export class Permissions {
             return new SecretPermission().fromJSON(rec);
         } else if (rec.permissiontype == 'HTTP ACCESS') {
             return new HTTPResourcePermission().fromJSON(rec);
+        } else if (rec.permissiontype == 'EXECUTE SCRIPT') {
+            return new ScriptPermission().fromJSON(rec);
+        } else if (rec.permissiontype == 'EXECUTE SCRIPT FLOW') {
+            return new ScriptFlowPermission().fromJSON(rec);
         } else if (Object.values(DB_PERMISSION).includes(rec.permissiontype)) {
             return new DatasourcePermission().permission(rec.permissiontype).fromJSON(rec);
         } else if (Object.values(MAMORI_PERMISSION).includes(rec.permissiontype)) {
@@ -212,6 +218,10 @@ export class Permissions {
                 return new SecretPermission();
             case PERMISSION_TYPE.CREDENTIAL:
                 return new CredentialPermission();
+            case PERMISSION_TYPE.SCRIPT:
+                return new ScriptPermission();
+            case PERMISSION_TYPE.SCRIPT_FLOW:
+                return new ScriptFlowPermission();
         }
     }
 }
@@ -1393,5 +1403,97 @@ export class CredentialPermission extends PermissionBase {
             f.push(["permissiontype", "equals", "CREDENTIAL USAGE"]);
         }
         return super.list(api, f);
+    }
+}
+
+/** GRANT EXECUTE SCRIPT ON {script} TO {grantee} */
+export class ScriptPermission extends PermissionBase {
+    private items?: string[];
+    private resourceName?: string;
+
+    public constructor() {
+        super();
+        this.resourceName = "";
+        this.items = ["EXECUTE SCRIPT"];
+    }
+
+    public resource(name: string): ScriptPermission {
+        this.resourceName = name;
+        return this;
+    }
+
+    public prepare(): any {
+        let res = super.prepare();
+        this.options.grantables = this.items;
+        this.options.object_name = '"' + this.resourceName + '"';
+        return res;
+    }
+
+    fromJSON(record: any) {
+        super.fromJSON(record);
+        if (record.key_name && record.key_name != '') {
+            this.resourceName = record.key_name;
+        }
+        return this;
+    }
+
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            if (prop != "options") {
+                if (prop == "items") {
+                    res["permissions"] = this.items?.join(",");
+                } else {
+                    res[prop] = this[prop];
+                }
+            }
+        }
+        return res;
+    }
+}
+
+/** GRANT EXECUTE SCRIPT FLOW ON {flow} TO {grantee} */
+export class ScriptFlowPermission extends PermissionBase {
+    private items?: string[];
+    private resourceName?: string;
+
+    public constructor() {
+        super();
+        this.resourceName = "";
+        this.items = ["EXECUTE SCRIPT FLOW"];
+    }
+
+    public resource(name: string): ScriptFlowPermission {
+        this.resourceName = name;
+        return this;
+    }
+
+    public prepare(): any {
+        let res = super.prepare();
+        this.options.grantables = this.items;
+        this.options.object_name = '"' + this.resourceName + '"';
+        return res;
+    }
+
+    fromJSON(record: any) {
+        super.fromJSON(record);
+        if (record.key_name && record.key_name != '') {
+            this.resourceName = record.key_name;
+        }
+        return this;
+    }
+
+    toJSON(): any {
+        let res: any = {};
+        for (let prop in this) {
+            if (prop != "options") {
+                if (prop == "items") {
+                    res["permissions"] = this.items?.join(",");
+                } else {
+                    res[prop] = this[prop];
+                }
+            }
+        }
+        return res;
     }
 }
