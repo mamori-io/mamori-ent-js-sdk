@@ -10,13 +10,20 @@ import { MamoriService } from './api';
 import { ISerializable } from './i-serializable';
 
 export interface ScriptFlowMappingSpec {
-  from: 'flow' | 'prev' | 'row';
+  from: 'flow' | 'prev' | 'row' | 'item';
   name: string;
 }
 
 export interface ScriptFlowStepDef {
-  script: string;
+  script?: string;
+  type?: 'script' | 'loop' | 'filter';
+  name?: string;
+  mode?: 'serial' | 'parallel';
+  method?: 'first_n' | 'random_n' | 'columns' | 'script';
+  count?: number;
+  column_filters?: Array<{ column: string; value?: string }>;
   mappings?: Record<string, ScriptFlowMappingSpec | any>;
+  steps?: ScriptFlowStepDef[];
 }
 
 function firstRow(result: any): any {
@@ -166,7 +173,7 @@ export class ScriptFlow implements ISerializable {
   }
 
   public async create(api: MamoriService): Promise<any> {
-    const result = await api.call('CREATE_SCRIPT_FLOW', this.name, JSON.stringify(this.steps || []));
+    const result = await api.call('CREATE_SCRIPT_FLOW', this.name, JSON.stringify(this.steps || []), null, '[]');
     const id = extractId(result);
     if (id != null) {
       this.id = id;
@@ -178,7 +185,7 @@ export class ScriptFlow implements ISerializable {
     if (this.id == null) {
       throw new Error('ScriptFlow id is required for update');
     }
-    return api.call('UPDATE_SCRIPT_FLOW', this.id, this.name, JSON.stringify(this.steps || []));
+    return api.call('UPDATE_SCRIPT_FLOW', this.id, this.name, JSON.stringify(this.steps || []), null, '[]');
   }
 
   public async delete(api: MamoriService): Promise<any> {

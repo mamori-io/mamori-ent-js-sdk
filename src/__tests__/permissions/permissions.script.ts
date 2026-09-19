@@ -33,7 +33,7 @@ describe('script execute permission tests', () => {
     });
 
     const script = new io_script.Script(scriptName, 'MAMORI', '')
-      .withBody('outputs.set("ok", "yes-" + parameters.get("x"));')
+      .withBody('parameters.out.set("ok", "yes-" + parameters.in.get("x"));')
       .withParameters([
         { name: 'x', direction: 'in', type: 'string', default: 'a' },
         { name: 'ok', direction: 'out', type: 'string' },
@@ -41,7 +41,7 @@ describe('script execute permission tests', () => {
     expect(await io_utils.noThrow(script.create(api))).toSucceed();
 
     const s2 = new io_script.Script(flowScript, 'MAMORI', '')
-      .withBody('outputs.set("ok", "flow");')
+      .withBody('parameters.out.set("ok", "flow");')
       .withParameters([{ name: 'ok', direction: 'out', type: 'string' }]);
     expect(await io_utils.noThrow(s2.create(api))).toSucceed();
 

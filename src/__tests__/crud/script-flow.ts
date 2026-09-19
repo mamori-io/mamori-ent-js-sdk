@@ -51,13 +51,13 @@ describe('script flow CRUD and execute', () => {
 
   test('scalar mapping between two mamori scripts', async () => {
     const script1 = new io_script.Script(s1, 'MAMORI', '')
-      .withBody('outputs.set("ticket", parameters.get("ticket_id") + "-ok");')
+      .withBody('parameters.out.set("ticket", parameters.in.get("ticket_id") + "-ok");')
       .withParameters([
         { name: 'ticket_id', direction: 'in', type: 'string' },
         { name: 'ticket', direction: 'out', type: 'string' },
       ]);
     const script2 = new io_script.Script(s2, 'MAMORI', '')
-      .withBody('outputs.set("final", "done:" + parameters.get("ticket"));')
+      .withBody('parameters.out.set("final", "done:" + parameters.in.get("ticket"));')
       .withParameters([
         { name: 'ticket', direction: 'in', type: 'string' },
         { name: 'final', direction: 'out', type: 'string' },
@@ -98,7 +98,7 @@ describe('script flow CRUD and execute', () => {
   test('resultset fan-out to next script', async () => {
     const producer = new io_script.Script(s1, 'MAMORI', '')
       .withBody(
-        'outputs.setRows([{id:1,email:"one@ex.com"},{id:2,email:"two@ex.com"}]);',
+        'parameters.out.setRows([{id:1,email:"one@ex.com"},{id:2,email:"two@ex.com"}]);',
       )
       .withParameters([
         {
@@ -113,7 +113,7 @@ describe('script flow CRUD and execute', () => {
       ]);
 
     const consumer = new io_script.Script(s3, 'MAMORI', '')
-      .withBody('outputs.set("msg", "mail:" + parameters.get("email"));')
+      .withBody('parameters.out.set("msg", "mail:" + parameters.in.get("email"));')
       .withParameters([
         { name: 'email', direction: 'in', type: 'string' },
         { name: 'msg', direction: 'out', type: 'string' },

@@ -36,8 +36,8 @@ describe('script CRUD and execute', () => {
   test('mamori script create, run with typed outs, update, delete', async () => {
     const script = new io_script.Script(mamoriName, 'MAMORI', '')
       .withBody(
-        'outputs.set("greeting", "hello-" + parameters.get("who"));' +
-          'outputs.set("count", Number(parameters.get("n")) + 1);',
+        'parameters.out.set("greeting", "hello-" + parameters.in.get("who"));' +
+          'parameters.out.set("count", Number(parameters.in.get("n")) + 1);',
       )
       .withParameters([
         { name: 'who', direction: 'in', type: 'string', default: 'world' },
@@ -61,7 +61,7 @@ describe('script CRUD and execute', () => {
     expect(run.result.outs.greeting).toBe('hello-sdk');
     expect(Number(run.result.outs.count)).toBe(5);
 
-    script.body = 'outputs.set("greeting", "updated"); outputs.set("count", 99);';
+    script.body = 'parameters.out.set("greeting", "updated"); parameters.out.set("count", 99);';
     const updated = await io_utils.noThrow(script.update(api));
     expect(updated).toSucceed();
 
@@ -85,7 +85,7 @@ describe('script CRUD and execute', () => {
 
     const script = new io_script.Script(name, 'MAMORI', '')
       .withBody(
-        'outputs.setRows([{id:1,email:"a@example.com"},{id:2,email:"b@example.com"}]);',
+        'parameters.out.setRows([{id:1,email:"a@example.com"},{id:2,email:"b@example.com"}]);',
       )
       .withParameters([
         {
