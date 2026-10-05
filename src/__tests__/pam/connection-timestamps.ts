@@ -133,7 +133,26 @@ describe(
             }
           }
         }
-        expect(conn).toBeTruthy();
+        if (!conn) {
+          const newest = logRows[0];
+          const newestStart = newest && newest.starttime;
+          const newestMs = parseInstantMs(newestStart);
+          const skewMs = Number.isNaN(newestMs)
+            ? null
+            : markerMs - newestMs;
+          throw new Error(
+            "No connection_log row with starttime >= marker (now-5s). " +
+              "If the newest wss row is only a few seconds before the marker, " +
+              "the test host clock is ahead of Hub/DB time — sync NTP " +
+              "(timedatectl: System clock synchronized). " +
+              "newest.starttime=" +
+              String(newestStart) +
+              " markerMs=" +
+              markerMs +
+              " skewMs≈" +
+              String(skewMs),
+          );
+        }
         expect(parseInstantMs(conn.starttime)).toBeGreaterThanOrEqual(markerMs);
         connectionId = conn.id;
         connectionSsid = conn.ssid;

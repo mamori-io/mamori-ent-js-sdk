@@ -6,9 +6,11 @@
  *
  * Required env (else entire describe skipped):
  *   MAMORI_AZURE_PROVIDER
- *   MAMORI_DIRECTORY_USERNAME + MAMORI_DIRECTORY_PASSWORD
- *     or MAMORI_AZURE_USER + MAMORI_AZURE_PASSWORD
+ *   MAMORI_AZURE_PASSWORD or MAMORI_DIRECTORY_PASSWORD (dummy is fine for skip-ON)
  * Also: MAMORI_SERVER, MAMORI_USERNAME, MAMORI_PASSWORD (admin)
+ *
+ * Subject defaults to omar@mamori.io (do not reuse MAMORI_DIRECTORY_USERNAME —
+ * that is often the LDAP/ad_sandbox identity).
  *
  * Negative paths only (API cannot create an OAuth portal session).
  */
@@ -34,8 +36,8 @@ const host = process.env.MAMORI_SERVER || "";
 const username = process.env.MAMORI_USERNAME || "";
 const password = process.env.MAMORI_PASSWORD || "";
 const azureProvider = process.env.MAMORI_AZURE_PROVIDER || "";
-const azureUser =
-  process.env.MAMORI_AZURE_USER || process.env.MAMORI_DIRECTORY_USERNAME || "";
+/** Azure directory login for azure3 on sandbox; override with MAMORI_AZURE_USER if needed. */
+const azureUser = process.env.MAMORI_AZURE_USER || "omar@mamori.io";
 const azurePassword =
   process.env.MAMORI_AZURE_PASSWORD || process.env.MAMORI_DIRECTORY_PASSWORD || "";
 
@@ -180,6 +182,9 @@ gated(
       "skip device code OFF: portal login fails with non-OAuth Azure/device-code error + matching events",
       async () => {
         await setReplaceDeviceToken(false);
+        // Hub ChangeMonitor reloads auth providers on a ~10s poll; wait so live auth
+        // picks up replace_device_token_workflow=false after the ON test set it true.
+        await sleep(5000);
 
         const loginResult = await portalLogin(host, azureUser, azurePassword);
         const msg = JSON.stringify(loginResult);
