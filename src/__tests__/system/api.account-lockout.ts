@@ -23,7 +23,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
   const testUser2 = ("t_lockout_user_2_" + testbatch).toLowerCase();
   const testPassword = "Aq1!aQ1!aQ1!";
   const wrongPassword = "WrongPassword123!";
-  const lockoutDurationForTesting = "1"; // 20 seconds (0.333 minutes)
+  const lockoutDurationForTesting = "1"; // Hub: mamori.security.auto_lockout.minutes (1 minute)
   const defaultLockoutDuration = "15"; // Default 15 minutes
   let originalLockoutDuration: string = defaultLockoutDuration;
   let failedAttemptsLimit: number = 10; // Default, may need to be read from system
@@ -253,12 +253,12 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     const lockedUntil = await triggerLockoutWithVerification(testUser, true);
     expect(lockedUntil).toBeTruthy();
 
-    // Verify lockout duration from getUserInfo (approximately 20 seconds for 0.333 minutes setting)
+    // Verify lockout duration from getUserInfo (~1 minute for auto_lockout.minutes=1)
     const userInfoAfterLock = await getUserInfo(testUser);
     const lockoutDurationSeconds = userInfoAfterLock?.lockout_duration_seconds ?? 0;
 
-    // Verify lockout duration is approximately 20 seconds (allow 5 second tolerance)
-    expect(lockoutDurationSeconds).toBeGreaterThanOrEqual(20);
+    // Remaining lock time should be within the configured 1-minute window
+    expect(lockoutDurationSeconds).toBeGreaterThanOrEqual(50);
     expect(lockoutDurationSeconds).toBeLessThanOrEqual(60);
 
     // Verify login fails even with correct password (account is locked)
@@ -287,8 +287,9 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
    * Verify that account automatically unlocks after lockout duration expires.
    */
   test("TC-9714-003: Lockout duration and expiration", async () => {
-    // Set short lockout duration (20 seconds)
-    await api.set_system_properties({ "mamori.security.auto_lockout.minutes": 1 });
+    // Hub lockout is whole minutes; 1 = restore after 1 minute
+    const lockoutMinutes = 1;
+    await api.set_system_properties({ "mamori.security.auto_lockout.minutes": lockoutMinutes });
 
     // Unlock user first
     await unlockTestUser(testUser);
@@ -312,10 +313,10 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
       await ignoreError(apiTest1.logout());
     }
 
-    // Sleep until lockout expires using lockout_duration_seconds from getUserInfo
-    const lockoutDurationSeconds = Math.max(0, userInfo?.lockout_duration_seconds ?? 0);
-    const timeUntilExpiry = lockoutDurationSeconds * 1000; // Convert to milliseconds
-    const sleepTime = Math.max(0, timeUntilExpiry) + 3000; // Add 1 second buffer to ensure expiry
+    // Wait until lockout expires (remaining DATEDIFF seconds, at least full configured minute) + buffer
+    const remainingSeconds = Math.max(0, userInfo?.lockout_duration_seconds ?? 0);
+    const configuredSeconds = lockoutMinutes * 60;
+    const sleepTime = (Math.max(remainingSeconds, configuredSeconds) + 5) * 1000;
     await helper.sleep(sleepTime);
 
     // Refresh API session in case it timed out during the sleep
@@ -340,7 +341,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
 
     // Reset lockout duration
     await api.set_system_properties({ "mamori.security.auto_lockout.minutes": originalLockoutDuration });
-  }, 100000); // Increase timeout for this test due to sleep
+  }, 120000); // Allow full 1-minute lockout wait + setup
 
   /**
    * TC-9714-004: Manual Account Unlock

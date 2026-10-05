@@ -45,7 +45,11 @@ describe('script execute permission tests', () => {
       .withParameters([{ name: 'ok', direction: 'out', type: 'string' }]);
     expect(await io_utils.noThrow(s2.create(api))).toSucceed();
 
-    const flow = new io_script_flow.ScriptFlow(flowName, [{ script: flowScript, mappings: {} }]);
+    // Hub requireStepId: each step needs a canvas/block id (same shape as CRUD script-flow tests)
+    const flowStepId = 'flow_perm_b1_' + testbatch;
+    const flow = new io_script_flow.ScriptFlow(flowName, [
+      { id: flowStepId, script: flowScript, mappings: {} },
+    ]);
     expect(await io_utils.noThrow(flow.create(api))).toSucceed();
   });
 

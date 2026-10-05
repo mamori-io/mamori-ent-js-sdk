@@ -17,21 +17,24 @@ export type ScriptParamType =
   | 'boolean'
   | 'datetime'
   | 'json_array'
-  | 'resultset';
+  | 'password'
+  | 'csv_file'
+  | 'list'
+  | 'msql_list';
 
 export type ScriptParamDirection = 'in' | 'out' | 'inout';
-
-export interface ScriptParameterColumn {
-  name: string;
-  type: Exclude<ScriptParamType, 'resultset'>;
-}
 
 export interface ScriptParameter {
   name: string;
   direction: ScriptParamDirection;
   type: ScriptParamType;
   default?: any;
-  columns?: ScriptParameterColumn[];
+  /** Static choices for type `list` */
+  items?: string[];
+  /** MSQL returning Text, Value columns for type `msql_list` */
+  sql?: string;
+  /** Optional UI hint for `list` / `msql_list` on the Run parameters page */
+  hint?: string;
 }
 
 /** null = unrestricted; [] = deny high-risk mamori.* ops */

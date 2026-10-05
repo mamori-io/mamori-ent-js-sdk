@@ -10,11 +10,13 @@ import { MamoriService } from './api';
 import { ISerializable } from './i-serializable';
 
 export interface ScriptFlowMappingSpec {
-  from: 'flow' | 'prev' | 'row' | 'item';
+  /** Canvas / step block id of the source block */
+  from: string;
   name: string;
 }
 
 export interface ScriptFlowStepDef {
+  id?: string;
   script?: string;
   type?: 'script' | 'loop' | 'filter';
   name?: string;

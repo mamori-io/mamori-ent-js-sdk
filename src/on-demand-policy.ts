@@ -251,7 +251,12 @@ export class OnDemandPolicy implements ISerializable {
     }
 
     public withScript(lines: string[]) {
-        this.sqlText = "BEGIN; " + lines.join(";") + " END"
+        const body = (lines || [])
+            .map((l) => (l == null ? "" : String(l).trim()))
+            .filter((l) => l.length > 0)
+            .map((l) => (l.endsWith(";") ? l : l + ";"))
+            .join("\n");
+        this.sqlText = "BEGIN;\n" + body + "\nEND";
     }
 
 }

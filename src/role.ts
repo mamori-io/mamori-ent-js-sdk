@@ -132,12 +132,28 @@ export class Role implements ISerializable {
     }
 
     /**
+     * References that would block deleting this role (grantees, policies, jobs, requestables, alerts).
+     * @param api  A logged-in MamoriService instance
+     */
+    public dependencies(api: MamoriService): Promise<{
+        grantees: string[];
+        policies: { name: string; fields: string[] }[];
+        jobs: string[];
+        requestables: { id: number; resource_type: string; resource_name: string; resource_login?: string }[];
+        alerts: string[];
+    }> {
+        return api.callAPI("GET", "/v1/roles/" + encodeURIComponent(this.roleid) + "/dependencies");
+    }
+
+    /**
      * Delete this Role.
      * @param api  A logged-in MamoriService instance
+     * @param cascade  When true, clear grants/policies/jobs/requestables/alerts then drop the role
      * @returns 
      */
-    public delete(api: MamoriService): Promise<any> {
-        return api.callAPI("DELETE", "/v1/roles/" + this.roleid);
+    public delete(api: MamoriService, cascade: boolean = false): Promise<any> {
+        const q = cascade ? "?cascade=true" : "";
+        return api.callAPI("DELETE", "/v1/roles/" + encodeURIComponent(this.roleid) + q);
     }
 
     /**

@@ -76,8 +76,8 @@ describe('script CRUD and execute', () => {
     expect(after).toBeFalsy();
   });
 
-  test('mamori script resultset out', async () => {
-    const name = mamoriName + '_rs';
+  test('mamori script json_array out', async () => {
+    const name = mamoriName + '_arr';
     const existing = await io_utils.ignoreError(io_script.Script.getByName(api, name));
     if (existing && existing.id) {
       await io_utils.ignoreError(existing.delete(api));
@@ -85,25 +85,15 @@ describe('script CRUD and execute', () => {
 
     const script = new io_script.Script(name, 'MAMORI', '')
       .withBody(
-        'parameters.out.setRows([{id:1,email:"a@example.com"},{id:2,email:"b@example.com"}]);',
+        'parameters.out.set("rows", [{id:1,email:"a@example.com"},{id:2,email:"b@example.com"}]);',
       )
-      .withParameters([
-        {
-          name: 'rows',
-          direction: 'out',
-          type: 'resultset',
-          columns: [
-            { name: 'id', type: 'number' },
-            { name: 'email', type: 'string' },
-          ],
-        },
-      ]);
+      .withParameters([{ name: 'rows', direction: 'out', type: 'json_array' }]);
 
     expect(await io_utils.noThrow(script.create(api))).toSucceed();
-    const run = await io_utils.noThrow(script.run(api, {}));
+    const run = await io_utils.noThrow(script.run(api));
     expect(run.success).toBe(true);
-    expect(run.result.rows.length).toBe(2);
-    expect(run.result.rows[0].email).toBe('a@example.com');
+    expect(run.result.outs.rows.length).toBe(2);
+    expect(run.result.outs.rows[0].email).toBe('a@example.com');
     expect(await io_utils.noThrow(script.delete(api))).toSucceed();
   });
 
