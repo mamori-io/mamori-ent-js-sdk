@@ -185,6 +185,111 @@ describe("masking policy tests", () => {
     }
   });
 
+  // ch5270: REVEAL after masking; SELECT * must return columns and clear values
+  oratest("masking oracle CH5270 reveal", async () => {
+    let testID = "orach5270";
+    let dsname = oracle_ds;
+    let dbname = "orclpdb1";
+
+    let adminApi = new MamoriService(host, INSECURE);
+    await adminApi.login(username, password);
+    try {
+      let rows: any = await adminApi.select(
+        "select databasename from sys.datasources where systemname='" +
+          dsname +
+          "'",
+      );
+      expect(rows).toSucceed();
+      dbname = rows[0].databasename;
+    } finally {
+      adminApi.logout();
+    }
+
+    let schemaName = "m5270" + testbatch;
+    let objectName =
+      '"' + dsname + '"."' + dbname + '".' + schemaName + ".tab1";
+    let rules = [
+      {
+        objecturi: dsname + "." + dbname + "." + schemaName + ".tab1",
+        column: "col1",
+        mask: "masked by full()",
+      },
+    ];
+    let policyName = testID + "_policy_" + testbatch;
+
+    let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(
+      host,
+      username,
+      password,
+      dsname,
+    );
+    try {
+      await io_utils.noThrow(
+        helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName),
+      );
+      let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy =
+        await helper.DBHelper.addMaskingPolicy(api, policyName, rules);
+      await io_utils.noThrow(mpolicy.grantTo(api, user.username));
+      let apiUser = await helper.DBHelper.preparePassthroughSession(
+        host,
+        user.username,
+        granteepw,
+        dsname,
+      );
+      try {
+        let masked = await io_utils.noThrow(
+          apiUser.queryRows("select * from " + schemaName + ".tab1"),
+        );
+        expect(masked).toSucceed();
+        expect(masked.length).toBeGreaterThan(0);
+        expect(masked[0].col1).toContain("XXXX");
+
+        let grantReveal = await io_utils.noThrow(
+          api.select(
+            "GRANT REVEAL (col1) ON " + objectName + " TO " + user.username,
+          ),
+        );
+        expect(grantReveal).toSucceed();
+
+        // ch5270: after REVEAL, SELECT * must still return columns (and clear data)
+        let revealed = await io_utils.noThrow(
+          apiUser.query("select * from " + schemaName + ".tab1"),
+        );
+        expect(revealed.meta).toBeDefined();
+        expect(Array.isArray(revealed.meta)).toBe(true);
+        expect(revealed.meta.length).toBeGreaterThanOrEqual(2);
+        let colNames = revealed.meta.map((c: any) =>
+          String(c.name).toLowerCase(),
+        );
+        expect(colNames).toEqual(expect.arrayContaining(["col1", "col2"]));
+        expect(Array.isArray(revealed.rows)).toBe(true);
+        expect(revealed.rows.length).toBeGreaterThan(0);
+
+        let clearRows = await io_utils.noThrow(
+          apiUser.queryRows("select * from " + schemaName + ".tab1"),
+        );
+        expect(clearRows).toSucceed();
+        expect(clearRows.length).toBeGreaterThan(0);
+        expect(clearRows[0].col1).toBe("value1");
+        expect(clearRows[0].col2).toBe("value21");
+
+        await io_utils.noThrow(
+          api.select(
+            "REVOKE REVEAL (col1) ON " + objectName + " FROM " + user.username,
+          ),
+        );
+      } finally {
+        apiUser.disconnect();
+        await io_utils.noThrow(mpolicy.delete(api));
+      }
+    } finally {
+      await io_utils.noThrow(
+        helper.DBHelper.cleanUpSchemaOracle(apiAdminPassthrough, schemaName),
+      );
+      apiAdminPassthrough.disconnect();
+    }
+  });
+
   oratest("masking oracle select with where clause", async () => {
     //admin passthrough session to db.
 
@@ -383,6 +488,97 @@ describe("masking policy tests", () => {
         expect(x3[0].col1).toContain("XXXX");
         let x4 = await io_utils.noThrow(permission.revoke(api));
         expect(x4.errors).toBe(false);
+      } finally {
+        apiUser.disconnect();
+        await io_utils.noThrow(mpolicy.delete(api));
+      }
+    } finally {
+      await io_utils.noThrow(
+        helper.DBHelper.cleanUpSchemaSS(apiAdminPassthrough, schemaName),
+      );
+      apiAdminPassthrough.disconnect();
+    }
+  });
+
+  // ch5270: REVEAL after masking; SELECT * must return columns and clear values
+  sstest("masking MSSQL CH5270 reveal", async () => {
+    let testID = "ssch5270";
+    let dsname = sqlserver_ds;
+    let dbname = "mamori";
+    let schemaName = testID + "_" + testbatch;
+    let objectName =
+      '"' + dsname + '"."' + dbname + '".' + schemaName + ".tab1";
+    let rules = [
+      {
+        objecturi: dsname + "." + dbname + "." + schemaName + ".tab1",
+        column: "col1",
+        mask: "masked by full()",
+      },
+    ];
+    let policyName = testID + "_policy_" + testbatch;
+
+    let apiAdminPassthrough = await helper.DBHelper.preparePassthroughSession(
+      host,
+      username,
+      password,
+      dsname,
+    );
+    try {
+      await io_utils.noThrow(
+        helper.DBHelper.prepareSSObjects(apiAdminPassthrough, schemaName),
+      );
+      let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy =
+        await io_utils.noThrow(
+          helper.DBHelper.addMaskingPolicy(api, policyName, rules),
+        );
+      await io_utils.noThrow(mpolicy.grantTo(api, user.username));
+      let apiUser = await helper.DBHelper.preparePassthroughSession(
+        host,
+        user.username,
+        granteepw,
+        dsname,
+      );
+      try {
+        let masked = await io_utils.noThrow(
+          apiUser.queryRows("select * from " + schemaName + ".tab1"),
+        );
+        expect(masked.length).toBeGreaterThan(0);
+        expect(masked[0].col1).toContain("XXXX");
+
+        let grantReveal = await io_utils.noThrow(
+          api.select(
+            "GRANT REVEAL (col1) ON " + objectName + " TO " + user.username,
+          ),
+        );
+        expect(grantReveal).toSucceed();
+
+        // ch5270: after REVEAL, SELECT * must still return columns (and clear data)
+        let revealed = await io_utils.noThrow(
+          apiUser.query("select * from " + schemaName + ".tab1"),
+        );
+        expect(revealed.meta).toBeDefined();
+        expect(Array.isArray(revealed.meta)).toBe(true);
+        expect(revealed.meta.length).toBeGreaterThanOrEqual(2);
+        let colNames = revealed.meta.map((c: any) =>
+          String(c.name).toLowerCase(),
+        );
+        expect(colNames).toEqual(expect.arrayContaining(["col1", "col2"]));
+        expect(Array.isArray(revealed.rows)).toBe(true);
+        expect(revealed.rows.length).toBeGreaterThan(0);
+
+        let clearRows = await io_utils.noThrow(
+          apiUser.queryRows("select * from " + schemaName + ".tab1"),
+        );
+        expect(clearRows).toSucceed();
+        expect(clearRows.length).toBeGreaterThan(0);
+        expect(clearRows[0].col1).toBe("value1");
+        expect(clearRows[0].col2).toBe("value21");
+
+        await io_utils.noThrow(
+          api.select(
+            "REVOKE REVEAL (col1) ON " + objectName + " FROM " + user.username,
+          ),
+        );
       } finally {
         apiUser.disconnect();
         await io_utils.noThrow(mpolicy.delete(api));
