@@ -4,6 +4,12 @@ import { User, MFA_PROVIDER } from '../../user';
 import { DatasourcePermission, DB_PERMISSION, TIME_UNIT } from '../../permission';
 import { handleAPIException, noThrow, ignoreError, addUniqueExtension } from '../../utils';
 import * as helper from '../../__utility__/test-helper';
+import {
+    PORTAL_LOGIN_APPLICATION,
+    col,
+    listConnectionLogForUser,
+    rowsOf,
+} from '../../__utility__/auth-test-harness';
 import '../../__utility__/jest/error_matcher';
 import * as crypto from 'crypto';
 
@@ -41,6 +47,13 @@ function assertProcedureCallOk(label: string, r: unknown): asserts r is any[] {
  * @param secret Base32-encoded secret string
  * @returns 6-digit TOTP code as string
  */
+/** hhmmss suffix so PushTOTP MFA cache cannot reuse a prior run for the same username. */
+function hhmmss(): string {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    return p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+}
+
 function generateTOTP(secret: string): string {
     // Base32 decoding
     const base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -204,8 +217,8 @@ describe("mamori user tests", () => {
     });
 
     test('mamori user 04 - MFA export restore', async () => {
-        // Step 1: Create a new user
-        let testUser = grantee + "_mfa_test";
+        // Step 1: Create a new user (hhmmss avoids PushTOTP MFA cache reuse across runs)
+        let testUser = (grantee + "_mfa_" + hhmmss()).toLowerCase();
         let k = new User(testUser).withEmail(testUser + "@ace.com").withFullName("MFA Test User");
         await ignoreError(k.delete(api));
         let createResult = await noThrow(k.create(api, granteepw));
@@ -276,6 +289,132 @@ describe("mamori user tests", () => {
         await helper.EncryptionKey.cleanupAESEncryptionKey(api, aesKeyName);
         
     });
+
+    /**
+     * Extends the PushTOTP user setup from mamori user 04:
+     * create → SQL SET VALIDATED → AUTHENTICATED BY pushtotp with known secret,
+     * then portal password-only login (no otp on the wire), assert connection log +
+     * pending MFA session, submit TOTP via set_ssid_notification, expect login OK.
+     */
+    test('mamori user 04b - pushtotp portal login pending MFA then token', async () => {
+        // Unique per run: same username reuses cached PushTOTP success and skips a fresh pending MFA.
+        const testUser = (grantee + "_ptotp_" + hhmmss()).toLowerCase();
+        const knownTotpSecret = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
+        const k = new User(testUser)
+            .withEmail(testUser + "@ace.com")
+            .withFullName("PushTOTP Portal Login User");
+        await ignoreError(k.delete(api));
+
+        const createResult = await noThrow(k.create(api, granteepw));
+        expect(createResult).toSucceed();
+
+        // First-time portal login requires the account to be validated (SQL).
+        const activateResult = await noThrow(
+            api.select("ALTER USER " + testUser + " SET VALIDATED = TRUE"),
+        );
+        expect(activateResult).toSucceed();
+
+        const setMfaResult = await noThrow(
+            api.select(
+                "ALTER USER " +
+                    testUser +
+                    " AUTHENTICATED BY pushtotp OPTIONS(SECRET '" +
+                    knownTotpSecret +
+                    "')",
+            ),
+        );
+        expect(setMfaResult).toSucceed();
+        await ignoreError(User.clearMFARequests(api, testUser));
+
+        const subjectApi = new MamoriService(host, INSECURE);
+        // Password-only portal login — Hub holds until PushTOTP is acknowledged.
+        const loginPromise = subjectApi.login(
+            testUser,
+            granteepw,
+            undefined,
+            PORTAL_LOGIN_APPLICATION,
+        );
+
+        const loginStartedAt = Date.now();
+        let pendingSession: any = null;
+        let connectionRow: any = null;
+        const deadline = Date.now() + 60000;
+        while (Date.now() < deadline) {
+            const conns = await listConnectionLogForUser(api, testUser, 30);
+            // Must be an open portal-login row started for this attempt (not a stale closed row).
+            connectionRow = conns.find((row) => {
+                const end = col(row, "endtime");
+                const open = end == null || String(end).trim() === "";
+                const access = String(
+                    col(row, "resource_access_type") || "",
+                ).toLowerCase();
+                const app = String(
+                    col(row, "client_application") || col(row, "application") || "",
+                ).toLowerCase();
+                const portal =
+                    access === "web_portal_login" ||
+                    app.indexOf("portal login") >= 0 ||
+                    app.indexOf("mamori portal") >= 0;
+                return open && portal;
+            });
+
+            const pendingRes = await noThrow(
+                api.select(
+                    "SELECT * FROM SYS.USER_SESSIONS WHERE state = 'PENDING' AND lower(user_id) = lower('" +
+                        testUser.replace(/'/g, "''") +
+                        "')",
+                ),
+            );
+            const pendingRows = rowsOf(pendingRes);
+            if (connectionRow && pendingRows.length > 0) {
+                pendingSession = pendingRows[0];
+                break;
+            }
+            await helper.sleep(500);
+        }
+
+        expect(connectionRow).toBeTruthy();
+        expect(col(connectionRow, "id") || col(connectionRow, "connection_id")).toBeTruthy();
+        expect(String(col(connectionRow, "login_username") || "").toLowerCase()).toBe(
+            testUser.toLowerCase(),
+        );
+        expect(pendingSession).toBeTruthy();
+        const providerName = String(
+            col(pendingSession, "provider_name") || "",
+        ).toLowerCase();
+        // Provider name may be instance name; type column is pushtotp.
+        const providerType = String(
+            col(pendingSession, "provider_type") || "",
+        ).toLowerCase();
+        expect(
+            providerName.indexOf("pushtotp") >= 0 || providerType === "pushtotp",
+        ).toBe(true);
+        const ssid = col(pendingSession, "ssid");
+        expect(ssid).toBeTruthy();
+        // Guard against a false pass if Hub never saw the login (same symptom as om01).
+        expect(Date.now() - loginStartedAt).toBeLessThan(60000);
+
+        const totpCode = generateTOTP(knownTotpSecret);
+        const notifyResult = await noThrow(
+            api.select(
+                "CALL set_ssid_notification('" +
+                    String(ssid).replace(/'/g, "''") +
+                    "', '" +
+                    totpCode.replace(/'/g, "''") +
+                    "')",
+            ),
+        );
+        // CALL returns a result set array (e.g. [{status:"ok"}]) on success.
+        expect(notifyResult).toSucceed();
+
+        const loginResult = await noThrow(loginPromise);
+        expect(loginResult.errors).toBeFalsy();
+        expect(loginResult.username).toBe(testUser);
+
+        await ignoreError(subjectApi.logout());
+        const cleanupResult = await noThrow(k.delete(api));
+        expect(cleanupResult).toSucceed();
+    }, 120000);
 
     test('mamori user 05 - password hash export restore', async () => {
         let testUser = grantee + "_pwd_ex_test";

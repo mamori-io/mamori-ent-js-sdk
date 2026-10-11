@@ -280,3 +280,168 @@ export function assertOperationOk(label: string, r: unknown): void {
     throw new Error(`${label} failed: ` + JSON.stringify(r));
   }
 }
+
+/** True for Azure directory auth providers (not azureoauth). */
+export function isAzureDirectoryProvider(row: any): boolean {
+  const type = String(col(row, "provider_type") || col(row, "type") || "").toLowerCase();
+  return type === "azure";
+}
+
+/**
+ * Pick an Azure directory provider from GET /v1/providers.
+ * Optional preferredName wins when present; otherwise first azure provider.
+ */
+export async function findAzureDirectoryProvider(
+  api: MamoriService,
+  preferredName?: string,
+): Promise<{ name: string; type: string; properties: any; row: any }> {
+  const listed = await noThrow(api.providers());
+  if (isApiError(listed)) {
+    throw new Error("providers() failed: " + JSON.stringify(listed));
+  }
+  const azureRows = rowsOf(listed).filter(isAzureDirectoryProvider);
+  if (azureRows.length === 0) {
+    throw new Error("No Azure directory authentication provider found via providers()");
+  }
+  const prefer = (preferredName || "").trim().toLowerCase();
+  const match =
+    (prefer
+      ? azureRows.find(
+          (r) =>
+            String(col(r, "provider_name") || col(r, "name") || "")
+              .toLowerCase() === prefer,
+        )
+      : undefined) || azureRows[0];
+  const name = String(col(match, "provider_name") || col(match, "name") || "").trim();
+  if (!name) {
+    throw new Error("Azure provider row missing provider_name: " + JSON.stringify(match));
+  }
+  const got = await noThrow(api.get_provider(name));
+  if (isApiError(got)) {
+    throw new Error("get_provider(" + name + ") failed: " + JSON.stringify(got));
+  }
+  return {
+    name,
+    type: String((got as any).provider_type || (got as any).type || "azure"),
+    properties: (got as any).properties || {},
+    row: got,
+  };
+}
+
+/** Admin: pending QR validation rows via USER_VALIDATION_ENTRY(username, delete?). */
+export async function userValidationEntries(
+  api: MamoriService,
+  userName: string,
+  deleteEntry: boolean = false,
+): Promise<any[]> {
+  const escaped = userName.replace(/'/g, "''");
+  const rows = await selectQuery(
+    api,
+    "CALL USER_VALIDATION_ENTRY('" + escaped + "', " + (deleteEntry ? "true" : "false") + ")",
+  );
+  if (rows && rows.errors) {
+    throw new Error("USER_VALIDATION_ENTRY failed: " + JSON.stringify(rows));
+  }
+  return Array.isArray(rows) ? rows : [];
+}
+
+export async function directoryUserRows(
+  api: MamoriService,
+  userName: string,
+): Promise<any[]> {
+  const escaped = userName.replace(/'/g, "''");
+  const rows = await selectQuery(
+    api,
+    "SELECT * FROM SYS.DIRECTORY_USERS WHERE lower(username) = lower('" +
+      escaped +
+      "') AND deleted_at IS NULL",
+  );
+  if (rows && rows.errors) {
+    throw new Error("SYS.DIRECTORY_USERS query failed: " + JSON.stringify(rows));
+  }
+  return Array.isArray(rows) ? rows : [];
+}
+
+/** Mamori MFA enrollment rows (scoped apply or common MFA provider names). */
+export function mamoriMfaEnrollmentRows(rows: any[]): any[] {
+  return (rows || []).filter((r) => {
+    const provider = String(col(r, "provider_name") || "").toLowerCase();
+    const apply = String(col(r, "mfa_apply") || "").trim();
+    if (provider === "password" || provider === "") {
+      return false;
+    }
+    return (
+      apply.length > 0 ||
+      provider === "pushtotp" ||
+      provider === "pushmobile" ||
+      provider === "totp"
+    );
+  });
+}
+
+export function assertNoMamoriMfaEnrollment(rows: any[], label: string): void {
+  const mfa = mamoriMfaEnrollmentRows(rows);
+  if (mfa.length > 0) {
+    throw new Error(
+      label + ": expected no Mamori MFA enrollment rows, got " + JSON.stringify(mfa),
+    );
+  }
+}
+
+export async function assertNoPendingMfaQr(
+  api: MamoriService,
+  userName: string,
+  label: string,
+): Promise<void> {
+  const entries = await userValidationEntries(api, userName, false);
+  const pending = entries.filter((r) => {
+    const guid = col(r, "guid") || col(r, "GUID");
+    return guid != null && String(guid).trim() !== "";
+  });
+  if (pending.length > 0) {
+    throw new Error(
+      label +
+        ": expected no pending Mamori MFA QR (user_validation), got " +
+        JSON.stringify(pending),
+    );
+  }
+}
+
+/**
+ * Assert Mamori MFA enrollment is present: scoped auth-provider rows and/or pending QR guid.
+ * When a guid exists, verifies get_qr_code returns a real otpauth payload.
+ */
+export async function assertMamoriMfaEnrollmentPending(
+  api: MamoriService,
+  userName: string,
+  label: string,
+): Promise<void> {
+  const authRows = await authProviderRows(api, userName);
+  const mfaRows = mamoriMfaEnrollmentRows(authRows);
+  const validation = await userValidationEntries(api, userName, false);
+  const guidRow = validation.find((r) => {
+    const guid = col(r, "guid") || col(r, "GUID");
+    return guid != null && String(guid).trim() !== "";
+  });
+  const guid = guidRow
+    ? String(col(guidRow, "guid") || col(guidRow, "GUID") || "").trim()
+    : "";
+
+  if (mfaRows.length === 0 && !guid) {
+    throw new Error(
+      label +
+        ": expected Mamori MFA enrollment (scoped USER_AUTHENTICATION_PROVIDERS or user_validation QR), found neither",
+    );
+  }
+
+  if (guid) {
+    const qr = await noThrow(api.get_qr_code(guid));
+    if (isApiError(qr)) {
+      throw new Error(label + ": get_qr_code failed: " + JSON.stringify(qr));
+    }
+    const qrCode = String((qr as any).qr_code || "");
+    if (!qrCode || qrCode === "Nothing to see here") {
+      throw new Error(label + ": expected usable MFA QR code for guid " + guid);
+    }
+  }
+}

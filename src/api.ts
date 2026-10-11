@@ -536,6 +536,27 @@ export class MamoriService extends eventable.Eventable {
       });
   }
 
+  /**
+   * Complete a pending PushTOTP / push MFA challenge (Login.vue AUTHORIZE path).
+   * Posts to Phoenix `/sessions/validate`, which calls Hub `set_ssid_notification`.
+   */
+  public validate_push_mfa(ssid: string, token: string): Promise<any> {
+    return this._http
+      .request({
+        method: "POST",
+        url: "/sessions/validate",
+        data: {
+          ssid: ssid,
+          token: token,
+        },
+        headers: {
+          Cookie: this._cookies,
+          "X-CSRF-Token": this._csrf,
+        },
+      })
+      .then((resp) => resp.data);
+  }
+
   public ping(): Promise<boolean> {
     return this.callAPI("GET", "/v1/ping").then((resp) => {
       return resp.pong;

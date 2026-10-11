@@ -189,6 +189,57 @@ describe("scoped MFA HTTP API tests" + (testbatch ? " " + testbatch : ""), () =>
     }
   });
 
+  test("HTTP provider switch returns new enroll guid and updates list auth_name", async () => {
+    const k = await createValidatedUser("http_switch");
+    try {
+      const first = await noThrow(
+        k.setScopedMfaHttp(api, MFA_PROVIDER.PUSHMOBILE, MFA_SCOPES),
+      );
+      assertApiOk("set pushmobile", first);
+      const firstGuid = String(
+        (Array.isArray(first) ? first[0]?.guid : (first as any).guid) || "",
+      ).trim();
+      expect(firstGuid).toBeTruthy();
+
+      const listed1 = await noThrow(k.listUserMfaApply(api));
+      assertApiOk("list after pushmobile", listed1);
+      const names1 = rowsOf(listed1)
+        .map((r) => String(r.auth_name || r.AUTH_NAME || "").toLowerCase())
+        .filter(Boolean);
+      expect(names1).toContain(MFA_PROVIDER.PUSHMOBILE);
+
+      const second = await noThrow(
+        k.setScopedMfaHttp(api, MFA_PROVIDER.PUSHTOTP, MFA_SCOPES),
+      );
+      assertApiOk("set pushtotp after switch", second);
+      const secondGuid = String(
+        (Array.isArray(second) ? second[0]?.guid : (second as any).guid) || "",
+      ).trim();
+      expect(secondGuid).toBeTruthy();
+      expect(secondGuid).not.toBe(firstGuid);
+
+      const listed2 = await noThrow(k.listUserMfaApply(api));
+      assertApiOk("list after pushtotp", listed2);
+      const names2 = rowsOf(listed2)
+        .map((r) => String(r.auth_name || r.AUTH_NAME || "").toLowerCase())
+        .filter(Boolean);
+      expect(names2).toContain(MFA_PROVIDER.PUSHTOTP);
+      expect(names2).not.toContain(MFA_PROVIDER.PUSHMOBILE);
+
+      await assertUserMfaApplies(api, k.username, [
+        MFA_APPLY.PORTAL_LOCAL_AUTH,
+        MFA_APPLY.RESOURCE_ACCESS,
+      ]);
+
+      const qr = await noThrow(api.get_qr_code(secondGuid));
+      assertApiOk("get_qr_code after HTTP provider switch", qr);
+      expect((qr as any).qr_code).toBeTruthy();
+      expect((qr as any).qr_code).not.toBe("Nothing to see here");
+    } finally {
+      await ignoreError(k.delete(api));
+    }
+  });
+
   test("non-admin HTTP set/delete/reset scoped MFA fails", async () => {
     const k = await createValidatedUser("http_priv");
     try {
