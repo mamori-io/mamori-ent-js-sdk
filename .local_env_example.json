@@ -11,6 +11,12 @@
     "MAMORI_SQLSERVER_DATASOURCE": "ss2014",
     "MAMORI_SSH_VPN_HOST": "localhost",
     "MAMORI_CREDENTIAL_ROLE": "db_credentials",
+    "MAMORI_LDAP_PROVIDER": "localad",
+    "MAMORI_LDAP_USER": "ldap1",
+    "MAMORI_LDAP_PASSWORD": "test",
+    "MAMORI_AZURE_PROVIDER": "azure3",
+    "MAMORI_AZURE_USER": "testuser@omarmamori.onmicrosoft.com",
+    "MAMORI_AZURE_PASSWORD": "",
     "MAMORI_ORACLE_DS": {
         "driver": "oracle11204",
         "host": "10.240.0.137",

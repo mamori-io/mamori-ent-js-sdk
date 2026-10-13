@@ -12,6 +12,8 @@ import "../../__utility__/jest/error_matcher";
 import * as helper from '../../__utility__/test-helper';
 
 describe("Task 9714: Account Lockout Workflow Tests", () => {
+  // Keep default Jest 60s (jest.config). Longer waits mask Hub/DM connection bugs.
+
   const testbatch = process.env.MAMORI_TEST_BATCH || "";
   const host = process.env.MAMORI_SERVER || "";
   const adminUser = process.env.MAMORI_USERNAME || "";
@@ -54,7 +56,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     } else {
       failedAttemptsLimit = 10;
     }
-    
+
     // Create test user
     await ignoreError(api.delete_user(testUser));
     await noThrow(
@@ -168,52 +170,46 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
    * Helper function to trigger account lockout with verification
    * This function performs failed login attempts incrementally, verifying the counter
    * at each step, and ensures the account is locked after reaching the limit.
-   * 
+   *
    * @param verifyIntermediateSteps - If true, verifies counter increments and non-lockout state after each attempt before the limit
    * @returns If verifyIntermediateSteps is true, returns the locked_until timestamp; otherwise returns the full user info
    */
+  /** Subject login client — keepAlive false avoids ~60s hangs reusing a socket after 401. */
+  function newSubjectClient(): MamoriService {
+    return new MamoriService(
+      host,
+      new https.Agent({ rejectUnauthorized: false, keepAlive: false }),
+    );
+  }
+
   async function triggerLockoutWithVerification(username: string, verifyIntermediateSteps: boolean = false): Promise<any> {
-    const apiTest = new MamoriService(host, INSECURE);
-    
-    try {
-      // Make attempts up to (limit - 1) - these should increment counter but NOT lock
-      for (let i = 0; i < failedAttemptsLimit - 1; i++) {
-        const loginResult = await noThrow(apiTest.login(username, wrongPassword));
-        if (!loginResult.errors) {
-          fail("Login should have failed");
-        }
+    const apiTest = newSubjectClient();
 
-        // Optionally verify failed_attempts counter increments and account is NOT locked yet
-        if (verifyIntermediateSteps) {
-          const userInfo = await getUserInfo(username);
-          expect(userInfo).toBeTruthy();
-          
-          // Account should NOT be locked yet (we're below the limit)
-          expect(userInfo.locked_until).toBeFalsy();
-          
-          expect(userInfo.failed_attempts).toBe(i + 1);
-        }
-      }
-
-      // Now make the final attempt that should trigger lockout (attempt #failedAttemptsLimit)
-      const finalLoginResult = await noThrow(apiTest.login(username, wrongPassword));
-      if (!finalLoginResult.errors) {
+    for (let i = 0; i < failedAttemptsLimit - 1; i++) {
+      const loginResult = await noThrow(apiTest.login(username, wrongPassword));
+      if (!loginResult.errors) {
         fail("Login should have failed");
       }
 
-      // Final verification: account should now be LOCKED after reaching the limit
-      const finalUserInfo = await getUserInfo(username);      
-      // Account should be LOCKED after reaching the limit
-      expect(finalUserInfo.locked_until).toBeTruthy(); // Should have a lockout timestamp
-      
-      // Counter should be reset to 0 after lockout
-      expect(finalUserInfo.failed_attempts).toBe(0); // Should reset to 0 after lockout
-      
-      // Return locked_until timestamp if verifyIntermediateSteps is true, otherwise return full user info
-      return verifyIntermediateSteps ? finalUserInfo.locked_until : finalUserInfo;
-    } finally {
-      await ignoreError(apiTest.logout());
+      if (verifyIntermediateSteps) {
+        const userInfo = await getUserInfo(username);
+        expect(userInfo).toBeTruthy();
+        expect(userInfo.locked_until).toBeFalsy();
+        expect(userInfo.failed_attempts).toBe(i + 1);
+      }
     }
+
+    const finalLoginResult = await noThrow(apiTest.login(username, wrongPassword));
+    if (!finalLoginResult.errors) {
+      fail("Login should have failed");
+    }
+
+    const finalUserInfo = await getUserInfo(username);
+    expect(finalUserInfo).toBeTruthy();
+    expect(finalUserInfo!.locked_until).toBeTruthy();
+    expect(finalUserInfo!.failed_attempts).toBe(0);
+
+    return verifyIntermediateSteps ? finalUserInfo!.locked_until : finalUserInfo;
   }
 
   /**
@@ -262,7 +258,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     expect(lockoutDurationSeconds).toBeLessThanOrEqual(60);
 
     // Verify login fails even with correct password (account is locked)
-    const apiTest = new MamoriService(host, INSECURE);
+    const apiTest = newSubjectClient();
     try {
       const loginResult = await noThrow(apiTest.login(testUser, testPassword));
       if (!loginResult.errors) {
@@ -284,26 +280,30 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
 
   /**
    * TC-9714-003: Lockout Duration and Expiration
-   * Verify that account automatically unlocks after lockout duration expires.
+   * Assert configured ~1 minute lock window, then simulate expiry (locked_until in the past)
+   * so we stay within the 60s Jest budget. A real wall-clock wait would exceed 60s by design
+   * and hide server connection hangs.
    */
   test("TC-9714-003: Lockout duration and expiration", async () => {
-    // Hub lockout is whole minutes; 1 = restore after 1 minute
     const lockoutMinutes = 1;
     await api.set_system_properties({ "mamori.security.auto_lockout.minutes": lockoutMinutes });
 
-    // Unlock user first
     await unlockTestUser(testUser);
 
-    // Trigger lockout
-    let lockedUntil = await triggerLockoutWithVerification(testUser, true);
+    const lockedUntil = await triggerLockoutWithVerification(testUser, true);
     expect(lockedUntil).toBeTruthy();
 
-    // Verify account is locked
     let userInfo = await getUserInfo(testUser);
-    expect(userInfo.locked_until).toBeTruthy();
+    expect(userInfo).toBeTruthy();
+    expect(userInfo!.locked_until).toBeTruthy();
 
-    // Verify login fails during lockout period
-    const apiTest1 = new MamoriService(host, INSECURE);
+    // Remaining lock time should be within the configured 1-minute window
+    const lockoutDurationSeconds = userInfo?.lockout_duration_seconds ?? 0;
+    expect(lockoutDurationSeconds).toBeGreaterThanOrEqual(50);
+    expect(lockoutDurationSeconds).toBeLessThanOrEqual(60);
+
+    // Login fails while still locked
+    const apiTest1 = newSubjectClient();
     try {
       const loginResult = await noThrow(apiTest1.login(testUser, testPassword));
       if (!loginResult.errors) {
@@ -313,41 +313,43 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
       await ignoreError(apiTest1.logout());
     }
 
-    // Wait until lockout expires (remaining DATEDIFF seconds, at least full configured minute) + buffer
-    const remainingSeconds = Math.max(0, userInfo?.lockout_duration_seconds ?? 0);
-    const configuredSeconds = lockoutMinutes * 60;
-    const sleepTime = (Math.max(remainingSeconds, configuredSeconds) + 5) * 1000;
-    await helper.sleep(sleepTime);
+    // Simulate lockout expiry without sleeping a full minute
+    await api.select(
+      `UPDATE mamori.mamorisys.security.users` +
+        ` SET locked_until = CURRENT_TIMESTAMP - INTERVAL '1' SECOND` +
+        ` WHERE LOWER(username) = LOWER('${testUser}') AND NOT deleted`,
+    );
 
-    // Refresh API session in case it timed out during the sleep
-    await refreshApiLogin();
-
-    // Verify login succeeds after expiration
-    const apiTest2 = new MamoriService(host, INSECURE);
+    const apiTest2 = newSubjectClient();
     try {
       const loginResult = await noThrow(apiTest2.login(testUser, testPassword));
       if (loginResult.errors) {
-        throw new Error(`Failed to login after expiration: ${loginResult.message || 'Unknown error'}`);
+        throw new Error(
+          `Failed to login after simulated expiration: ${loginResult.message || "Unknown error"}`,
+        );
       }
       expect(apiTest2.username).toBe(testUser);
     } finally {
       await ignoreError(apiTest2.logout());
     }
 
-    // Verify locked_until is cleared (should be null after expiration)
     userInfo = await getUserInfo(testUser);
-    expect(userInfo).toBeTruthy(); // User should exist
-    expect(userInfo!.locked_until).toBeNull(); // locked_until should be null after expiration
+    expect(userInfo).toBeTruthy();
+    expect(userInfo!.locked_until).toBeNull();
 
-    // Reset lockout duration
-    await api.set_system_properties({ "mamori.security.auto_lockout.minutes": originalLockoutDuration });
-  }, 120000); // Allow full 1-minute lockout wait + setup
+    await api.set_system_properties({
+      "mamori.security.auto_lockout.minutes": originalLockoutDuration,
+    });
+  });
 
   /**
    * TC-9714-004: Manual Account Unlock
    * Verify that administrator can manually unlock a locked account.
    */
   test("TC-9714-004: Manual account unlock", async () => {
+    // Prior tests (esp. TC-003 sleep) can expire the admin portal session → 403.
+    await refreshApiLogin();
+
     // Set short lockout duration
     await api.set_system_properties({ "mamori.security.auto_lockout.minutes": lockoutDurationForTesting });
 
@@ -362,7 +364,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     expect(userInfo.locked_until).toBeTruthy();
 
     // Verify login fails
-    const apiTest1 = new MamoriService(host, INSECURE);
+    const apiTest1 = newSubjectClient();
     try {
       const loginResult = await noThrow(apiTest1.login(testUser, testPassword));
       if (!loginResult.errors) {
@@ -380,7 +382,7 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
     expect(userInfo.locked_until).toBeFalsy();
 
     // Verify login succeeds immediately
-    const apiTest2 = new MamoriService(host, INSECURE);
+    const apiTest2 = newSubjectClient();
     try {
       const loginResult = await noThrow(apiTest2.login(testUser, testPassword));
       if (loginResult.errors) {
@@ -400,6 +402,8 @@ describe("Task 9714: Account Lockout Workflow Tests", () => {
    * Verify that lockout-related events are properly recorded in audit log.
    */
   test("TC-9714-005: Audit log entries for lockout", async () => {
+    await refreshApiLogin();
+
     // Step 1: Setup - Unlock user first
     await unlockTestUser(testUser2);
     // Get current timestamp from database to ensure proper timezone handling

@@ -4,7 +4,7 @@
  * Pattern: admin session only for directory lifecycle + SYS.USER_AUTHENTICATION_PROVIDERS.
  * Subject login is out of scope here (see api.replace-device-token / api.mfa-apply).
  *
- * Env: MAMORI_DIRECTORY_PROVIDER, MAMORI_DIRECTORY_USERNAME (+ admin MAMORI_*)
+ * Env: MAMORI_LDAP_PROVIDER, MAMORI_LDAP_USER (+ admin MAMORI_*)
  */
 import { MamoriService } from "../../api";
 import { DirectoryUser } from "../../user";
@@ -20,8 +20,8 @@ import "../../__utility__/jest/error_matcher";
 const host = process.env.MAMORI_SERVER || "";
 const username = process.env.MAMORI_USERNAME || "";
 const password = process.env.MAMORI_PASSWORD || "";
-const directoryProvider = process.env.MAMORI_DIRECTORY_PROVIDER || "";
-const directoryUsername = process.env.MAMORI_DIRECTORY_USERNAME || "";
+const directoryProvider = process.env.MAMORI_LDAP_PROVIDER || "";
+const directoryUsername = process.env.MAMORI_LDAP_USER || "";
 
 const directoryTest =
   directoryProvider && directoryUsername ? test : test.skip;

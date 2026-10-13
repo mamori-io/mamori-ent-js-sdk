@@ -17,4 +17,4 @@ export class ServerSession {
             return { errors: true, payload };
         });
     }
-} 
+}

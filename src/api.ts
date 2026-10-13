@@ -44,6 +44,7 @@ import * as io_providers from "./provider";
 import * as io_eventhandler from "./event-handler";
 import * as io_script from "./script";
 import * as io_script_flow from "./script-flow";
+import * as io_tag from "./tag";
 import * as io_connectionlog from "./connection-log";
 import * as eventable from "./eventable";
 import * as io_utility_ds from "./__utility__/ds";
@@ -91,6 +92,7 @@ export {
   io_eventhandler,
   io_script,
   io_script_flow,
+  io_tag,
   io_connectionlog,
 };
 

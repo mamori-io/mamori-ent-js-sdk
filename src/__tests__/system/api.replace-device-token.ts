@@ -6,11 +6,10 @@
  *
  * Required env (else entire describe skipped):
  *   MAMORI_AZURE_PROVIDER
- *   MAMORI_AZURE_PASSWORD or MAMORI_DIRECTORY_PASSWORD (dummy is fine for skip-ON)
+ *   MAMORI_AZURE_PASSWORD (dummy is fine for skip-ON)
  * Also: MAMORI_SERVER, MAMORI_USERNAME, MAMORI_PASSWORD (admin)
  *
- * Subject defaults to omar@mamori.io (do not reuse MAMORI_DIRECTORY_USERNAME —
- * that is often the LDAP/ad_sandbox identity).
+ * Subject: MAMORI_AZURE_USER (default omar@mamori.io). LDAP identity is MAMORI_LDAP_*.
  *
  * Negative paths only (API cannot create an OAuth portal session).
  */
@@ -38,8 +37,7 @@ const password = process.env.MAMORI_PASSWORD || "";
 const azureProvider = process.env.MAMORI_AZURE_PROVIDER || "";
 /** Azure directory login for azure3 on sandbox; override with MAMORI_AZURE_USER if needed. */
 const azureUser = process.env.MAMORI_AZURE_USER || "omar@mamori.io";
-const azurePassword =
-  process.env.MAMORI_AZURE_PASSWORD || process.env.MAMORI_DIRECTORY_PASSWORD || "";
+const azurePassword = process.env.MAMORI_AZURE_PASSWORD || "";
 
 const gated =
   azureProvider && azureUser && azurePassword && host && username && password

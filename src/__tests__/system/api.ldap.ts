@@ -7,10 +7,9 @@ import "../../__utility__/jest/error_matcher";
 const host = process.env.MAMORI_SERVER || "";
 const username = process.env.MAMORI_USERNAME || "";
 const password = process.env.MAMORI_PASSWORD || "";
-const adUser = process.env.AD_USER || process.env.MAMORI_DIRECTORY_USERNAME || "";
-const adPassword = process.env.AD_USER_PASSWORD || "";
-const adProvider =
-  process.env.AD_AUTH_PROVIDER || process.env.MAMORI_DIRECTORY_PROVIDER || "";
+const adUser = process.env.MAMORI_LDAP_USER || "";
+const adPassword = process.env.MAMORI_LDAP_PASSWORD || "";
+const adProvider = process.env.MAMORI_LDAP_PROVIDER || "";
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 const ldapTest = adUser && adPassword && adProvider ? test : test.skip;

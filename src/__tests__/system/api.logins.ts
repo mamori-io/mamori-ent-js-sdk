@@ -7,7 +7,7 @@ const password = process.env.MAMORI_PASSWORD || "";
 
 const INSECURE = new https.Agent({ rejectUnauthorized: false });
 
-let adtest = process.env.AD_USER ? test : test.skip;
+let adtest = process.env.MAMORI_LDAP_USER ? test : test.skip;
 
 describe("server based tests", () => {
   test("login should succeed", async () => {
@@ -26,11 +26,11 @@ describe("server based tests", () => {
 
       let sql =
         "VALIDATE AUTHENTICATION USERNAME '" +
-        process.env.AD_USER +
+        process.env.MAMORI_LDAP_USER +
         "' PASSWORD '" +
-        process.env.AD_USER_PASSWORD +
+        process.env.MAMORI_LDAP_PASSWORD +
         "' WITH PROVIDER '" +
-        process.env.AD_AUTH_PROVIDER +
+        process.env.MAMORI_LDAP_PROVIDER +
         "'";
       for (let i = 0; i < 100; i++) {
         await api.select(sql);
@@ -39,7 +39,7 @@ describe("server based tests", () => {
       await expect(async () => {
         await api.select(
           "VALIDATE AUTHENTICATION USERNAME 'hfdhjdfjhdfgjhdfj' PASSWORD 'hnjdfjhfdghj' WITH PROVIDER '" +
-            process.env.AD_AUTH_PROVIDER +
+            process.env.MAMORI_LDAP_PROVIDER +
             "'",
         );
       }).rejects.toThrow();
