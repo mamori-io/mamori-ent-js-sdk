@@ -1,5 +1,5 @@
 import { MamoriService } from '../../api';
-import { io_https, io_datasource, io_utils, io_role, io_db_credential } from '../../api';
+import { io_https, io_datasource, io_utils, io_role, io_db_credential, io_tag } from '../../api';
 import { setPassthroughPermissions, createPGDatabaseUser, dropPGDatabaseUser } from '../../__utility__/ds';
 import '../../__utility__/jest/error_matcher';
 import * as helper from '../../__utility__/test-helper';
@@ -112,6 +112,67 @@ describe("datasource tests", () => {
             expect(resDel).toSucceed();
         }
 
+    });
+
+    dbtest('datasource tags - add/remove and cascade on delete', async () => {
+        const dsName = 'test_ds_tags_' + testbatch;
+        const tagName = 'test_ds_tag_' + testbatch;
+        const ds = new io_datasource.Datasource(dsName);
+        await io_utils.ignoreError(ds.delete(api));
+        const existingTag = await io_utils.ignoreError(io_tag.Tag.getByName(api, tagName));
+        if (existingTag && existingTag.id) {
+            await io_utils.ignoreError(existingTag.delete(api));
+        }
+
+        ds.ofType('POSTGRESQL', 'postgres')
+            .at(dbHost, Number(dbPort))
+            .withCredentials(dbUsername, dbPassword)
+            .withDatabase('mamorisys')
+            .withConnectionProperties('allowEncodingChanges=true;defaultNchar=true');
+        expect(await io_utils.noThrow(ds.create(api))).toSucceed();
+
+        const tag = new io_tag.Tag(tagName);
+        expect(await io_utils.noThrow(tag.create(api))).toSucceed();
+        expect(tag.id).toBeTruthy();
+
+        try {
+            expect(await io_utils.noThrow(ds.addTag(api, tag))).toSucceed();
+
+            let assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            let match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'datasource' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === dsName.toLowerCase(),
+            );
+            expect(match.length).toBe(1);
+
+            expect(await io_utils.noThrow(ds.removeTag(api, tag))).toSucceed();
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'datasource' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === dsName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+
+            // Re-assign then delete resource — tag assignments must cascade away.
+            expect(await io_utils.noThrow(ds.addTag(api, tagName))).toSucceed();
+            expect(await io_utils.noThrow(ds.delete(api))).toSucceed();
+
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'datasource' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === dsName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+        } finally {
+            await io_utils.ignoreError(ds.delete(api));
+            await io_utils.ignoreError(tag.delete(api));
+        }
     });
 
     dbtest('datasource 002 - postgres password policy', async () => {

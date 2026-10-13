@@ -9,6 +9,7 @@
 import { MamoriService, LoginResponse } from './api';
 import { ISerializable } from "./i-serializable";
 import { CREDENTIAL_RESET_OPTIONS } from './utils';
+import { Tag, resolveTagId } from './tag';
 
 /**
  * A datasource represents a target database.
@@ -164,6 +165,31 @@ export class Datasource implements ISerializable {
      */
     public delete(api: MamoriService): Promise<any> {
         return api.callAPI("DELETE", "/v1/systems/" + this.name);
+    }
+
+    /**
+     * Assign a tag to this datasource via ASSIGN_TAG.
+     * @param tag Tag instance, numeric id, or tag name
+     */
+    public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+        const tagId = await resolveTagId(api, tag);
+        return api.call('ASSIGN_TAG', 'datasource', this.name, tagId);
+    }
+
+    /**
+     * Remove a tag from this datasource via CLEAR_TAG.
+     * Pass '*' to clear all tags on the datasource.
+     * @param tag Tag instance, numeric id, tag name, or '*'
+     */
+    public async removeTag(
+        api: MamoriService,
+        tag: Tag | number | string | '*',
+    ): Promise<any> {
+        if (tag === '*') {
+            return api.call('CLEAR_TAG', 'datasource', this.name, '*');
+        }
+        const tagId = await resolveTagId(api, tag);
+        return api.call('CLEAR_TAG', 'datasource', this.name, String(tagId));
     }
 
     /**

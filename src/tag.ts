@@ -293,3 +293,24 @@ export class Tag implements ISerializable {
     return api.call('CLEAR_TAG', resourceType, resourceKey, spec);
   }
 }
+
+/** Resolve a Tag instance, numeric id, or tag name to a tag id. */
+export async function resolveTagId(
+  api: MamoriService,
+  tag: Tag | number | string,
+): Promise<number> {
+  if (typeof tag === 'number') {
+    return tag;
+  }
+  if (tag instanceof Tag) {
+    if (tag.id == null) {
+      throw new Error('Tag id is required');
+    }
+    return tag.id;
+  }
+  const byName = await Tag.getByName(api, String(tag));
+  if (!byName || byName.id == null) {
+    throw new Error(`Tag not found: ${tag}`);
+  }
+  return byName.id;
+}
