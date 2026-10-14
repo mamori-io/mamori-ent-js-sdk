@@ -10,6 +10,7 @@ import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 import { sqlEscape, prepareFilter } from './utils';
 import { HTTPResourcePermission } from './permission';
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 
 export class HTTPResource implements ISerializable {
@@ -203,6 +204,19 @@ export class HTTPResource implements ISerializable {
 
     public revokeFrom(api: MamoriService, grantee: string): Promise<any> {
         return new HTTPResourcePermission().name(this.name).grantee(grantee).revoke(api);
+    }
+
+    /** Assign a tag to this HTTP resource via ASSIGN_TAG. */
+    public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+        return assignResourceTag(api, 'http', this.name, tag);
+    }
+
+    /** Remove a tag from this HTTP resource via CLEAR_TAG. Pass '*' to clear all. */
+    public async removeTag(
+        api: MamoriService,
+        tag: Tag | number | string | '*',
+    ): Promise<any> {
+        return clearResourceTag(api, 'http', this.name, tag);
     }
 
 }

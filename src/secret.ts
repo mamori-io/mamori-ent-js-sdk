@@ -10,6 +10,7 @@ import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 import { sqlEscape, prepareFilter } from './utils';
 import { SecretPermission } from './permission';
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 export enum SECRET_PROTOCOL {
     GENERIC = "",
@@ -226,6 +227,19 @@ export class Secret implements ISerializable {
         return api.delete_secret(this.id!).then((res: any) => {
             return res;
         });
+    }
+
+    /** Assign a tag to this secret via ASSIGN_TAG. */
+    public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+        return assignResourceTag(api, 'secret', this.name, tag);
+    }
+
+    /** Remove a tag from this secret via CLEAR_TAG. Pass '*' to clear all. */
+    public async removeTag(
+        api: MamoriService,
+        tag: Tag | number | string | '*',
+    ): Promise<any> {
+        return clearResourceTag(api, 'secret', this.name, tag);
     }
 
     public update(api: MamoriService): Promise<any> {

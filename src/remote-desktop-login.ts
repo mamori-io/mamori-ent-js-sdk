@@ -10,6 +10,7 @@ import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 import { RemoteDesktopLoginPermission } from './permission';
 import { objectClone, prepareFilter } from './utils';
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 export enum REMOTE_DESKTOP_PROTOCOL {
     RDP = "rdp",
@@ -400,6 +401,19 @@ export class RemoteDesktopLogin implements ISerializable {
      */
     public delete(api: MamoriService): Promise<any> {
         return api.delete_remote_desktop(this.name);
+    }
+
+    /** Assign a tag to this remote desktop via ASSIGN_TAG. */
+    public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+        return assignResourceTag(api, 'rdp', this.name, tag);
+    }
+
+    /** Remove a tag from this remote desktop via CLEAR_TAG. Pass '*' to clear all. */
+    public async removeTag(
+        api: MamoriService,
+        tag: Tag | number | string | '*',
+    ): Promise<any> {
+        return clearResourceTag(api, 'rdp', this.name, tag);
     }
 
     public grantTo(api: MamoriService, grantee: string): Promise<any> {

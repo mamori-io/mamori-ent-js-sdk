@@ -8,6 +8,7 @@
  */
 import { MamoriService } from "../../api";
 import { DirectoryUser } from "../../user";
+import { Tag } from "../../tag";
 import { noThrow, ignoreError } from "../../utils";
 import {
   INSECURE_HTTPS,
@@ -22,6 +23,7 @@ const username = process.env.MAMORI_USERNAME || "";
 const password = process.env.MAMORI_PASSWORD || "";
 const directoryProvider = process.env.MAMORI_LDAP_PROVIDER || "";
 const directoryUsername = process.env.MAMORI_LDAP_USER || "";
+const testbatch = process.env.MAMORI_TEST_BATCH || String(Date.now());
 
 const directoryTest =
   directoryProvider && directoryUsername ? test : test.skip;
@@ -73,6 +75,64 @@ describe("directory user tests", () => {
       expect(mfaScoped.length).toBe(0);
     } finally {
       await ignoreError(k.delete(api));
+    }
+  });
+
+  directoryTest("directory user tags - add/remove (delete does not cascade)", async () => {
+    const k = new DirectoryUser(directoryProvider, directoryUsername);
+    const tagName = "test_dir_user_tag_" + testbatch;
+    await ignoreError(k.delete(api));
+    const existingTag = await ignoreError(Tag.getByName(api, tagName));
+    if (existingTag && existingTag.id) {
+      await ignoreError(existingTag.delete(api));
+    }
+
+    assertOperationOk("directory create (tags)", await noThrow(k.create(api)));
+    const tag = new Tag(tagName);
+    expect(await noThrow(tag.create(api))).toSucceed();
+    expect(tag.id).toBeTruthy();
+
+    try {
+      expect(await noThrow(k.addTag(api, tag))).toSucceed();
+
+      let assignments = await noThrow(Tag.listAssignments(api, tag.id));
+      expect(assignments.errors).not.toBe(true);
+      let match = assignments.filter(
+        (r: any) =>
+          String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === "user" &&
+          String(r.resource_key || r.RESOURCE_KEY).toLowerCase() ===
+            directoryUsername.toLowerCase(),
+      );
+      expect(match.length).toBe(1);
+
+      expect(await noThrow(k.removeTag(api, tag))).toSucceed();
+      assignments = await noThrow(Tag.listAssignments(api, tag.id));
+      expect(assignments.errors).not.toBe(true);
+      match = assignments.filter(
+        (r: any) =>
+          String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === "user" &&
+          String(r.resource_key || r.RESOURCE_KEY).toLowerCase() ===
+            directoryUsername.toLowerCase(),
+      );
+      expect(match.length).toBe(0);
+
+      expect(await noThrow(k.addTag(api, tagName))).toSucceed();
+      // Directory delete does not cascade user_tags; clear before delete.
+      expect(await noThrow(k.removeTag(api, tag))).toSucceed();
+      assertOperationOk("directory delete (tags)", await noThrow(k.delete(api)));
+
+      assignments = await noThrow(Tag.listAssignments(api, tag.id));
+      expect(assignments.errors).not.toBe(true);
+      match = assignments.filter(
+        (r: any) =>
+          String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === "user" &&
+          String(r.resource_key || r.RESOURCE_KEY).toLowerCase() ===
+            directoryUsername.toLowerCase(),
+      );
+      expect(match.length).toBe(0);
+    } finally {
+      await ignoreError(k.delete(api));
+      await ignoreError(tag.delete(api));
     }
   });
 });

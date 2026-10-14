@@ -1,4 +1,4 @@
-import { MamoriService, io_utils, io_https, io_requestable_resource, io_role, io_key } from '../../api';
+import { MamoriService, io_utils, io_https, io_requestable_resource, io_role, io_key, io_tag } from '../../api';
 import * as helper from '../../__utility__/test-helper';
 import { SshLogin } from '../../ssh-login';
 import '../../__utility__/jest/error_matcher';
@@ -95,6 +95,64 @@ describe("ssh login tests", () => {
 
     });
 
+    test('ssh login tags - add/remove and cascade on delete', async () => {
+        const loginName = 'test_ssh_tags_' + testbatch;
+        const tagName = 'test_ssh_tag_' + testbatch;
+        const login = new SshLogin(loginName);
+        await io_utils.ignoreError(login.delete(api));
+        const existingTag = await io_utils.ignoreError(io_tag.Tag.getByName(api, tagName));
+        if (existingTag && existingTag.id) {
+            await io_utils.ignoreError(existingTag.delete(api));
+        }
+
+        login.at('localhost', '22');
+        login.withKeyCredentials('root', sshKeyName);
+        const created = await io_utils.noThrow(login.create(api));
+        expect(created.status).toBe('ok');
+
+        const tag = new io_tag.Tag(tagName);
+        expect(await io_utils.noThrow(tag.create(api))).toSucceed();
+        expect(tag.id).toBeTruthy();
+
+        try {
+            expect(await io_utils.noThrow(login.addTag(api, tag))).toSucceed();
+
+            let assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            let match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'ssh' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === loginName.toLowerCase(),
+            );
+            expect(match.length).toBe(1);
+
+            expect(await io_utils.noThrow(login.removeTag(api, tag))).toSucceed();
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'ssh' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === loginName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+
+            expect(await io_utils.noThrow(login.addTag(api, tagName))).toSucceed();
+            const deleted = await io_utils.noThrow(login.delete(api));
+            expect(deleted.status).toBe('ok');
+
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'ssh' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === loginName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+        } finally {
+            await io_utils.ignoreError(login.delete(api));
+            await io_utils.ignoreError(tag.delete(api));
+        }
+    });
 
     test('ssh login 02', async () => {
         let name = "test_ssh_pw_to_local" + testbatch

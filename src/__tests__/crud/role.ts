@@ -1,6 +1,7 @@
 import { MamoriService } from '../../api';
 import * as https from 'https';
 import { Role } from '../../role';
+import { Tag } from '../../tag';
 import { DatasourcePermission, DB_PERMISSION, TIME_UNIT } from '../../permission';
 import { handleAPIException, noThrow, ignoreError, FILTER_OPERATION } from '../../utils';
 import '../../__utility__/jest/error_matcher';
@@ -171,6 +172,63 @@ describe("role tests", () => {
         let resDel = await noThrow(k.delete(api));
         expect(resDel).toSucceed();
 
+    });
+
+    test('role tags - add/remove (delete does not cascade role_tags)', async () => {
+        const roleName = 'test_role_tags_' + testbatch;
+        const tagName = 'test_role_tag_' + testbatch;
+        const role = new Role(roleName);
+        await ignoreError(role.delete(api));
+        const existingTag = await ignoreError(Tag.getByName(api, tagName));
+        if (existingTag && existingTag.id) {
+            await ignoreError(existingTag.delete(api));
+        }
+
+        expect(await noThrow(role.create(api))).toSucceed();
+
+        const tag = new Tag(tagName);
+        expect(await noThrow(tag.create(api))).toSucceed();
+        expect(tag.id).toBeTruthy();
+
+        try {
+            expect(await noThrow(role.addTag(api, tag))).toSucceed();
+
+            let assignments = await noThrow(Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            let match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'role' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === roleName.toLowerCase(),
+            );
+            expect(match.length).toBe(1);
+
+            expect(await noThrow(role.removeTag(api, tag))).toSucceed();
+            assignments = await noThrow(Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'role' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === roleName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+
+            expect(await noThrow(role.addTag(api, tagName))).toSucceed();
+            // No FK cascade from sysroles to role_tags; clear before delete.
+            expect(await noThrow(role.removeTag(api, tag))).toSucceed();
+            expect(await noThrow(role.delete(api))).toSucceed();
+
+            assignments = await noThrow(Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'role' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === roleName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+        } finally {
+            await ignoreError(role.delete(api));
+            await ignoreError(tag.delete(api));
+        }
     });
 
 });

@@ -1,5 +1,5 @@
 import { MamoriService } from '../../api';
-import { io_https, io_utils, io_secret, io_requestable_resource, io_role } from '../../api';
+import { io_https, io_utils, io_secret, io_requestable_resource, io_role, io_tag } from '../../api';
 import * as helper from '../../__utility__/test-helper';
 import '../../__utility__/jest/error_matcher';
 
@@ -175,5 +175,68 @@ describe("Secret CRUD tests", () => {
         await io_utils.noThrow(io_secret.Secret.deleteByName(api, multiSecret));
     });
 
+    test('secret tags - add/remove and cascade on delete', async () => {
+        const secretName = 'test_secret_tags_' + testbatch;
+        const tagName = 'test_secret_tag_' + testbatch;
+        const existing = await io_utils.noThrow(io_secret.Secret.getByName(api, secretName));
+        if (existing) {
+            await io_utils.ignoreError(existing.delete(api));
+        }
+        const existingTag = await io_utils.ignoreError(io_tag.Tag.getByName(api, tagName));
+        if (existingTag && existingTag.id) {
+            await io_utils.ignoreError(existingTag.delete(api));
+        }
+
+        const secret = new io_secret.Secret(io_secret.SECRET_PROTOCOL.GENERIC, secretName)
+            .withSecret('#tag-test-secret#')
+            .withUsername('testUser')
+            .withHost('10.123.0.101')
+            .withDescription('tag test');
+        const created = await io_utils.noThrow(secret.create(api));
+        expect(created.status).toBe('OK');
+
+        const tag = new io_tag.Tag(tagName);
+        expect(await io_utils.noThrow(tag.create(api))).toSucceed();
+        expect(tag.id).toBeTruthy();
+
+        try {
+            expect(await io_utils.noThrow(secret.addTag(api, tag))).toSucceed();
+
+            let assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            let match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'secret' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === secretName.toLowerCase(),
+            );
+            expect(match.length).toBe(1);
+
+            expect(await io_utils.noThrow(secret.removeTag(api, tag))).toSucceed();
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'secret' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === secretName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+
+            expect(await io_utils.noThrow(secret.addTag(api, tagName))).toSucceed();
+            const deleted = await io_utils.noThrow(io_secret.Secret.deleteByName(api, secretName));
+            expect(deleted.error).toBe(false);
+
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'secret' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === secretName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+        } finally {
+            await io_utils.ignoreError(io_secret.Secret.deleteByName(api, secretName));
+            await io_utils.ignoreError(tag.delete(api));
+        }
+    });
 
 });

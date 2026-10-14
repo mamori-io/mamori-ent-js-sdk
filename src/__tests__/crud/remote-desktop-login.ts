@@ -1,5 +1,5 @@
 import { MamoriService } from '../../api';
-import { io_https, io_utils, io_remotedesktop, io_requestable_resource, io_role } from '../../api';
+import { io_https, io_utils, io_remotedesktop, io_requestable_resource, io_role, io_tag } from '../../api';
 import * as helper from '../../__utility__/test-helper';
 import '../../__utility__/jest/error_matcher';
 
@@ -172,12 +172,63 @@ describe("remote desktop login tests", () => {
         await io_utils.ignoreError(new io_role.Role(endorsementRole).delete(api)); 
     });
 
+    test('rmd-rdp tags - add/remove and cascade on delete', async () => {
+        const rdpName = 'test_rdp_tags_' + testbatch;
+        const tagName = 'test_rdp_tag_' + testbatch;
+        const rdp = new io_remotedesktop.RemoteDesktopLogin(
+            rdpName,
+            io_remotedesktop.REMOTE_DESKTOP_PROTOCOL.RDP,
+        );
+        await io_utils.ignoreError(rdp.delete(api));
+        const existingTag = await io_utils.ignoreError(io_tag.Tag.getByName(api, tagName));
+        if (existingTag && existingTag.id) {
+            await io_utils.ignoreError(existingTag.delete(api));
+        }
 
+        rdp.at('host', 'port').withLoginMode(io_remotedesktop.LOGIN_PROMPT_MODE.MAMORI_PROMPT);
+        expect(await io_utils.noThrow(rdp.create(api))).toSucceed();
 
+        const tag = new io_tag.Tag(tagName);
+        expect(await io_utils.noThrow(tag.create(api))).toSucceed();
+        expect(tag.id).toBeTruthy();
 
+        try {
+            expect(await io_utils.noThrow(rdp.addTag(api, tag))).toSucceed();
 
+            let assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            let match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'rdp' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === rdpName.toLowerCase(),
+            );
+            expect(match.length).toBe(1);
 
+            expect(await io_utils.noThrow(rdp.removeTag(api, tag))).toSucceed();
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'rdp' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === rdpName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
 
+            expect(await io_utils.noThrow(rdp.addTag(api, tagName))).toSucceed();
+            expect(await io_utils.noThrow(rdp.delete(api))).toSucceed();
 
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'rdp' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === rdpName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+        } finally {
+            await io_utils.ignoreError(rdp.delete(api));
+            await io_utils.ignoreError(tag.delete(api));
+        }
+    });
 
 });

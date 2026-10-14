@@ -9,7 +9,7 @@
 import { MamoriService, LoginResponse } from './api';
 import { ISerializable } from "./i-serializable";
 import { CREDENTIAL_RESET_OPTIONS } from './utils';
-import { Tag, resolveTagId } from './tag';
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 /**
  * A datasource represents a target database.
@@ -172,8 +172,7 @@ export class Datasource implements ISerializable {
      * @param tag Tag instance, numeric id, or tag name
      */
     public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
-        const tagId = await resolveTagId(api, tag);
-        return api.call('ASSIGN_TAG', 'datasource', this.name, tagId);
+        return assignResourceTag(api, 'datasource', this.name, tag);
     }
 
     /**
@@ -185,11 +184,7 @@ export class Datasource implements ISerializable {
         api: MamoriService,
         tag: Tag | number | string | '*',
     ): Promise<any> {
-        if (tag === '*') {
-            return api.call('CLEAR_TAG', 'datasource', this.name, '*');
-        }
-        const tagId = await resolveTagId(api, tag);
-        return api.call('CLEAR_TAG', 'datasource', this.name, String(tagId));
+        return clearResourceTag(api, 'datasource', this.name, tag);
     }
 
     /**

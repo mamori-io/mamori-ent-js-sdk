@@ -9,6 +9,7 @@
 import { LoginResponse, MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 import { prepareFilter } from './utils';
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 /**
  * Multi-Factor Authentication (MFA) provider types available for user authentication
@@ -288,6 +289,19 @@ export class User extends UserBase {
         return api.delete_user(this.username);
     }
 
+    /** Assign a tag to this user via ASSIGN_TAG. */
+    public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+        return assignResourceTag(api, 'user', this.username, tag);
+    }
+
+    /** Remove a tag from this user via CLEAR_TAG. Pass '*' to clear all. */
+    public async removeTag(
+        api: MamoriService,
+        tag: Tag | number | string | '*',
+    ): Promise<any> {
+        return clearResourceTag(api, 'user', this.username, tag);
+    }
+
     /**
      * Update this user with the current properties.
      * @param api  A logged-in MamoriService instance
@@ -553,7 +567,17 @@ export class DirectoryUser extends UserBase {
         return api.delete_external_user(this.username);
     }
 
+    /** Assign a tag to this directory user via ASSIGN_TAG (resource type 'user'). */
+    public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+        return assignResourceTag(api, 'user', this.username, tag);
+    }
 
-
+    /** Remove a tag from this directory user via CLEAR_TAG. Pass '*' to clear all. */
+    public async removeTag(
+        api: MamoriService,
+        tag: Tag | number | string | '*',
+    ): Promise<any> {
+        return clearResourceTag(api, 'user', this.username, tag);
+    }
 
 }

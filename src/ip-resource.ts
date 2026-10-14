@@ -10,6 +10,7 @@ import { listenerCount } from 'process';
 import { textChangeRangeIsUnchanged } from 'typescript';
 import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 export class IpResource implements ISerializable {
 
@@ -124,7 +125,17 @@ export class IpResource implements ISerializable {
         return api.callAPI("PUT", "/v1/ip_resources/" + encodeURIComponent(this.name), { resource: rec });
     }
 
+    /** Assign a tag to this IP resource via ASSIGN_TAG. */
+    public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+        return assignResourceTag(api, 'ip', this.name, tag);
+    }
 
-
+    /** Remove a tag from this IP resource via CLEAR_TAG. Pass '*' to clear all. */
+    public async removeTag(
+        api: MamoriService,
+        tag: Tag | number | string | '*',
+    ): Promise<any> {
+        return clearResourceTag(api, 'ip', this.name, tag);
+    }
 
 }

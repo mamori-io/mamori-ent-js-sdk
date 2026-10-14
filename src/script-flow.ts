@@ -8,6 +8,7 @@
  */
 import { MamoriService } from './api';
 import { ISerializable } from './i-serializable';
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 export interface ScriptFlowMappingSpec {
   /** Canvas / step block id of the source block */
@@ -195,6 +196,19 @@ export class ScriptFlow implements ISerializable {
       throw new Error('ScriptFlow id is required for delete');
     }
     return api.call('DELETE_SCRIPT_FLOW', this.id);
+  }
+
+  /** Assign a tag to this script flow via ASSIGN_TAG. */
+  public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+    return assignResourceTag(api, 'script_flow', this.name, tag);
+  }
+
+  /** Remove a tag from this script flow via CLEAR_TAG. Pass '*' to clear all. */
+  public async removeTag(
+    api: MamoriService,
+    tag: Tag | number | string | '*',
+  ): Promise<any> {
+    return clearResourceTag(api, 'script_flow', this.name, tag);
   }
 
   public async run(api: MamoriService, inputs: Record<string, any> = {}): Promise<any> {

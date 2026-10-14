@@ -1,4 +1,4 @@
-import { MamoriService, io_https, io_utils, io_script, io_script_flow } from '../../api';
+import { MamoriService, io_https, io_utils, io_script, io_script_flow, io_tag } from '../../api';
 import '../../__utility__/jest/error_matcher';
 
 const testbatch = process.env.MAMORI_TEST_BATCH || '';
@@ -153,5 +153,72 @@ describe('script flow CRUD and execute', () => {
     expect(await io_utils.noThrow(flow.delete(api))).toSucceed();
     expect(await io_utils.noThrow(consumer.delete(api))).toSucceed();
     expect(await io_utils.noThrow(producer.delete(api))).toSucceed();
+  });
+
+  test('script flow tags - add/remove and cascade on delete', async () => {
+    const flowTagName = 'test_script_flow_tags_' + testbatch;
+    const scriptForFlow = 'test_flow_tag_s_' + testbatch;
+    const tagName = 'test_script_flow_tag_' + testbatch;
+
+    await deleteFlow(flowTagName);
+    await deleteScript(scriptForFlow);
+    const existingTag = await io_utils.ignoreError(io_tag.Tag.getByName(api, tagName));
+    if (existingTag && existingTag.id) {
+      await io_utils.ignoreError(existingTag.delete(api));
+    }
+
+    const script = new io_script.Script(scriptForFlow, 'MAMORI', '')
+      .withBody('parameters.out.set("ok", true);')
+      .withParameters([{ name: 'ok', direction: 'out', type: 'boolean' }]);
+    expect(await io_utils.noThrow(script.create(api))).toSucceed();
+
+    const flow = new io_script_flow.ScriptFlow(flowTagName, [
+      { id: 'b1_' + testbatch, script: scriptForFlow, mappings: {} },
+    ]);
+    expect(await io_utils.noThrow(flow.create(api))).toSucceed();
+    expect(flow.id).toBeTruthy();
+
+    const tag = new io_tag.Tag(tagName);
+    expect(await io_utils.noThrow(tag.create(api))).toSucceed();
+    expect(tag.id).toBeTruthy();
+
+    try {
+      expect(await io_utils.noThrow(flow.addTag(api, tag))).toSucceed();
+
+      let assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+      expect(assignments.errors).not.toBe(true);
+      let match = assignments.filter(
+        (r: any) =>
+          String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'script_flow' &&
+          String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === flowTagName.toLowerCase(),
+      );
+      expect(match.length).toBe(1);
+
+      expect(await io_utils.noThrow(flow.removeTag(api, tag))).toSucceed();
+      assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+      expect(assignments.errors).not.toBe(true);
+      match = assignments.filter(
+        (r: any) =>
+          String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'script_flow' &&
+          String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === flowTagName.toLowerCase(),
+      );
+      expect(match.length).toBe(0);
+
+      expect(await io_utils.noThrow(flow.addTag(api, tagName))).toSucceed();
+      expect(await io_utils.noThrow(flow.delete(api))).toSucceed();
+
+      assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+      expect(assignments.errors).not.toBe(true);
+      match = assignments.filter(
+        (r: any) =>
+          String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'script_flow' &&
+          String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === flowTagName.toLowerCase(),
+      );
+      expect(match.length).toBe(0);
+    } finally {
+      await deleteFlow(flowTagName);
+      await deleteScript(scriptForFlow);
+      await io_utils.ignoreError(tag.delete(api));
+    }
   });
 });

@@ -314,3 +314,31 @@ export async function resolveTagId(
   }
   return byName.id;
 }
+
+/** Assign a tag to a resource via ASSIGN_TAG. */
+export async function assignResourceTag(
+  api: MamoriService,
+  resourceType: TagResourceType,
+  resourceKey: string,
+  tag: Tag | number | string,
+): Promise<any> {
+  const tagId = await resolveTagId(api, tag);
+  return api.call('ASSIGN_TAG', resourceType, resourceKey, tagId);
+}
+
+/**
+ * Clear a tag from a resource via CLEAR_TAG.
+ * Pass '*' to clear all tags on the resource.
+ */
+export async function clearResourceTag(
+  api: MamoriService,
+  resourceType: TagResourceType,
+  resourceKey: string,
+  tag: Tag | number | string | '*',
+): Promise<any> {
+  if (tag === '*') {
+    return api.call('CLEAR_TAG', resourceType, resourceKey, '*');
+  }
+  const tagId = await resolveTagId(api, tag);
+  return api.call('CLEAR_TAG', resourceType, resourceKey, String(tagId));
+}

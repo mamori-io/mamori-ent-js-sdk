@@ -33,14 +33,82 @@ describe("masking policy tests", () => {
   let granteepw = "J{J'vpKsn\/a@C+W6(6A,4_vdQ'}D";
   let accessRoleName = "test_masking_access_role_001_" + testbatch;
 
+  /** Policies created by individual tests in this file (stable names + testbatch). */
+  const policyNames = [
+    "orach1711_policy_" + testbatch,
+    "orach5270_policy_" + testbatch,
+    "orach7309_policy_" + testbatch,
+    "ssch1711_policy_" + testbatch,
+    "ssch5270_policy_" + testbatch,
+  ];
+
+  function maskedPassthroughPermission() {
+    return new io_permission.DatasourcePermission()
+      .permission(io_permission.DB_PERMISSION.MASKED)
+      .on("*", "", "", "")
+      .grantee(accessRoleName);
+  }
+
+  function dbAccessPermission() {
+    return new io_permission.DatasourcePermission()
+      .permissions([
+        io_permission.DB_PERMISSION.SELECT,
+        io_permission.DB_PERMISSION.CALL,
+        io_permission.DB_PERMISSION.EXECUTE_SQL_BLOCK,
+      ])
+      .on("*", "*", "*", "*")
+      .grantee(accessRoleName);
+  }
+
+  /**
+   * Drop/revoke fixtures this suite creates. Safe to call when objects are missing.
+   * Must run at the start of beforeAll so a prior failed run cannot leave
+   * MASKED PASSTHROUGH (etc.) and block re-grants.
+   */
+  async function cleanupFixtures() {
+    for (const name of policyNames) {
+      await io_utils.ignoreError(
+        new io_sqlmaskingpolicies.SQLMaskingPolicy(name).delete(api),
+      );
+    }
+
+    await io_utils.ignoreError(
+      new io_permission.MamoriPermission()
+        .permission(io_permission.MAMORI_PERMISSION.ALL_PRIVILEGES)
+        .grantee(grantee)
+        .revoke(api),
+    );
+    await io_utils.ignoreError(
+      new io_permission.RolePermission()
+        .role(accessRoleName)
+        .grantee(grantee)
+        .revoke(api),
+    );
+    await io_utils.ignoreError(
+      new io_permission.RolePermission()
+        .role(credential_role)
+        .grantee(grantee)
+        .revoke(api),
+    );
+    await io_utils.ignoreError(maskedPassthroughPermission().revoke(api));
+    await io_utils.ignoreError(dbAccessPermission().revoke(api));
+    await io_utils.ignoreError(new io_role.Role(accessRoleName).delete(api));
+    await io_utils.ignoreError(
+      (user || new io_user.User(grantee)).delete(api),
+    );
+  }
+
   beforeAll(async () => {
     //console.log("login %s %s", host, username);
     api = new MamoriService(host, INSECURE);
 
     await api.login(username, password);
+
+    // Clear leftovers from interrupted prior runs before creating/granting.
+    await cleanupFixtures();
+
     //create the user
     user = new io_user.User(grantee).withEmail("test@test.com");
-    await io_utils.ignoreError(user.delete(api));
     let u = await user.create(api, granteepw).catch((e) => {
       fail(io_utils.handleAPIException(e));
     });
@@ -60,26 +128,11 @@ describe("masking policy tests", () => {
     let r = await io_utils.noThrow(
       new io_role.Role(accessRoleName).create(api),
     );
-    let grant1 = await io_utils.noThrow(
-      new io_permission.DatasourcePermission()
-        .permission(io_permission.DB_PERMISSION.MASKED)
-        .on("*", "", "", "")
-        .grantee(accessRoleName)
-        .grant(api),
-    );
+    expect(r).toSucceed();
+    let grant1 = await io_utils.noThrow(maskedPassthroughPermission().grant(api));
     expect(grant1).toSucceed();
 
-    let grant2 = await io_utils.noThrow(
-      new io_permission.DatasourcePermission()
-        .permissions([
-          io_permission.DB_PERMISSION.SELECT,
-          io_permission.DB_PERMISSION.CALL,
-          io_permission.DB_PERMISSION.EXECUTE_SQL_BLOCK,
-        ])
-        .on("*", "*", "*", "*")
-        .grantee(accessRoleName)
-        .grant(api),
-    );
+    let grant2 = await io_utils.noThrow(dbAccessPermission().grant(api));
     expect(grant2).toSucceed();
 
     let p2 = await io_utils.noThrow(
@@ -92,8 +145,7 @@ describe("masking policy tests", () => {
   });
 
   afterAll(async () => {
-    await user.delete(api);
-    await io_utils.noThrow(new io_role.Role(accessRoleName).delete(api));
+    await cleanupFixtures();
     await api.logout();
   });
 
@@ -322,7 +374,7 @@ describe("masking policy tests", () => {
       dsname,
     );
     try {
-      let prep = await io_utils.noThrow(
+      await io_utils.noThrow(
         helper.DBHelper.prepareOracleObjects(apiAdminPassthrough, schemaName),
       );
       //Create the permission with the where filter
@@ -385,7 +437,7 @@ describe("masking policy tests", () => {
       dsname,
     );
     try {
-      let prep = await io_utils.noThrow(
+      await io_utils.noThrow(
         helper.DBHelper.prepareSSObjects(apiAdminPassthrough, schemaName),
       );
       //Create the permission with the where filter
@@ -405,6 +457,7 @@ describe("masking policy tests", () => {
         let x1 = await io_utils.noThrow(
           apiUser.queryRows("select * from " + schemaName + ".tab1"),
         );
+        expect(x1).toSucceed();
         expect(x1.length).toBeGreaterThan(1);
         //GRANT RESTRICTION ON SELECT
         await io_utils.noThrow(perm.grant(api));
@@ -452,14 +505,12 @@ describe("masking policy tests", () => {
       dsname,
     );
     try {
-      let prep = await io_utils.noThrow(
+      await io_utils.noThrow(
         helper.DBHelper.prepareSSObjects(apiAdminPassthrough, schemaName),
       );
-      //create the masking policy
+      // Do not wrap in noThrow — assertion failures must surface (not become grantTo TypeError)
       let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy =
-        await io_utils.noThrow(
-          helper.DBHelper.addMaskingPolicy(api, policyName, rules),
-        );
+        await helper.DBHelper.addMaskingPolicy(api, policyName, rules);
       //grant the policy to the user
       await io_utils.noThrow(mpolicy.grantTo(api, user.username));
       let apiUser = await helper.DBHelper.preparePassthroughSession(
@@ -527,10 +578,9 @@ describe("masking policy tests", () => {
       await io_utils.noThrow(
         helper.DBHelper.prepareSSObjects(apiAdminPassthrough, schemaName),
       );
+      // Do not wrap in noThrow — assertion failures must surface (not become grantTo TypeError)
       let mpolicy: io_sqlmaskingpolicies.SQLMaskingPolicy =
-        await io_utils.noThrow(
-          helper.DBHelper.addMaskingPolicy(api, policyName, rules),
-        );
+        await helper.DBHelper.addMaskingPolicy(api, policyName, rules);
       await io_utils.noThrow(mpolicy.grantTo(api, user.username));
       let apiUser = await helper.DBHelper.preparePassthroughSession(
         host,

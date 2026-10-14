@@ -11,6 +11,7 @@ import { SshLoginDesc } from './api';
 import { sqlEscape } from './utils';
 import { ISerializable } from "./i-serializable";
 import { SSHLoginPermission } from './permission';
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 
 /**
@@ -176,6 +177,26 @@ export class SshLogin implements ISerializable {
         return api.select("CALL DELETE_SSH_LOGIN('" + sqlEscape(this.name) + "')").then((res: any) => {
             return res[0];
         });
+    }
+
+    /**
+     * Assign a tag to this SSH login via ASSIGN_TAG.
+     * @param tag Tag instance, numeric id, or tag name
+     */
+    public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+        return assignResourceTag(api, 'ssh', this.name, tag);
+    }
+
+    /**
+     * Remove a tag from this SSH login via CLEAR_TAG.
+     * Pass '*' to clear all tags on the login.
+     * @param tag Tag instance, numeric id, tag name, or '*'
+     */
+    public async removeTag(
+        api: MamoriService,
+        tag: Tag | number | string | '*',
+    ): Promise<any> {
+        return clearResourceTag(api, 'ssh', this.name, tag);
     }
 
     public update(api: MamoriService): Promise<any> {

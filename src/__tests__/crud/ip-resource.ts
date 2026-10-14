@@ -1,6 +1,6 @@
 import {
     MamoriService,
-    io_https, io_utils, io_ipresource, io_requestable_resource, io_role
+    io_https, io_utils, io_ipresource, io_requestable_resource, io_role, io_tag
 } from '../../api';
 import * as helper from '../../__utility__/test-helper';
 import '../../__utility__/jest/error_matcher';
@@ -100,5 +100,61 @@ describe("IP resource CRUD tests", () => {
         //
     });
 
+    test('ip resource tags - add/remove and cascade on delete', async () => {
+        const ipName = 'test_ip_tags_' + testbatch;
+        const tagName = 'test_ip_tag_' + testbatch;
+        const ip = new io_ipresource.IpResource(ipName)
+            .withCIDR('10.0.201.0/24')
+            .withPorts('443');
+        await io_utils.ignoreError(ip.delete(api));
+        const existingTag = await io_utils.ignoreError(io_tag.Tag.getByName(api, tagName));
+        if (existingTag && existingTag.id) {
+            await io_utils.ignoreError(existingTag.delete(api));
+        }
+
+        expect(await io_utils.noThrow(ip.create(api))).toSucceed();
+
+        const tag = new io_tag.Tag(tagName);
+        expect(await io_utils.noThrow(tag.create(api))).toSucceed();
+        expect(tag.id).toBeTruthy();
+
+        try {
+            expect(await io_utils.noThrow(ip.addTag(api, tag))).toSucceed();
+
+            let assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            let match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'ip' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === ipName.toLowerCase(),
+            );
+            expect(match.length).toBe(1);
+
+            expect(await io_utils.noThrow(ip.removeTag(api, tag))).toSucceed();
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'ip' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === ipName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+
+            expect(await io_utils.noThrow(ip.addTag(api, tagName))).toSucceed();
+            expect(await io_utils.noThrow(ip.delete(api))).toSucceed();
+
+            assignments = await io_utils.noThrow(io_tag.Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'ip' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === ipName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+        } finally {
+            await io_utils.ignoreError(ip.delete(api));
+            await io_utils.ignoreError(tag.delete(api));
+        }
+    });
 
 });

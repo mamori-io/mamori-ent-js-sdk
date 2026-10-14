@@ -1,6 +1,7 @@
 import { MamoriService } from '../../api';
 import * as https from 'https';
 import { User, MFA_PROVIDER } from '../../user';
+import { Tag } from '../../tag';
 import { DatasourcePermission, DB_PERMISSION, TIME_UNIT } from '../../permission';
 import { handleAPIException, noThrow, ignoreError, addUniqueExtension } from '../../utils';
 import * as helper from '../../__utility__/test-helper';
@@ -571,6 +572,63 @@ describe("mamori user tests", () => {
             await helper.EncryptionKey.cleanupAESEncryptionKey(api2, aesKeyName);
         } finally {
             await ignoreError(api2.logout());
+        }
+    });
+
+    test('mamori user tags - add/remove (soft-delete does not cascade)', async () => {
+        const userName = ('test_user_tags_' + testbatch).toLowerCase();
+        const tagName = 'test_user_tag_' + testbatch;
+        const user = new User(userName).withEmail(userName + '@ace.com').withFullName('Tag Test User');
+        await ignoreError(user.delete(api));
+        const existingTag = await ignoreError(Tag.getByName(api, tagName));
+        if (existingTag && existingTag.id) {
+            await ignoreError(existingTag.delete(api));
+        }
+
+        expect(await noThrow(user.create(api, granteepw))).toSucceed();
+
+        const tag = new Tag(tagName);
+        expect(await noThrow(tag.create(api))).toSucceed();
+        expect(tag.id).toBeTruthy();
+
+        try {
+            expect(await noThrow(user.addTag(api, tag))).toSucceed();
+
+            let assignments = await noThrow(Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            let match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'user' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === userName.toLowerCase(),
+            );
+            expect(match.length).toBe(1);
+
+            expect(await noThrow(user.removeTag(api, tag))).toSucceed();
+            assignments = await noThrow(Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'user' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === userName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+
+            expect(await noThrow(user.addTag(api, tagName))).toSucceed();
+            // Soft-delete does not cascade user_tags; clear before delete so assignments stay empty.
+            expect(await noThrow(user.removeTag(api, tag))).toSucceed();
+            expect(await noThrow(user.delete(api))).toSucceed();
+
+            assignments = await noThrow(Tag.listAssignments(api, tag.id));
+            expect(assignments.errors).not.toBe(true);
+            match = assignments.filter(
+                (r: any) =>
+                    String(r.resource_type || r.RESOURCE_TYPE).toLowerCase() === 'user' &&
+                    String(r.resource_key || r.RESOURCE_KEY).toLowerCase() === userName.toLowerCase(),
+            );
+            expect(match.length).toBe(0);
+        } finally {
+            await ignoreError(user.delete(api));
+            await ignoreError(tag.delete(api));
         }
     });
 

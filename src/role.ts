@@ -9,6 +9,7 @@
 import { MamoriService } from './api';
 import { ISerializable } from "./i-serializable";
 import { TIME_UNIT } from './permission';
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 
 export interface RoleGrant {
@@ -154,6 +155,19 @@ export class Role implements ISerializable {
     public delete(api: MamoriService, cascade: boolean = false): Promise<any> {
         const q = cascade ? "?cascade=true" : "";
         return api.callAPI("DELETE", "/v1/roles/" + encodeURIComponent(this.roleid) + q);
+    }
+
+    /** Assign a tag to this role via ASSIGN_TAG. */
+    public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+        return assignResourceTag(api, 'role', this.roleid, tag);
+    }
+
+    /** Remove a tag from this role via CLEAR_TAG. Pass '*' to clear all. */
+    public async removeTag(
+        api: MamoriService,
+        tag: Tag | number | string | '*',
+    ): Promise<any> {
+        return clearResourceTag(api, 'role', this.roleid, tag);
     }
 
     /**

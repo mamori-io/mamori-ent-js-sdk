@@ -8,6 +8,7 @@
  */
 import { MamoriService } from './api';
 import { ISerializable } from './i-serializable';
+import { Tag, assignResourceTag, clearResourceTag } from './tag';
 
 export type ScriptTargetType = 'MAMORI' | 'SQL';
 
@@ -269,6 +270,19 @@ export class Script implements ISerializable {
       throw new Error('Script id is required for delete');
     }
     return api.call('DELETE_SCRIPT', this.id);
+  }
+
+  /** Assign a tag to this script via ASSIGN_TAG. */
+  public async addTag(api: MamoriService, tag: Tag | number | string): Promise<any> {
+    return assignResourceTag(api, 'script', this.name, tag);
+  }
+
+  /** Remove a tag from this script via CLEAR_TAG. Pass '*' to clear all. */
+  public async removeTag(
+    api: MamoriService,
+    tag: Tag | number | string | '*',
+  ): Promise<any> {
+    return clearResourceTag(api, 'script', this.name, tag);
   }
 
   public async run(api: MamoriService, inputs: Record<string, any> = {}): Promise<any> {
