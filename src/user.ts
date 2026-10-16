@@ -44,7 +44,11 @@ export enum MFA_PROVIDER {
     /** Okta authentication */
     OKTA = "okta",
     /** PingID authentication */
-    PINGID = "pingid"
+    PINGID = "pingid",
+    /** Google Workspace authentication */
+    GOOGLE = "google",
+    /** AWS IAM Identity Center authentication */
+    AWSIDC = "awsidc"
 }
 
 /**

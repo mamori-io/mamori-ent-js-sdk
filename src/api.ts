@@ -1414,6 +1414,14 @@ export class MamoriService extends eventable.Eventable {
     });
   }
 
+  public validate_auth_provider(name: string, options: any = null) {
+    return this.callAPI(
+      "PUT",
+      "/v1/providers/" + encodeURIComponent(name) + "/validate",
+      options,
+    );
+  }
+
   public set_default_provider_chain(options: any) {
     return this.callAPI("POST", "/v1/defaults/provider", options);
   }
